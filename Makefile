@@ -108,11 +108,11 @@ user:
 	source $(USER_SOURCE) && make all
 
 .PHONY: all
-all: setup chsdi/static/css/extended.min.css templates potomo rss lint fixrights
+all: setup templates potomo lint fixrights
 
-setup: .venv gdal node_modules .venv/hooks
+setup: .venv gdal  .venv/hooks
 
-templates: .venv/last-version apache/wsgi.conf apache/tomcat-print.conf print/WEB-INF/web.xml development.ini production.ini
+templates: .venv/last-version apache/wsgi.conf development.ini production.ini
 
 .PHONY: dev
 dev:
@@ -151,16 +151,6 @@ lint:
 autolint:
 	@echo "${GREEN}Auto correction of python files...${RESET}";
 	${AUTOPEP8_CMD} --in-place --aggressive --aggressive --verbose --ignore=${PEP8_IGNORE} $(PYTHON_FILES)
-
-.PHONY: doc
-doc: chsdi/static/css/extended.min.css
-	@echo "${GREEN}Building the documentation...${RESET}";
-	cd chsdi/static/doc && ../../../${SPHINX_CMD} -b html source build
-
-.PHONY:
-rss: doc chsdi/static/doc/build/releasenotes/index.html
-	@echo "${GREEN}Creating the rss feed from releasenotes${RESET}";
-	${PYTHON_CMD} scripts/rssFeedGen.py
 
 .PHONY: translate
 translate:
@@ -203,21 +193,6 @@ gdal: .venv
 		${PYTHON_CMD} -c "from osgeo import gdal; print('GDAL installed'); print(gdal.__version__, gdal.__file__)"; \
 	fi
 
-.PHONY: updateapi
-updateapi:
-	@echo "${GREEN}Updating geoadmin API...${RESET}";
-	rm -rf chsdi/static/js/ol3 && \
-	cd chsdi/static/js/ && \
-	git clone https://github.com/geoadmin/ol3.git && \
-	cd ol3 && \
-	git remote add upstream https://github.com/openlayers/ol3 && \
-	git fetch upstream && \
-	npm install && \
-	API_URL=$(API_URL) make -f Makefile-ga build-ga && \
-	cp build/ga.css ../../css/ && \
-	cp build/ga*.js ../../js/ && \
-	cp resources/EPSG* ../../js/;
-
 .PHONY: deploybranch
 deploybranch:
 	@echo "${GREEN}Deploying branch $(GIT_BRANCH) to dev...${RESET}";
@@ -236,29 +211,6 @@ deploybranchint:
 deploybranchdemo:
 	@echo "${GREEN}Deploying branch $(GIT_BRANCH) to dev and demo...${RESET}";
 	./scripts/deploybranch.sh demo
-
-.PHONY: printconfig
-printconfig:
-	@echo '# File managed by zc.buildout mf-chsdi3'  > /srv/tomcat/tomcat1/bin/setenv-local.sh
-	@echo 'export JAVA_XMX="2G"'  >> /srv/tomcat/tomcat1/bin/setenv-local.sh
-
-.PHONY: printwar
-printwar: printconfig print/WEB-INF/web.xml.in
-	cd print && \
-	mkdir temp_$(VERSION) && \
-	echo "${GREEN}Updating print war...${RESET}" && \
-	cp -f ${BASEWAR} temp_$(VERSION)/print-chsdi3-$(APACHE_BASE_PATH).war && \
-	cp -fr ${PRINT_INPUT} temp_$(VERSION)/ && \
-	cd temp_$(VERSION) && \
-	jar uf print-chsdi3-$(APACHE_BASE_PATH).war ${PRINT_INPUT} && \
-	echo "${GREEN}Print war creation was successful.${RESET}" && \
-	rm -rf $(PRINT_OUTPUT) $(PRINT_OUTPUT_BASE) && \
-	cp -f print-chsdi3-$(APACHE_BASE_PATH).war $(PRINT_OUTPUT) && chmod 666 $(PRINT_OUTPUT) && cd .. && \
-	echo "${GREEN}Removing temp directory${RESET}" && \
-	rm -rf temp_$(VERSION) && \
-	echo "${GREEN}Restarting tomcat...${RESET}" && \
-	sudo /etc/init.d/tomcat-tomcat1 restart && \
-	echo "${GREEN}It may take a few seconds for $(PRINT_OUTPUT_BASE) directory to appear...${RESET}";
 
 # Remove when ready to be merged
 .PHONY: deploydev
@@ -302,22 +254,6 @@ deploy/conf/00-branch.conf.in:
 deploy/conf/00-branch.conf: deploy/conf/00-branch.conf.in
 	@echo "${GREEN}Creating deploy/conf/00-branch.conf...${RESET}"
 	${MAKO_CMD} --var "git_branch=$(GIT_BRANCH)" $< > $@
-
-apache/tomcat-print.conf.in:
-	@echo "${GREEN}Template file apache/tomcat-print.conf.in has changed${RESET}";
-apache/tomcat-print.conf: apache/tomcat-print.conf.in
-	@echo "${GREEN}Creating apache/tomcat-print.conf...${RESET}";
-	${MAKO_CMD} \
-		--var "print_war=$(PRINT_WAR)" \
-		--var "apache_entry_path=$(APACHE_ENTRY_PATH)" \
-		--var "print_temp_dir=$(PRINT_TEMP_DIR)" $< > $@
-
-print/WEB-INF/web.xml.in:
-	@echo "${GREEN}Template file print/WEB-INF/web.xml has changed${RESET}"
-print/WEB-INF/web.xml: print/WEB-INF/web.xml.in
-	@echo "${GREEN}Creating print/WEB-INF/web.xml...${RESET}"
-	${MAKO_CMD} \
-		--var "print_temp_dir=$(PRINT_TEMP_DIR)" $< > $@
 
 apache/application.wsgi.mako:
 	@echo "${GREEN}Template file apache/application.wsgi.mako has changed${RESET}";
@@ -414,23 +350,6 @@ requirements.txt:
 	mkdir -p $(dir $@)
 	test $(VERSION) != $(LAST_VERSION) && echo $(VERSION) > .venv/last-version || :
 
-package.json:
-	@echo "${GREEN}File package.json has changed${RESET}";
-node_modules: package.json
-	@echo "${GREEN}Installing node packages...${RESET}";
-	npm install
-	cp -f node_modules/jquery/dist/jquery.min.js chsdi/static/js/jquery.min.js
-	cp -f node_modules/blueimp-gallery/js/blueimp-gallery.min.js chsdi/static/js/blueimp-gallery.min.js
-	cp -f node_modules/d3/d3.min.js chsdi/static/js/d3.min.js
-	cp -f node_modules/d3-tip/index.js chsdi/static/js/d3-tip.js
-	cp -f node_modules/blueimp-gallery/css/blueimp-gallery.min.css chsdi/static/css/blueimp-gallery.min.css
-
-chsdi/static/less/extended.less:
-	@echo "${GREEN}File chsdi/static/less/extended.less has changed${RESET}";
-chsdi/static/css/extended.min.css: chsdi/static/less/extended.less
-	@echo "${GREEN}Generating new css file...${RESET}";
-	node_modules/.bin/lessc -ru --clean-css $< $@
-
 fixrights:
 	@echo "${GREEN}Fixing rights...${RESET}";
 	chgrp -f -R geodata . || :
@@ -441,8 +360,6 @@ clean:
 	rm -rf production.ini
 	rm -rf development.ini
 	rm -rf apache/wsgi.conf
-	rm -rf apache/tomcat-print.conf
-	rm -rf print/WEB-INF/web.xml
 	rm -rf apache/application.wsgi
 	rm -rf rc_branch
 	rm -rf deploy/deploy-branch.cfg
