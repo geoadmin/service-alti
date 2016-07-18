@@ -8,9 +8,9 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = open(os.path.join(here, 'requirements.txt')).read().split('\n')
 
-setup(name='chsdi',
-      version='3.0.1',
-      description='chsdi',
+setup(name='alti',
+      version='0.0.1',
+      description='alti',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -23,14 +23,13 @@ setup(name='chsdi',
       url='',
       keywords='web pyramid pylons',
       packages=find_packages(),
-      package_data = {'chsdi': ['locale/*/LC_MESSAGES/*.mo']},
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
       tests_require=requires,
-      test_suite="chsdi",
+      test_suite="alti",
       entry_points="""\
       [paste.app_factory]
-      main = chsdi:main
+      main = alti:main
       """,
       )

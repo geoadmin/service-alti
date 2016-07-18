@@ -1,4 +1,4 @@
-mf-chsdi3 is available for use under the following license, commonly known
+service-alti is available for use under the following license, commonly known
 as the 3-clause (or "modified") BSD license:
 
 ==============================
@@ -33,10 +33,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ==============================
 
-Portions of mf-chsdi3 are based on works by others. A non-extensive list:
+Portions of service-alti are based on works by others. A non-extensive list:
 
 [Pyramid Source Code](https://github.com/Pylons/pyramid/blob/master/LICENSE.txt)
-
-[Sphinx Doc Source Code](https://github.com/sphinx-doc/sphinx/blob/master/LICENSE)
-
-[OpenLayers 3 Source Code](https://github.com/openlayers/ol3/blob/master/LICENSE.md)

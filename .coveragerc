@@ -1,4 +1,4 @@
 [run]
-source = chsdi
+source = alti
 omit =
-    chsdi/tests/*
+    alti/tests/*
