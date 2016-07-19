@@ -4,7 +4,6 @@ APACHE_ENTRY_PATH := $(shell if [ '$(APACHE_BASE_PATH)' = 'main' ]; then echo ''
 KEEP_VERSION ?= 'false'
 LAST_VERSION := $(shell if [ -f '.venv/last-version' ]; then cat .venv/last-version 2> /dev/null; else echo '-none-'; fi)
 VERSION := $(shell if [ '$(KEEP_VERSION)' = 'true' ] && [ '$(LAST_VERSION)' != '-none-' ]; then echo $(LAST_VERSION); else python -c "print __import__('time').strftime('%s')"; fi)
-BASEWAR := print-servlet-2.0-SNAPSHOT-IMG-MAGICK.war
 BRANCH_STAGING := $(shell if [ '$(DEPLOY_TARGET)' = 'dev' ]; then echo 'test'; else echo 'integration'; fi)
 BRANCH_TO_DELETE :=
 CURRENT_DIRECTORY := $(shell pwd)
@@ -15,18 +14,12 @@ HTTP_PROXY := http://ec2-52-28-118-239.eu-central-1.compute.amazonaws.com:80
 INSTALL_DIRECTORY := .venv
 MODWSGI_USER := www-data
 NO_TESTS ?= withtests
-NODE_DIRECTORY := node_modules
-PRINT_INPUT := *.yaml *.png WEB-INF
-PRINT_OUTPUT_BASE := /srv/tomcat/tomcat1/webapps/print-chsdi3-$(APACHE_BASE_PATH)
-PRINT_OUTPUT := $(PRINT_OUTPUT_BASE).war
-PRINT_TEMP_DIR := /var/cache/print
-PYTHON_FILES := $(shell find chsdi/* -path chsdi/static -prune -o -type f -name "*.py" -print)
+PYTHON_FILES := $(shell find alti/* -path alti/static -prune -o -type f -name "*.py" -print)
 SHORTENER_ALLOWED_DOMAINS := admin.ch, swisstopo.ch, bgdi.ch
 SHORTENER_ALLOWED_HOSTS :=
 TEMPLATE_FILES := $(shell find -type f -name "*.in" -print)
 USER_SOURCE ?= rc_user
 WSGI_APP := $(CURRENT_DIRECTORY)/apache/application.wsgi
-ZADARA_DIR := /var/local/cartoweb/downloads/
 
 # Commands
 AUTOPEP8_CMD := $(INSTALL_DIRECTORY)/bin/autopep8
@@ -37,7 +30,6 @@ PIP_CMD := $(INSTALL_DIRECTORY)/bin/pip
 PSERVE_CMD := $(INSTALL_DIRECTORY)/bin/pserve
 PSHELL_CMD := $(INSTALL_DIRECTORY)/bin/pshell
 PYTHON_CMD := $(INSTALL_DIRECTORY)/bin/python
-SPHINX_CMD := $(INSTALL_DIRECTORY)/bin/sphinx-build
 
 # Linting rules
 PEP8_IGNORE := "E128,E221,E241,E251,E272,E501,E711,E731"
@@ -57,9 +49,6 @@ RED := $(shell tput setaf 1)
 GREEN := $(shell tput setaf 2)
 
 # Versions
-# We need GDAL which is hard to install in a venv, modify PYTHONPATH to use the
-# system wide version.
-GDAL_VERSION ?= 1.9.0
 PYTHON_VERSION := $(shell python --version 2>&1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
 PYTHONPATH ?= .venv/lib/python${PYTHON_VERSION}/site-packages:/usr/lib64/python${PYTHON_VERSION}/site-packages
 
@@ -73,18 +62,12 @@ help:
 	@echo "- serve              Serve the application with pserve"
 	@echo "- shell              Enter interactive shell with app loaded in the background"
 	@echo "- test               Launch the tests (no e2e tests)"
-	@echo "- teste2e            Launch end-to-end tests"
 	@echo "- lint               Run the linter"
 	@echo "- autolint           Run the autolinter"
-	@echo "- translate          Generate the translation files"
-	@echo "- doc                Generate the doc for api3.geo.admin.ch"
 	@echo "- deploybranch       Deploy current branch to dev (must be pushed before hand)"
 	@echo "- deploybranchint    Deploy current branch to dev and int (must be pushed before hand)"
 	@echo "- deploybranchdemo   Deploy current branch to dev and demo (must be pushed before hand)"
 	@echo "- deletebranch       List deployed branches or delete a deployed branch (BRANCH_TO_DELETE=...)"
-	@echo "- updateapi          Updates geoadmin api source code (ol3 fork)"
-	@echo "- printconfig        Set tomcat print env variables"
-	@echo "- printwar           Creates the .jar print file (only one per env per default)"
 	@echo "- deploydev          Deploys master to dev (SNAPSHOT=true to also create a snapshot)"
 	@echo "- deployint          Deploys a snapshot to integration (SNAPSHOT=201512021146)"
 	@echo "- deployprod         Deploys a snapshot to production (SNAPSHOT=201512021146)"
@@ -95,9 +78,6 @@ help:
 	@echo "APACHE_ENTRY_PATH:   ${APACHE_ENTRY_PATH}"
 	@echo "API_URL:             ${API_URL}"
 	@echo "BRANCH_STAGING:      ${BRANCH_STAGING}"
-	@echo "DBHOST:              ${DBHOST}"
-	@echo "DBSTAGING:           ${DBSTAGING}"
-	@echo "GEOADMINHOST:        ${GEOADMINHOST}"
 	@echo "GIT_BRANCH:          ${GIT_BRANCH}"
 	@echo "SERVER_PORT:         ${SERVER_PORT}"
 	@echo
@@ -108,11 +88,11 @@ user:
 	source $(USER_SOURCE) && make all
 
 .PHONY: all
-all: setup chsdi/static/css/extended.min.css templates potomo rss lint fixrights
+all: setup templates lint fixrights
 
-setup: .venv gdal node_modules .venv/hooks
+setup: .venv .venv/hooks
 
-templates: .venv/last-version apache/wsgi.conf apache/tomcat-print.conf print/WEB-INF/web.xml development.ini production.ini
+templates: .venv/last-version apache/wsgi.conf development.ini production.ini
 
 .PHONY: dev
 dev:
@@ -136,11 +116,7 @@ shell:
 
 .PHONY: test
 test:
-	PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} chsdi/tests/ -e .*e2e.*
-
-.PHONY: teste2e
-teste2e:
-	PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} chsdi/tests/e2e/
+	PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
 
 .PHONY: lint
 lint:
@@ -151,72 +127,6 @@ lint:
 autolint:
 	@echo "${GREEN}Auto correction of python files...${RESET}";
 	${AUTOPEP8_CMD} --in-place --aggressive --aggressive --verbose --ignore=${PEP8_IGNORE} $(PYTHON_FILES)
-
-.PHONY: doc
-doc: chsdi/static/css/extended.min.css
-	@echo "${GREEN}Building the documentation...${RESET}";
-	cd chsdi/static/doc && ../../../${SPHINX_CMD} -b html source build
-
-.PHONY:
-rss: doc chsdi/static/doc/build/releasenotes/index.html
-	@echo "${GREEN}Creating the rss feed from releasenotes${RESET}";
-	${PYTHON_CMD} scripts/rssFeedGen.py
-
-.PHONY: translate
-translate:
-	@echo "${GREEN}Updating translations...${RESET}";
-	${PYTHON_CMD} translations/translation2po.py chsdi/locale/;
-
-chsdi/locale/en/LC_MESSAGES/chsdi.po:
-chsdi/locale/en/LC_MESSAGES/chsdi.mo: chsdi/locale/en/LC_MESSAGES/chsdi.po
-	msgfmt -o $@ $<
-chsdi/locale/fr/LC_MESSAGES/chsdi.po:
-chsdi/locale/fr/LC_MESSAGES/chsdi.mo: chsdi/locale/fr/LC_MESSAGES/chsdi.po
-	msgfmt -o $@ $<
-chsdi/locale/de/LC_MESSAGES/chsdi.po:
-chsdi/locale/de/LC_MESSAGES/chsdi.mo: chsdi/locale/de/LC_MESSAGES/chsdi.po
-	msgfmt -o $@ $<
-chsdi/locale/fi/LC_MESSAGES/chsdi.po:
-chsdi/locale/fi/LC_MESSAGES/chsdi.mo: chsdi/locale/fi/LC_MESSAGES/chsdi.po
-	msgfmt -o $@ $<
-chsdi/locale/it/LC_MESSAGES/chsdi.po:
-chsdi/locale/it/LC_MESSAGES/chsdi.mo: chsdi/locale/it/LC_MESSAGES/chsdi.po
-	msgfmt -o $@ $<
-
-potomo: chsdi/locale/en/LC_MESSAGES/chsdi.mo chsdi/locale/fr/LC_MESSAGES/chsdi.mo \
-        chsdi/locale/de/LC_MESSAGES/chsdi.mo chsdi/locale/fi/LC_MESSAGES/chsdi.mo \
-        chsdi/locale/it/LC_MESSAGES/chsdi.mo
-
-.PHONY: gdal
-gdal: .venv
-	@if [ ! -d $(INSTALL_DIRECTORY)/build ]; \
-	then \
-		echo "${GREEN}Installing GDAL...${RESET}"; \
-		mkdir -p $(INSTALL_DIRECTORY)/build && \
-		${PIP_CMD} install --download $(INSTALL_DIRECTORY)/build GDAL==$(GDAL_VERSION) && \
-		cd $(INSTALL_DIRECTORY)/build && \
-		tar -xzf GDAL-$(GDAL_VERSION).tar.gz && \
-		cd GDAL-$(GDAL_VERSION) && \
-		../../../${PYTHON_CMD} setup.py build_ext --gdal-config=/usr/bin/gdal-config-64 --library-dirs=/usr/lib --include-dirs=/usr/include/gdal && \
-		../../../${PYTHON_CMD} setup.py install --root / && \
-		cd ../../.. && \
-		${PYTHON_CMD} -c "from osgeo import gdal; print('GDAL installed'); print(gdal.__version__, gdal.__file__)"; \
-	fi
-
-.PHONY: updateapi
-updateapi:
-	@echo "${GREEN}Updating geoadmin API...${RESET}";
-	rm -rf chsdi/static/js/ol3 && \
-	cd chsdi/static/js/ && \
-	git clone https://github.com/geoadmin/ol3.git && \
-	cd ol3 && \
-	git remote add upstream https://github.com/openlayers/ol3 && \
-	git fetch upstream && \
-	npm install && \
-	API_URL=$(API_URL) make -f Makefile-ga build-ga && \
-	cp build/ga.css ../../css/ && \
-	cp build/ga*.js ../../js/ && \
-	cp resources/EPSG* ../../js/;
 
 .PHONY: deploybranch
 deploybranch:
@@ -236,29 +146,6 @@ deploybranchint:
 deploybranchdemo:
 	@echo "${GREEN}Deploying branch $(GIT_BRANCH) to dev and demo...${RESET}";
 	./scripts/deploybranch.sh demo
-
-.PHONY: printconfig
-printconfig:
-	@echo '# File managed by zc.buildout mf-chsdi3'  > /srv/tomcat/tomcat1/bin/setenv-local.sh
-	@echo 'export JAVA_XMX="2G"'  >> /srv/tomcat/tomcat1/bin/setenv-local.sh
-
-.PHONY: printwar
-printwar: printconfig print/WEB-INF/web.xml.in
-	cd print && \
-	mkdir temp_$(VERSION) && \
-	echo "${GREEN}Updating print war...${RESET}" && \
-	cp -f ${BASEWAR} temp_$(VERSION)/print-chsdi3-$(APACHE_BASE_PATH).war && \
-	cp -fr ${PRINT_INPUT} temp_$(VERSION)/ && \
-	cd temp_$(VERSION) && \
-	jar uf print-chsdi3-$(APACHE_BASE_PATH).war ${PRINT_INPUT} && \
-	echo "${GREEN}Print war creation was successful.${RESET}" && \
-	rm -rf $(PRINT_OUTPUT) $(PRINT_OUTPUT_BASE) && \
-	cp -f print-chsdi3-$(APACHE_BASE_PATH).war $(PRINT_OUTPUT) && chmod 666 $(PRINT_OUTPUT) && cd .. && \
-	echo "${GREEN}Removing temp directory${RESET}" && \
-	rm -rf temp_$(VERSION) && \
-	echo "${GREEN}Restarting tomcat...${RESET}" && \
-	sudo /etc/init.d/tomcat-tomcat1 restart && \
-	echo "${GREEN}It may take a few seconds for $(PRINT_OUTPUT_BASE) directory to appear...${RESET}";
 
 # Remove when ready to be merged
 .PHONY: deploydev
@@ -303,22 +190,6 @@ deploy/conf/00-branch.conf: deploy/conf/00-branch.conf.in
 	@echo "${GREEN}Creating deploy/conf/00-branch.conf...${RESET}"
 	${MAKO_CMD} --var "git_branch=$(GIT_BRANCH)" $< > $@
 
-apache/tomcat-print.conf.in:
-	@echo "${GREEN}Template file apache/tomcat-print.conf.in has changed${RESET}";
-apache/tomcat-print.conf: apache/tomcat-print.conf.in
-	@echo "${GREEN}Creating apache/tomcat-print.conf...${RESET}";
-	${MAKO_CMD} \
-		--var "print_war=$(PRINT_WAR)" \
-		--var "apache_entry_path=$(APACHE_ENTRY_PATH)" \
-		--var "print_temp_dir=$(PRINT_TEMP_DIR)" $< > $@
-
-print/WEB-INF/web.xml.in:
-	@echo "${GREEN}Template file print/WEB-INF/web.xml has changed${RESET}"
-print/WEB-INF/web.xml: print/WEB-INF/web.xml.in
-	@echo "${GREEN}Creating print/WEB-INF/web.xml...${RESET}"
-	${MAKO_CMD} \
-		--var "print_temp_dir=$(PRINT_TEMP_DIR)" $< > $@
-
 apache/application.wsgi.mako:
 	@echo "${GREEN}Template file apache/application.wsgi.mako has changed${RESET}";
 apache/application.wsgi: apache/application.wsgi.mako
@@ -341,9 +212,7 @@ apache/wsgi.conf: apache/wsgi.conf.in apache/application.wsgi
 		--var "current_directory=$(CURRENT_DIRECTORY)" \
 		--var "modwsgi_user=$(MODWSGI_USER)" \
 		--var "wsgi_threads=$(WSGI_THREADS)" \
-		--var "wsgi_app=$(WSGI_APP)" \
-		--var "zadara_dir=$(ZADARA_DIR)" \
-		--var "print_temp_dir=$(PRINT_TEMP_DIR)" $< > $@
+		--var "wsgi_app=$(WSGI_APP)" $< > $@
 
 development.ini.in:
 	@echo "${GREEN}Template file development.ini.in has changed${RESET}";
@@ -363,26 +232,8 @@ production.ini: production.ini.in
 		--var "apache_entry_path=$(APACHE_ENTRY_PATH)" \
 		--var "apache_base_path=$(APACHE_BASE_PATH)" \
 		--var "current_directory=$(CURRENT_DIRECTORY)" \
-		--var "dbhost=$(DBHOST)" \
-		--var "dbport=$(DBPORT)" \
-		--var "dbstaging=$(DBSTAGING)" \
-		--var "zadara_dir=$(ZADARA_DIR)" \
 		--var "api_url=$(API_URL)" \
-		--var "shop_url=$(SHOP_URL)" \
-		--var "geodata_staging=$(GEODATA_STAGING)" \
-		--var "sphinxhost=$(SPHINXHOST)" \
-		--var "wmshost=$(WMSHOST)" \
-		--var "webdav_host=$(WEBDAV_HOST)" \
-		--var "mapproxyhost=$(MAPPROXYHOST)" \
-		--var "geoadminhost=$(GEOADMINHOST)" \
-		--var "host=$(HOST)" \
-		--var "print_temp_dir=$(PRINT_TEMP_DIR)" \
-		--var "http_proxy=$(HTTP_PROXY)" \
-		--var "geoadmin_file_storage_bucket=$(GEOADMIN_FILE_STORAGE_BUCKET)" \
-		--var "shortener_allowed_hosts=$(SHORTENER_ALLOWED_HOSTS)" \
-		--var "vector_bucket=$(VECTOR_BUCKET)" \
-		--var "vector_profilename=$(VECTOR_PROFILENAME)" \
-		--var "shortener_allowed_domains=$(SHORTENER_ALLOWED_DOMAINS)" $< > $@
+		--var "http_proxy=$(HTTP_PROXY)" $< > $@
 
 .venv/hooks: .venv/bin/git-secrets ./scripts/install-git-hooks.sh
 	@echo "${GREEN}Installing git hooks${RESET}";
@@ -399,7 +250,6 @@ requirements.txt:
 		${PIP_CMD} install -U pip; \
 	fi
 	${PYTHON_CMD} setup.py develop
-	${PIP_CMD} install Pillow==3.1.0
 
 .venv/bin/git-secrets: .venv
 	@echo "${GREEN}Installing git secrets${RESET}";
@@ -414,23 +264,6 @@ requirements.txt:
 	mkdir -p $(dir $@)
 	test $(VERSION) != $(LAST_VERSION) && echo $(VERSION) > .venv/last-version || :
 
-package.json:
-	@echo "${GREEN}File package.json has changed${RESET}";
-node_modules: package.json
-	@echo "${GREEN}Installing node packages...${RESET}";
-	npm install
-	cp -f node_modules/jquery/dist/jquery.min.js chsdi/static/js/jquery.min.js
-	cp -f node_modules/blueimp-gallery/js/blueimp-gallery.min.js chsdi/static/js/blueimp-gallery.min.js
-	cp -f node_modules/d3/d3.min.js chsdi/static/js/d3.min.js
-	cp -f node_modules/d3-tip/index.js chsdi/static/js/d3-tip.js
-	cp -f node_modules/blueimp-gallery/css/blueimp-gallery.min.css chsdi/static/css/blueimp-gallery.min.css
-
-chsdi/static/less/extended.less:
-	@echo "${GREEN}File chsdi/static/less/extended.less has changed${RESET}";
-chsdi/static/css/extended.min.css: chsdi/static/less/extended.less
-	@echo "${GREEN}Generating new css file...${RESET}";
-	node_modules/.bin/lessc -ru --clean-css $< $@
-
 fixrights:
 	@echo "${GREEN}Fixing rights...${RESET}";
 	chgrp -f -R geodata . || :
@@ -441,8 +274,6 @@ clean:
 	rm -rf production.ini
 	rm -rf development.ini
 	rm -rf apache/wsgi.conf
-	rm -rf apache/tomcat-print.conf
-	rm -rf print/WEB-INF/web.xml
 	rm -rf apache/application.wsgi
 	rm -rf rc_branch
 	rm -rf deploy/deploy-branch.cfg
@@ -451,14 +282,4 @@ clean:
 .PHONY: cleanall
 cleanall: clean
 	rm -rf .venv
-	rm -rf node_modules
-	rm -rf chsdi/static/css/extended.min.css
-	rm -rf chsdi/locale/en/LC_MESSAGES/chsdi.mo
-	rm -rf chsdi/locale/fr/LC_MESSAGES/chsdi.mo
-	rm -rf chsdi/locale/de/LC_MESSAGES/chsdi.mo
-	rm -rf chsdi/locale/fi/LC_MESSAGES/chsdi.mo
-	rm -rf chsdi/locale/it/LC_MESSAGES/chsdi.mo
-	rm -rf chsdi/static/js/jquery.min.js
-	rm -rf chsdi/static/js/blueimp-gallery.min.js
-	rm -rf chsdi/static/js/d3.min.js
-	rm -rf chsdi/static/js/d3-tip.js
+	rm -rf *.egg-info	

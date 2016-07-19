@@ -1,73 +1,22 @@
-mf-chsdi3
-=========
+service-alti
+============
 
-next generation of [http://api3.geo.admin.ch](http://api3.geo.admin.ch)
 
-Jenkins Build Status: [![Jenkins Build Status](https://jenkins.ci.bgdi.ch/buildStatus/icon?job=chsdi3)](https://jenkins.prod.bgdi.ch/job/chsdi3/)
+Height and profile services for [http://api3.geo.admin.ch](http://api3.geo.admin.ch)
 
 # Getting started
 
 Checkout the source code:
 
-    git clone https://github.com/geoadmin/mf-chsdi3.git
+    git clone https://github.com/geoadmin/service-alti.git
 
 or when you're using ssh key (see https://help.github.com/articles/generating-ssh-keys):
 
-    git clone git@github.com:geoadmin/mf-chsdi3.git
+    git clone git@github.com:geoadmin/service-alti.git
 
-Add .pgpass to your environment
-
-    cd
-    touch .pgpass
-    chmod 600 .pgpass
-
-Open .pgpass and Add
-
-    pg.bgdi.ch:5432:*:${username}:${pass}
-    pg-sandbox.bgdi.ch:5432:*:${username}:${pass}
-
-Make sure PGUSER and PGPASS is set in your .bashrc (for nosetests, potranslate and sphinx)
-
-    export PGUSER=${username} // postgres user (won't be relevant soon)
-    export PGPASS=${pass}
-
-Add .boto to your environment
-
-    cd
-    touch .boto
-    chmod 600 .boto
-
-Open .boto and Add (`/etc/boto.cfg` for main)
-
-    [Credentials]
-    aws_access_key_id = ${keyid}
-    aws_secret_access_key = ${accesskey}
-
-[Nagios Check for Dynamodb Dumps](https://dashboard.bgdi.ch/cgi-bin/nagios3/extinfo.cgi?type=2&host=ip-10-220-4-46.eu-west-1.compute.internal&service=DynamoDB+backup)
-
-Create a developer specific build configuration:
-
-    touch rc_user_<username>
-
-Add the port number in the newly created user rc file. You should at least edit your dev port. For instance:
-
-    export SERVER_PORT=9000
-
-Every variables you export in rc_user_<username> will override the default ones in rc_dev and rc_user.
-
-Where "username" is your specific rc configuration. To create the specific build:
-
-    make user
-
-If you do this on mf1t, you need to make sure that a correct configuration exists under
-    
-    /var/www/vhosts/mf-chsdi3/conf
-
-that points to your working directory. If all is well, you can reach your pages at:
-
-    http://mf-chsdi3.dev.bgdi.ch/<username>/
 
 ## Deploying to dev, int, prod and demo
+
 
 Do the following commands **inside your working directory**. Here's how a standard
 deploy process is done.
@@ -118,15 +67,15 @@ So you'll likely use this command **after** you push your branch to github.
 
 The first time you use the command will take some time to execute.
 
-The code of the deployed branch is in a specific directory 
-`/var/www/vhosts/mf-geoadmin3/private/branch` on both test and integration.
+The code of the deployed branch is in a specific directory
+`/var/www/vhosts/service-alti/private/branch` on both test and integration.
 The command adds a branch specific configuration to
-`/var/www/vhosts/mf-geoadmin3/conf`. This way, the deployed branch
+`/var/www/vhosts/service-alti/conf`. This way, the deployed branch
 behaves exactly the same as any user specific deploy.
 A deploy to a "demo" instance is possible too (simply use ./deploybranch.sh demo).
 
 Sample path:
-http://mf-chsdi3.int.bgdi.ch/gjn_deploybranch/ (Don't forget the slash at the end)
+http://service-alti.int.bgdi.ch/gjn_deploybranch/ (Don't forget the slash at the end)
 
 ## Deleting a branch
 
@@ -136,16 +85,8 @@ To list all the deployed branch:
 To delete a given branch:
 `make deletebranch BRANCH_TO_DELETE=my_deployed_branch`
 
-## Get correct back-link to geoadmin3
-Per default the back-link to geoadmin3 points to the main instance. If you
-want to change that, adapt the `geoadminhost` variable in the
-`buildout_branch.cfg.in` input file and commit it in *your branch*.
-
 ## Run nosetests manual on different environments
 We are able to run our integration tests against different staging environments
-
-**For this to work, you need to adapt your personal ~/.pgpass file. It has to
-include access information for all clusters (add pgcluster0i and pgcluster0)**
 
 To run against prod environment:
 `scripts/nose_run.sh -p`
@@ -159,24 +100,6 @@ To run against dev/test environment:
 To run against your private environment:
 `make test`
 
-To execute all tests, including _mapproxy_ and _varnish_ ones, which are deactivated by default:
-`scripts/nose_run.sh -a`
-
-## Printing
-
-Per default, printing is handled by one single war file on an instances. This war is installed and handled by the 'main' installation.
-
-If you need to work on printing and use your own war, you have to add the following to your personal configuration (rc_user_xxx file):
-
-```
-export PRINT_WAR=ltxxx
-```
-
-In order to create the shared war use:
-
-```
-make printwar APACHE_BASE_PATH=main
-```
 
 ## Python Code Styling
 
