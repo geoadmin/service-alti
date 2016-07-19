@@ -12,12 +12,12 @@ then
   exit 1
 fi
 
-SNAPSHOTDIR=/var/www/vhosts/mf-chsdi3/private/snapshots/$1
+SNAPSHOTDIR=/var/www/vhosts/service-alti/private/snapshots/$1
 
 cwd=$(pwd)
 
 # Go into snapshot directory to run nose-tests
-SNAPSHOTDIR_CODE=$SNAPSHOTDIR/chsdi3/code/chsdi3
+SNAPSHOTDIR_CODE=$SNAPSHOTDIR/alti/code/alti
 cd $SNAPSHOTDIR_CODE
 
 # Run nose tests with target cluster db

@@ -5,13 +5,13 @@ T="$(date +%s)"
 # Bail out on any error
 set -o errexit
 
-BASE_DIR=/var/www/vhosts/mf-chsdi3
+BASE_DIR=/var/www/vhosts/service-alti
 GIT_BRANCH=$(git rev-parse --symbolic-full-name --abbrev-ref HEAD)
 CODE_DIR=$BASE_DIR/private/branch/$GIT_BRANCH
 
 if ! [ -f $CODE_DIR/.git/config ];
 then
-    git clone https://github.com/geoadmin/mf-chsdi3 $CODE_DIR
+    git clone https://github.com/geoadmin/service-alti $CODE_DIR
 fi
 
 cd $CODE_DIR
