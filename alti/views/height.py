@@ -3,7 +3,6 @@
 from alti.lib.helpers import filter_alt
 from alti.lib.validation.height import HeightValidation
 from alti.lib.raster.georaster import get_raster
-from alti.lib.decorators import requires_authorization
 
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
@@ -29,7 +28,6 @@ class Height(HeightValidation):
             self.layers = ['DTM25']
         self.request = request
 
-    @requires_authorization()
     @view_config(route_name='height', renderer='jsonp', http_cache=0)
     def height(self):
         rasters = [get_raster(layer) for layer in self.layers]
