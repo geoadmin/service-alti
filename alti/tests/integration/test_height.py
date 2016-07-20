@@ -24,9 +24,6 @@ class TestHeightView(TestsBase):
         resp = self.testapp.get('/rest/services/height', params={'easting': '600000', 'northing': 'NaN'}, headers=self.headers, status=400)
         resp.mustcontain('Please provide numerical values for the parameter \'northing\'/\'lat\'')
 
-    def test_height_no_header(self):
-        self.testapp.get('/rest/services/height', params={'easting': '600000', 'northing': '200000'}, status=403)
-
     def test_height_valid_with_lonlat(self):
         resp = self.testapp.get('/rest/services/height', params={'lon': '600000.1', 'lat': '200000.1'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
