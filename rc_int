@@ -3,6 +3,5 @@ export API_URL=//mf-chsdi3.int.bgdi.ch
 export DEPLOY_TARGET=int
 export KEEP_VERSION=true
 export MODWSGI_CONFIG=production.ini
-export ROBOTS_FILE=robots.txt
 export SERVER_PORT=6543
 export WSGI_THREADS=15

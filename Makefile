@@ -206,7 +206,6 @@ apache/wsgi.conf: apache/wsgi.conf.in apache/application.wsgi
 	${MAKO_CMD} \
 		--var "apache_entry_path=$(APACHE_ENTRY_PATH)" \
 		--var "apache_base_path=$(APACHE_BASE_PATH)" \
-		--var "robots_file=$(ROBOTS_FILE)" \
 		--var "branch_staging=$(BRANCH_STAGING)" \
 		--var "git_branch=$(GIT_BRANCH)" \
 		--var "current_directory=$(CURRENT_DIRECTORY)" \
