@@ -38,8 +38,8 @@ RewriteRule ^${apache_entry_path}/[0-9]+/(.*)$ ${apache_entry_path}/$1 [E=${apac
 Header merge Cache-Control "max-age=31536013, public" env=${apache_base_path}setyearcache
 
 # Robots static files
-RewriteRule ^${apache_entry_path}/robots.txt ${apache_entry_path}/static/${robots_file} [PT]
-<LocationMatch ^${apache_entry_path}/static/(robots.txt|robots_prod.txt)>
+RewriteRule ^${apache_entry_path}/robots.txt ${apache_entry_path}/static/robots.txt [PT]
+<LocationMatch ^${apache_entry_path}/static/robots.txt>
     Header set Content-type "text/plain"
 </LocationMatch>
 

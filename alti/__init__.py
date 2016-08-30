@@ -29,6 +29,7 @@ def main(global_config, **settings):
     config.add_route('checker', '/checker')
     config.add_route('checker_dev', '/checker_dev')
 
+    config.add_static_view('static', 'alti:static')
     config.add_static_view('/', 'alti:static/')
     config.scan()
     return config.make_wsgi_app()
