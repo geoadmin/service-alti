@@ -64,12 +64,13 @@ class ProfileValidation(object):
     @nb_points.setter
     def nb_points(self, value):
         if value is None:
-            self._nb_points = 200
+            self._nb_points = self.nb_points_default
         else:
-            if value.isdigit():
+            if value.isdigit() and int(value) <= self.nb_points_max:
                 self._nb_points = int(value)
             else:
-                raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'")
+                raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
+                            " smaller than {}".format(self.nb_points_max))
 
     @ma_offset.setter
     def ma_offset(self, value):

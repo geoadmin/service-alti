@@ -71,6 +71,7 @@ class TestProfileView(TestsBase):
         params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}', 'nb_points': '150'}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(len(resp.json), 151)
 
     def test_profile_json_simplify_linestring(self):
         params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}', 'nb_points': '1'}
@@ -86,6 +87,17 @@ class TestProfileView(TestsBase):
         params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}', 'nb_points': 'toto'}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=400)
         resp.mustcontain("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'")
+
+    def test_profile_json_nb_points_too_much(self):
+        params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}', 'nb_points': '1000000'}
+        resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=400)
+        resp.mustcontain("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'")
+
+    def test_profile_json_default_nb_points(self):
+        params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}'}
+        resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
+        pnts = resp.json
+        self.assertEqual(len(pnts), 201)
 
     def test_profile_csv_valid(self):
         params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}'}
