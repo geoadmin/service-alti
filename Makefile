@@ -44,6 +44,7 @@ PEP8_IGNORE := "E128,E221,E241,E251,E272,E501,E711,E731"
 # E711: comparison to None should be 'if cond is None:' (SQLAlchemy's filter syntax requires this ignore!)
 # E731: do not assign a lambda expression, use a def
 
+
 # Colors
 RESET := $(shell tput sgr0)
 RED := $(shell tput setaf 1)
