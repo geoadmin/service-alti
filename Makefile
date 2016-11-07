@@ -281,4 +281,4 @@ clean:
 .PHONY: cleanall
 cleanall: clean
 	rm -rf .venv
-	rm -rf *.egg-info	
+	rm -rf *.egg-info
