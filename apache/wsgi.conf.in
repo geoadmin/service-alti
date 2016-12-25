@@ -67,7 +67,6 @@ Header always set Access-Control-Allow-Headers "x-requested-with, Content-Type, 
 </Directory>
 
 # Some services are not "free": control is done at varnish level
-<LocationMatch ^${apache_entry_path}/rest/(height|profile)>
-   Order Deny,Allow
-   Allow from all
+<LocationMatch ^${apache_entry_path}/rest/services/(height|profile)>
+  Require all denied
 </LocationMatch>
