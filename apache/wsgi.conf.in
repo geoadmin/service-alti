@@ -60,13 +60,25 @@ Header always set Access-Control-Allow-Headers "x-requested-with, Content-Type, 
 # app instance in the global application group so it is always executed within
 # the main interpreter
 <Directory ${current_directory}/apache>
-    Order allow,deny
-    Allow from all
+    <IfVersion < 2.4>
+        Order allow,deny
+        Allow from all
+    </IfVersion>
+    <IfVersion >= 2.4>
+        Require all granted
+    </IfVersion>
     WSGIProcessGroup service-alti:${apache_base_path}
     WSGIApplicationGroup %{GLOBAL}
 </Directory>
 
 # Some services are not "free": control is done at varnish level
 <LocationMatch ^${apache_entry_path}/rest/services/(height|profile)>
-  Require all denied
+    <IfVersion < 2.4>
+        Order deny,allow
+        Deny from all
+        Allow from 127.0.0.1
+    </IfVersion>
+    <IfVersion >= 2.4>
+        Require local
+    </IfVersion>
 </LocationMatch>
