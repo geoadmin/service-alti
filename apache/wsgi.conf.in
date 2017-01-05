@@ -70,15 +70,3 @@ Header always set Access-Control-Allow-Headers "x-requested-with, Content-Type, 
     WSGIProcessGroup service-alti:${apache_base_path}
     WSGIApplicationGroup %{GLOBAL}
 </Directory>
-
-# Some services are not "free": control is done at varnish level
-<LocationMatch ^${apache_entry_path}/rest/services/(height|profile)>
-    <IfVersion < 2.4>
-        Order deny,allow
-        Deny from all
-        Allow from 127.0.0.1
-    </IfVersion>
-    <IfVersion >= 2.4>
-        Require local
-    </IfVersion>
-</LocationMatch>
