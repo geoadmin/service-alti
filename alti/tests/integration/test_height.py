@@ -25,29 +25,29 @@ class TestHeightView(TestsBase):
         resp.mustcontain('Please provide numerical values for the parameter \'northing\'/\'lat\'')
 
     def test_height_valid_with_lonlat(self):
-        resp = self.testapp.get('/rest/services/height', params={'lon': '600000.1', 'lat': '200000.1'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'lon': '604726.8', 'lat': '195738.1'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '560.2')
+        self.assertEqual(resp.json['height'], '509.4')
 
     def test_height_with_dtm2(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1', 'layers': 'DTM2'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': '604726.8', 'northing': '195738.1', 'layers': 'DTM2'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '556.5')
+        self.assertEqual(resp.json['height'], '509.6')
 
     def test_height_with_dtm2_elevModel(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1', 'elevation_model': 'DTM2'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': '604726.8', 'northing': '195738.1', 'elevation_model': 'DTM2'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '556.5')
+        self.assertEqual(resp.json['height'], '509.6')
 
     def test_height_with_comb(self):
         resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1', 'layers': 'COMB'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '556.5')
+        self.assertEqual(resp.json['height'], '553.6')
 
     def test_height_with_comb_elevModel(self):
         resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1', 'elevation_model': 'COMB'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '556.5')
+        self.assertEqual(resp.json['height'], '553.6')
 
     def test_height_wrong_layer(self):
         resp = self.testapp.get('/rest/services/height', params={'easting': '600000', 'northing': '200000', 'layers': 'TOTO'}, headers=self.headers, status=400)
