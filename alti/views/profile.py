@@ -5,6 +5,9 @@ from pyramid.view import view_config
 
 from alti.lib.validation.profile import ProfileValidation
 from alti.lib.raster.georaster import get_raster
+from alti.lib.validation import srs_guesser
+
+from pyramid.httpexceptions import HTTPBadRequest
 
 
 class Profile(ProfileValidation):
@@ -22,6 +25,13 @@ class Profile(ProfileValidation):
             self.nb_points = request.params.get('nbPoints')
         else:
             self.nb_points = request.params.get('nb_points')
+        if 'sr' in request.params:
+            self.sr = int(request.params.get('sr'))
+        else:
+            sr = srs_guesser(self.linestring)
+            if sr is None:
+                raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
+            self.sr = sr
         self.ma_offset = request.params.get('offset')
         self.request = request
 
@@ -37,8 +47,7 @@ class Profile(ProfileValidation):
 
     def _compute_points(self):
         """Compute the alt=fct(dist) array and store it in c.points"""
-        rasters = [get_raster(layer) for layer in self.layers]
-
+        rasters = [get_raster(layer, self.sr) for layer in self.layers]
         # Simplify input line with a tolerance of 2 m
         if self.nb_points < len(self.linestring.coords):
             linestring = self.linestring.simplify(12.5)

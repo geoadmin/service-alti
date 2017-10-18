@@ -12,25 +12,35 @@ _rasters = {}
 _rasterfiles = {}
 
 
-def get_raster(name):
+def get_raster(name, sr):
     global _rasters
-    result = _rasters.get(name, None)
+    filename = "%s%s" % (sr, name)
+    result = _rasters.get(filename, None)
     if not result:
-        result = GeoRaster(_rasterfiles[name])
-        _rasters[name] = result
+        result = GeoRaster(_rasterfiles[sr][name])
+        _rasters[filename] = result
     return result
 
 
 def init_rasterfiles(datapath, preloadtypes):
     global _rasterfiles
     _rasterfiles = {
-        'DTM25': datapath + 'dhm25_25_matrix/mm0001.shp',
-        'DTM2': datapath + 'swissalti3d/2m/index.shp',
-        'COMB': datapath + 'swissalti3d/kombo_2m_dhm25/index.shp'
+        21781: {
+            'DTM25': datapath + 'dhm25_25_matrix/mm0001.shp',
+            'DTM2': datapath + 'swissalti3d/2m/index.shp',
+            'COMB': datapath + 'swissalti3d/kombo_2m_dhm25/index.shp'
+        },
+        2056: {
+            'DTM25': datapath + 'dhm25_25_matrix_lv95/mm0001.shp',
+            'DTM2': datapath + 'swissalti3d/2m_lv95/index.shp',
+            'COMB': datapath + 'swissalti3d/kombo_2m_dhm25_lv95/index.shp'
+        }
     }
     try:
-        for pt in preloadtypes:
-            get_raster(pt)
+        for preloadtype in preloadtypes:
+            pt, sr = preloadtype
+            get_raster(pt, sr)
+
     except Exception as e:
         log.error('Could not initialize raster files. Make sure they exist in the following directory: %s (Exception: %s)' % (datapath, e))
 

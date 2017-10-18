@@ -15,7 +15,7 @@ def main(global_config, **settings):
     config = Configurator(settings=settings)
 
     # init raster files for height/profile and preload COMB file
-    init_rasterfiles(settings.get('dtm_base_path'), ['COMB'])
+    init_rasterfiles(settings.get('dtm_base_path'), [('COMB', 2056), ('COMB', 21781)])
 
     # renderers
     config.add_renderer('jsonp', JSONP(param_name='callback', indent=None, separators=(',', ':')))
