@@ -238,7 +238,7 @@ production.ini: production.ini.in
 	@echo "${GREEN}Installing git hooks${RESET}";
 	./scripts/install-git-hooks.sh
 	touch $@
-
+ 
 requirements.txt:
 	@echo "${GREEN}File requirements.txt has changed${RESET}";
 .venv: requirements.txt
@@ -246,9 +246,12 @@ requirements.txt:
 	@if [ ! -d $(INSTALL_DIRECTORY) ]; \
 	then \
 		virtualenv $(INSTALL_DIRECTORY); \
-		${PIP_CMD} install -U pip; \
+		${PIP_CMD} install ${CURRENT_DIRECTORY}/pip-8.1.2.tar.gz; \
+		${PIP_CMD} install -U pip distribute; \
+		${PIP_CMD} install setuptools==36.6.0;  \
+		${PIP_CMD} install pyopenssl ndg-httpsclient pyasn1; \
 	fi
-	${PYTHON_CMD} setup.py develop
+	${PIP_CMD} install -e .
 
 .venv/bin/git-secrets: .venv
 	@echo "${GREEN}Installing git secrets${RESET}";
