@@ -18,3 +18,5 @@ MANIFEST
 buildout_branch.cfg
 deploy/deploy-branch.cfg
 deploy/conf/00-branch.conf
+payload.json
+result_payload.json
