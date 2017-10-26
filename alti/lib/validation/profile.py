@@ -24,7 +24,11 @@ class ProfileValidation(object):
         sr = None
         if self.linestring is not None:
             for epsg, bbox in bboxes.iteritems():
-                dtm_poly = Polygon([(bbox[0], bbox[1]), (bbox[2], bbox[1]), (bbox[2], bbox[3]), (bbox[0], bbox[3])])
+                dtm_poly = Polygon([
+                    (bbox[0], bbox[1]),
+                    (bbox[2], bbox[1]),
+                    (bbox[2], bbox[3]),
+                    (bbox[0], bbox[3])])
                 if dtm_poly.contains(self.linestring):
                     sr = epsg
                     break

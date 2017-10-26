@@ -1,6 +1,26 @@
 # -*- coding: utf-8 -*-
 
+import json
+import random
+from shapely.geometry import Point, LineString, mapping
 from alti.tests.integration import TestsBase
+
+
+def generate_random_coord():
+    minx, miny = 2650000, 1200000
+    maxx, maxy = 2750000, 1280000
+    yield random.randint(minx, maxx), random.randint(miny, maxy)
+
+
+def generate_random_point(nb_pts):
+    for i in xrange(nb_pts):
+        for x, y in generate_random_coord():
+            yield Point(x, y)
+
+
+def create_json(nb_pts):
+    line = LineString([p for p in generate_random_point(nb_pts)])
+    return json.dumps(mapping(line))
 
 
 class TestProfileView(TestsBase):
@@ -137,3 +157,8 @@ class TestProfileView(TestsBase):
         params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}', 'offset': 'asdf'}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=400)
         resp.mustcontain("Please provide a numerical value for the parameter 'offset'")
+
+    def test_profile_entity_too_large(self):
+        params = {'geom': create_json(7000), 'sr': '2056'}
+        resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=413)
+        resp.mustcontain('LineString too large')
