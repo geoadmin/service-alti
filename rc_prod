@@ -5,4 +5,5 @@ export KEEP_VERSION=true
 export MODWSGI_CONFIG=production.ini
 export PRINT_WAR=main
 export SERVER_PORT=6543
-export WSGI_THREADS=30
+export WSGI_THREADS=15
+export WSGI_PROCESSES=4

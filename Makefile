@@ -211,6 +211,7 @@ apache/wsgi.conf: apache/wsgi.conf.in apache/application.wsgi
 		--var "current_directory=$(CURRENT_DIRECTORY)" \
 		--var "modwsgi_user=$(MODWSGI_USER)" \
 		--var "wsgi_threads=$(WSGI_THREADS)" \
+		--var "wsgi_processes=$(WSGI_PROCESSES)" \
 		--var "wsgi_app=$(WSGI_APP)" $< > $@
 
 development.ini.in:
@@ -238,7 +239,7 @@ production.ini: production.ini.in
 	@echo "${GREEN}Installing git hooks${RESET}";
 	./scripts/install-git-hooks.sh
 	touch $@
- 
+
 requirements.txt:
 	@echo "${GREEN}File requirements.txt has changed${RESET}";
 .venv: requirements.txt
