@@ -28,7 +28,7 @@ address_search_referers = localhost,admin.ch,awk.ch,cadastre.ch,rspp.ch,rollstuh
 http_proxy = ${http_proxy}
 
 profile_nb_points_default = 200
-profile_nb_points_maximum = 500
+profile_nb_points_maximum = 3500
 
 ###
 # wsgi server configuration
