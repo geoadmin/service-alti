@@ -58,7 +58,7 @@ class TestProfileView(TestsBase):
         self.assertEqual(resp.content_type, 'application/json')
         self.assertEqual(resp.json[0]['dist'], 0)
         self.assertEqual(resp.json[0]['alts']['DTM25'], 1138)
-        self.assertEqual(resp.json[0]['alts']['DTM2'], 1138.9)
+        self.assertEqual(resp.json[0]['alts']['DTM2'], 1139)
         self.assertEqual(resp.json[0]['easting'], 550050)
         self.assertEqual(resp.json[0]['northing'], 206550)
 
