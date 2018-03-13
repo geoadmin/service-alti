@@ -60,12 +60,12 @@ class TestHeightView(TestsBase):
     def test_height_lv03_with_dtm2(self):
         resp = self.testapp.get('/rest/services/height', params={'easting': '604726.8', 'northing': '195738.1', 'layers': 'DTM2'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '509.6')
+        self.assertEqual(resp.json['height'], '509.5')
 
     def test_height_lv03_with_dtm2_elevModel(self):
         resp = self.testapp.get('/rest/services/height', params={'easting': '604726.8', 'northing': '195738.1', 'elevation_model': 'DTM2'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '509.6')
+        self.assertEqual(resp.json['height'], '509.5')
 
     def test_height_lv03_with_comb(self):
         resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1', 'layers': 'COMB'}, headers=self.headers, status=200)
