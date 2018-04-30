@@ -147,17 +147,15 @@ class Profile(ProfileValidation):
         for coord in coords:
             if prev_coord is not None:
                 cur_length = self._dist(prev_coord, coord)
-                cur_nb_points = int(nbPoints * cur_length / totalLength + 0.5)
-                if cur_nb_points < 1:
-                    cur_nb_points = 1
-                dx = (coord[0] - prev_coord[0]) / float(cur_nb_points)
-                dy = (coord[1] - prev_coord[1]) / float(cur_nb_points)
-                for i in xrange(1, cur_nb_points + 1):
-                    result.append(
-                        [prev_coord[0] + dx * i,
-                         prev_coord[1] + dy * i])
-            else:
-                result.append([coord[0], coord[1]])
+                cur_nb_points = int(math.ceil(nbPoints * cur_length / totalLength))
+                if cur_nb_points > 1:
+                    dx = (coord[0] - prev_coord[0]) / cur_nb_points
+                    dy = (coord[1] - prev_coord[1]) / cur_nb_points
+                    for i in xrange(1, cur_nb_points):
+                        result.append(
+                            [prev_coord[0] + dx * i,
+                             prev_coord[1] + dy * i])
+            result.append([coord[0], coord[1]])
             prev_coord = coord
         return result
 
