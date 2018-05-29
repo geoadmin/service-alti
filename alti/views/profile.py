@@ -15,7 +15,7 @@ class Profile(ProfileValidation):
     def __init__(self, request):
         super(Profile, self).__init__()
         self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default', 200))
-        self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', 500))
+        self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', 1000))
         self.linestring = request.params.get('geom')
         if 'layers' in request.params:
             self.layers = request.params.get('layers')
@@ -32,6 +32,8 @@ class Profile(ProfileValidation):
             if sr is None:
                 raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
             self.sr = sr
+        if len(self.linestring.coords) > self.nb_points_max:
+            raise HTTPBadRequest("Input LineString has more coordinates than {}".format(self.nb_points_max))
         self.ma_offset = request.params.get('offset')
         self.request = request
 
