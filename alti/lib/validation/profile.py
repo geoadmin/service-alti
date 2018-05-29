@@ -6,6 +6,8 @@ from pyramid.httpexceptions import HTTPBadRequest
 from shapely.geometry import asShape, Polygon
 
 
+DEFAULT_OFFSET = 0
+
 bboxes = {
     2056: (2450000, 1030000, 2900000, 1350000),
     21781: (450000, 30000, 900000, 350000)
@@ -105,7 +107,7 @@ class ProfileValidation(object):
     @ma_offset.setter
     def ma_offset(self, value):
         if value is None:
-            self._ma_offset = 3
+            self._ma_offset = DEFAULT_OFFSET
         else:
             if value.isdigit():
                 self._ma_offset = int(value)
