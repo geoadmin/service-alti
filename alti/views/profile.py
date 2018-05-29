@@ -32,7 +32,8 @@ class Profile(ProfileValidation):
             if sr is None:
                 raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
             self.sr = sr
-        if len(self.linestring.coords) > self.nb_points_max:
+        self.coords_in_linestring = len(self.linestring.coords)
+        if self.coords_in_linestring > self.nb_points_max:
             raise HTTPBadRequest("Input LineString has more coordinates than {}".format(self.nb_points_max))
         self.ma_offset = request.params.get('offset')
         self.request = request
@@ -50,7 +51,7 @@ class Profile(ProfileValidation):
     def _compute_points(self):
         """Compute the alt=fct(dist) array and store it in c.points"""
         rasters = [get_raster(layer, self.sr) for layer in self.layers]
-
+        # Densify the line if request nb points != coords in linestring
         coords = self._create_points(self.linestring.coords, self.nb_points)
         zvalues = {}
         for i in xrange(0, len(self.layers)):
@@ -59,25 +60,29 @@ class Profile(ProfileValidation):
                 z = rasters[i].getVal(coords[j][0], coords[j][1])
                 zvalues[self.layers[i]].append(z)
 
+        # Smooth profile if offset > 0
         factor = lambda x: float(1) / (abs(x) + 1)
-        zvalues2 = {}
-        for i in xrange(0, len(self.layers)):
-            zvalues2[self.layers[i]] = []
-            for j in xrange(0, len(zvalues[self.layers[i]])):
-                s = 0
-                d = 0
-                if zvalues[self.layers[i]][j] is None:
-                    zvalues2[self.layers[i]].append(None)
-                    continue
-                for k in xrange(-self.ma_offset, self.ma_offset + 1):
-                    p = j + k
-                    if p < 0 or p >= len(zvalues[self.layers[i]]):
+        if self.ma_offset > 0:
+            zvalues2 = {}
+            for i in xrange(0, len(self.layers)):
+                zvalues2[self.layers[i]] = []
+                for j in xrange(0, len(zvalues[self.layers[i]])):
+                    s = 0
+                    d = 0
+                    if zvalues[self.layers[i]][j] is None:
+                        zvalues2[self.layers[i]].append(None)
                         continue
-                    if zvalues[self.layers[i]][p] is None:
-                        continue
-                    s += zvalues[self.layers[i]][p] * factor(k)
-                    d += factor(k)
-                zvalues2[self.layers[i]].append(s / d)
+                    for k in xrange(-self.ma_offset, self.ma_offset + 1):
+                        p = j + k
+                        if p < 0 or p >= len(zvalues[self.layers[i]]):
+                            continue
+                        if zvalues[self.layers[i]][p] is None:
+                            continue
+                        s += zvalues[self.layers[i]][p] * factor(k)
+                        d += factor(k)
+                    zvalues2[self.layers[i]].append(s / d)
+        else:
+            zvalues2 = zvalues
 
         dist = 0
         prev_coord = None
@@ -131,6 +136,10 @@ class Profile(ProfileValidation):
         """
         totalLength = 0
         prev_coord = None
+
+        if len(coords) == nbPoints:
+            return coords
+
         for coord in coords:
             if prev_coord is not None:
                 totalLength += self._dist(prev_coord, coord)
@@ -170,5 +179,5 @@ class Profile(ProfileValidation):
         return round(dist, 1)
 
     def _filter_coordinate(self, coords):
-        # 1mm accuracy is enough for distances
+        # 1mm accuracy is enough for coordinates
         return round(coords, 3)
