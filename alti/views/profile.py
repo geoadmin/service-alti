@@ -50,13 +50,8 @@ class Profile(ProfileValidation):
     def _compute_points(self):
         """Compute the alt=fct(dist) array and store it in c.points"""
         rasters = [get_raster(layer, self.sr) for layer in self.layers]
-        # Simplify input line with a tolerance of 2 m
-        if self.nb_points < len(self.linestring.coords):
-            linestring = self.linestring.simplify(12.5)
-        else:
-            linestring = self.linestring
 
-        coords = self._create_points(linestring.coords, self.nb_points)
+        coords = self._create_points(self.linestring.coords, self.nb_points)
         zvalues = {}
         for i in xrange(0, len(self.layers)):
             zvalues[self.layers[i]] = []
