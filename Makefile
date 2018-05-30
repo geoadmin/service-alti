@@ -20,6 +20,7 @@ SHORTENER_ALLOWED_HOSTS :=
 TEMPLATE_FILES := $(shell find -type f -name "*.in" -print)
 USER_SOURCE ?= rc_user
 WSGI_APP := $(CURRENT_DIRECTORY)/apache/application.wsgi
+PYPI_URL ?= https://pypi.org/simple/
 
 # Commands
 AUTOPEP8_CMD := $(INSTALL_DIRECTORY)/bin/autopep8
@@ -247,12 +248,9 @@ requirements.txt:
 	@if [ ! -d $(INSTALL_DIRECTORY) ]; \
 	then \
 		virtualenv $(INSTALL_DIRECTORY); \
-		${PIP_CMD} install ${CURRENT_DIRECTORY}/pip-8.1.2.tar.gz; \
-		${PIP_CMD} install -U pip distribute; \
-		${PIP_CMD} install setuptools==36.6.0;  \
-		${PIP_CMD} install pyopenssl ndg-httpsclient pyasn1; \
+		${PIP_CMD} install --upgrade pip==9.0.1 setuptools --index-url ${PYPI_URL} ; \
 	fi
-	${PIP_CMD} install -e .
+	${PIP_CMD} install --index-url ${PYPI_URL} -e .
 
 .venv/bin/git-secrets: .venv
 	@echo "${GREEN}Installing git secrets${RESET}";
