@@ -250,7 +250,7 @@ requirements.txt:
 		virtualenv $(INSTALL_DIRECTORY); \
 		${PIP_CMD} install --upgrade pip==9.0.1 setuptools --index-url ${PYPI_URL} ; \
 	fi
-	${PIP_CMD} install --index-url ${PYPI_URL} --find-links local_eggs/ -e .
+	${PIP_CMD} install --index-url ${PYPI_URL} -e .
 
 .venv/bin/git-secrets: .venv
 	@echo "${GREEN}Installing git secrets${RESET}";
