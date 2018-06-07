@@ -22,9 +22,12 @@ def generate_random_point(nb_pts, srid):
             yield Point(x, y)
 
 
-def create_json(nb_pts, srid=2056):
+def create_json(nb_pts, srid=2056, json_format=True):
     line = LineString([p for p in generate_random_point(nb_pts, srid)])
-    return json.dumps(mapping(line))
+    if json_format:
+        return json.dumps(mapping(line))
+    else:
+        return line
 
 
 class TestProfileView(TestsBase):
@@ -43,12 +46,36 @@ class TestProfileView(TestsBase):
     def test_profile_lv95_json_valid(self):
         self.testapp.get('/rest/services/profile.json', params={'sr': 2056, 'geom': create_json(4, 2056)}, headers=self.headers, status=200)
 
+    def test_profile_lv95_json_same_points(self):
+        points_in_profile = 10
+        requested_points = points_in_profile
+        original_line = create_json(points_in_profile, 2056, json_format=False)
+        resp = self.testapp.get('/rest/services/profile.json', params={'nb_points': requested_points, 'sr': 2056, 'geom': json.dumps(mapping(original_line))}, headers=self.headers, status=200)
+        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(len(resp.json), points_in_profile)
+        x, y = original_line.coords[5]
+        c = resp.json[5]
+        i, j = c['easting'], c['northing']
+        self.assertEqual((x, y), (i, j))
+
+    def test_profile_lv95_json_not_same_points(self):
+        points_in_profile = 10
+        requested_points = points_in_profile + 10
+        original_line = create_json(points_in_profile, 2056, json_format=False)
+        resp = self.testapp.get('/rest/services/profile.json', params={'nb_points': requested_points, 'sr': 2056, 'geom': json.dumps(mapping(original_line))}, headers=self.headers, status=200)
+        self.assertEqual(resp.content_type, 'application/json')
+        x, y = original_line.coords[5]
+        c = resp.json[5]
+        i, j = c['easting'], c['northing']
+        self.assertGreaterEqual(len(resp.json), requested_points)
+        self.assertNotEqual((x, y), (i, j))
+
     def test_profile_lv03_json_valid(self):
         params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}'}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
         self.assertEqual(resp.json[0]['dist'], 0)
-        self.assertEqual(resp.json[0]['alts']['DTM25'], 1138)
+        self.assertEqual(resp.json[0]['alts']['DTM25'],  1121.7)
         self.assertEqual(resp.json[0]['easting'], 550050)
         self.assertEqual(resp.json[0]['northing'], 206550)
 
@@ -57,8 +84,8 @@ class TestProfileView(TestsBase):
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
         self.assertEqual(resp.json[0]['dist'], 0)
-        self.assertEqual(resp.json[0]['alts']['DTM25'], 1138)
-        self.assertEqual(resp.json[0]['alts']['DTM2'], 1139)
+        self.assertEqual(resp.json[0]['alts']['DTM25'],  1121.7)
+        self.assertEqual(resp.json[0]['alts']['DTM2'], 1121.9)
         self.assertEqual(resp.json[0]['easting'], 550050)
         self.assertEqual(resp.json[0]['northing'], 206550)
 
