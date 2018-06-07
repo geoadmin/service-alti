@@ -54,23 +54,23 @@ class Profile(ProfileValidation):
         # Densify the line if request nb points != coords in linestring
         coords = self._create_points(self.linestring.coords, self.nb_points)
         zvalues = {}
+        smoothed_values = {}
         for i in xrange(0, len(self.layers)):
             zvalues[self.layers[i]] = []
             for j in xrange(0, len(coords)):
                 z = rasters[i].getVal(coords[j][0], coords[j][1])
                 zvalues[self.layers[i]].append(z)
 
-        # Smooth profile if offset > 0
-        factor = lambda x: float(1) / (abs(x) + 1)
         if self.ma_offset > 0:
-            zvalues2 = {}
+            # Smooth profile if offset > 0
+            factor = lambda x: float(1) / (abs(x) + 1)
             for i in xrange(0, len(self.layers)):
-                zvalues2[self.layers[i]] = []
+                smoothed_values[self.layers[i]] = []
                 for j in xrange(0, len(zvalues[self.layers[i]])):
                     s = 0
                     d = 0
                     if zvalues[self.layers[i]][j] is None:
-                        zvalues2[self.layers[i]].append(None)
+                        smoothed_values[self.layers[i]].append(None)
                         continue
                     for k in xrange(-self.ma_offset, self.ma_offset + 1):
                         p = j + k
@@ -80,9 +80,9 @@ class Profile(ProfileValidation):
                             continue
                         s += zvalues[self.layers[i]][p] * factor(k)
                         d += factor(k)
-                    zvalues2[self.layers[i]].append(s / d)
+                    smoothed_values[self.layers[i]].append(s / d)
         else:
-            zvalues2 = zvalues
+            smoothed_values = zvalues
 
         dist = 0
         prev_coord = None
@@ -101,9 +101,9 @@ class Profile(ProfileValidation):
                 dist += self._dist(prev_coord, coords[j])
             alts = {}
             for i in xrange(0, len(self.layers)):
-                if zvalues2[self.layers[i]][j] is not None:
+                if smoothed_values[self.layers[i]][j] is not None:
                     alts[self.layers[i]] = self._filter_alt(
-                        zvalues2[self.layers[i]][j])
+                        smoothed_values[self.layers[i]][j])
             if len(alts) > 0:
                 rounded_dist = self._filter_dist(dist)
                 if self.json:
