@@ -33,7 +33,7 @@ PSHELL_CMD := $(INSTALL_DIRECTORY)/bin/pshell
 PYTHON_CMD := $(INSTALL_DIRECTORY)/bin/python
 
 # Linting rules
-PEP8_IGNORE := "E128,E221,E241,E251,E272,E501,E711,E731"
+PEP8_IGNORE := "E128,E221,E241,E251,E272,E501,E711,E731,W504"
 
 # E128: continuation line under-indented for visual indent
 # E221: multiple spaces before operator
@@ -43,6 +43,7 @@ PEP8_IGNORE := "E128,E221,E241,E251,E272,E501,E711,E731"
 # E501: line length 79 per default
 # E711: comparison to None should be 'if cond is None:' (SQLAlchemy's filter syntax requires this ignore!)
 # E731: do not assign a lambda expression, use a def
+# W504: W504 line break after binary operator
 
 
 # Colors
