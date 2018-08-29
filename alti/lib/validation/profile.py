@@ -60,15 +60,15 @@ class ProfileValidation(object):
             raise HTTPBadRequest("Missing parameter geom")
         try:
             geom = geojson.loads(value, object_hook=geojson.GeoJSON.to_instance)
-        except:
+        except ValueError:
             raise HTTPBadRequest("Error loading geometry in JSON string")
         try:
             shape = asShape(geom)
-        except:
+        except Exception:
             raise HTTPBadRequest("Error converting JSON to Shape")
         try:
             shape.is_valid
-        except:
+        except Exception:
             raise HTTPBadRequest("Invalid Linestring syntax")
 
         self._linestring = shape
@@ -100,7 +100,7 @@ class ProfileValidation(object):
                 self._nb_points = int(value)
             else:
                 raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
-                            " smaller than {}".format(self.nb_points_max))
+                    " smaller than {}".format(self.nb_points_max))
 
     @ma_offset.setter
     def ma_offset(self, value):
