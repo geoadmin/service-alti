@@ -235,6 +235,7 @@ production.ini: production.ini.in
 		--var "apache_entry_path=$(APACHE_ENTRY_PATH)" \
 		--var "apache_base_path=$(APACHE_BASE_PATH)" \
 		--var "current_directory=$(CURRENT_DIRECTORY)" \
+		--var "dtm_base_path=$(DTM_BASE_PATH)" \
 		--var "api_url=$(API_URL)" \
 		--var "http_proxy=$(HTTP_PROXY)" $< > $@
 
