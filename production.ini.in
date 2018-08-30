@@ -19,7 +19,7 @@ pyramid.default_locale_name = de
 # Mako specific
 mako.directories = alti:templates
 
-dtm_base_path = /var/local/profile/
+dtm_base_path = ${dtm_base_path}
 api_url = ${api_url}
 install_directory = ${current_directory}
 apache_base_path = ${apache_base_path}
