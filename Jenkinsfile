@@ -7,7 +7,7 @@ node(label: "jenkins-slave") {
       checkout scm
     }
     stage("Build") {
-      sh 'eval $(cat rc_dev) && make cleanall all'
+      sh 'source rc_ci && make cleanall all'
     }
     stage("Lint") {
       sh 'make lint'

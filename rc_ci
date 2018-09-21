@@ -4,4 +4,3 @@ export DEPLOY_TARGET=ci
 export KEEP_VERSION=false
 # Using EFS on Jenkins
 export DTM_BASE_PATH=/var/local/geodata/bund/swisstopo/
-
