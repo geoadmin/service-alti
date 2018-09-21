@@ -15,10 +15,10 @@ node(label: "jenkins-slave") {
     stage("Test") {
       parallel (
         'integration': {
-          sh '.venv/bin/nosetests tests/integration/'
+          sh '.venv/bin/nosetests alti/tests/integration/'
         },
         'functional': {
-          sh '.venv/bin/nosetests tests/functional/'
+          sh '.venv/bin/nosetests alti/tests/functional/'
         }
       )
     }
