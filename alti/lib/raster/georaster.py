@@ -19,6 +19,8 @@ def get_raster(name, sr):
     if not result:
         result = GeoRaster(_rasterfiles[sr][name])
         _rasters[filename] = result
+    log.debug(_rasters)
+    log.debug(result.shapefileName)
     return result
 
 
@@ -40,6 +42,7 @@ def init_rasterfiles(datapath, preloadtypes):
         for preloadtype in preloadtypes:
             pt, sr = preloadtype
             get_raster(pt, sr)
+            log.info('Preloading raster: %s - %s' % (pt, sr))
 
     except Exception as e:
         log.error('Could not initialize raster files. Make sure they exist in the following directory: %s (Exception: %s)' % (datapath, e))
@@ -91,6 +94,7 @@ class GeoRaster:
 
     def __init__(self, shapefileName):
         self.tiles = []
+        self.shapefileName = shapefileName
         shpRecords = shputils.loadShapefile(shapefileName)
         dir = dirname(shapefileName)
         if dir == "":
