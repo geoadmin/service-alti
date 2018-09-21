@@ -10,3 +10,5 @@ if [ -f rc_user_$USERNAME ]; then
 else
   echo 'Please provide a custom config file using the pattern rc_user_$USERNAME'
 fi
+export DTM_BASE_PATH=/var/local/geodata/bund/swisstopo/
+
