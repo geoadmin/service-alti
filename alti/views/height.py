@@ -45,6 +45,6 @@ class Height(HeightValidation):
         rasters = [get_raster(layer, self.sr) for layer in self.layers]
         alt = filter_alt(rasters[0].getVal(self.lon, self.lat))
         if alt is None:
-            raise HTTPBadRequest('Requested coordinate out of bounds')
+            raise HTTPBadRequest('Requested coordinate ({},{}) out of bounds in sr {}'.format(self.lon, self.lat, self.sr))
 
         return {'height': str(alt)}
