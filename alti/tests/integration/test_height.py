@@ -105,3 +105,14 @@ class TestHeightView(TestsBase):
     def test_height_lv03_miss_easting(self):
         resp = self.testapp.get('/rest/services/height', params={'northing': '200000'}, headers=self.headers, status=400)
         resp.mustcontain("Missing parameter 'easting'/'lon'")
+
+    def test_different_srs_return_same_height(self):
+        # Summit of Finsteraarhorn
+        resp_lv03 = self.testapp.get('/rest/services/height', params={'easting': '652741.57', 'northing': '154231.64', 'layers': 'DTM2'}, headers=self.headers, status=200)
+        resp_lv95 = self.testapp.get('/rest/services/height', params={'easting': '2652741.5', 'northing': '1154231.4', 'layers': 'DTM2'}, headers=self.headers, status=200)
+        resp_wgs84 = self.testapp.get('/rest/services/height', params={'easting': '8.12617', 'northing': '46.53730', 'layers': 'DTM2'}, headers=self.headers, status=200)
+
+        height = resp_lv95.json['height']
+
+        self.assertEqual(resp_lv03.json['height'], height)
+        self.assertEqual(resp_wgs84.json['height'], height)
