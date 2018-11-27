@@ -29,6 +29,8 @@ http_proxy = ${http_proxy}
 
 profile_nb_points_default = 200
 profile_nb_points_maximum = 500
+native_srs = 2056
+supported_srs = 2056,21781,3857,4326
 
 ###
 # wsgi server configuration

@@ -23,16 +23,18 @@ def init_bboxes():
 bboxes = init_bboxes()
 
 
-def srs_guesser(geom):
-    sr = None
-    try:
-        geom_type = geom.geom_type
-    except ValueError:
-        return sr
+class SrsValidation(object):
 
-    if geom_type in ('Point', 'LineString'):
-        for epsg, bbox in bboxes.iteritems():
-            if bbox.contains(geom):
-                sr = epsg
-                break
-    return sr
+    def srs_guesser(self, geom):
+        sr = None
+        try:
+            geom_type = geom.geom_type
+        except ValueError:
+            return sr
+
+        if geom_type in ('Point', 'LineString'):
+            for epsg, bbox in bboxes.iteritems():
+                if bbox.contains(geom):
+                    sr = epsg
+                    break
+        return sr

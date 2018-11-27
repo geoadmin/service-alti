@@ -3,36 +3,17 @@
 import geojson
 from pyramid.httpexceptions import HTTPBadRequest
 
-from shapely.geometry import asShape, Polygon
+from shapely.geometry import asShape
+from alti.lib.validation import SrsValidation
 
 
-bboxes = {
-    2056: (2450000, 1030000, 2900000, 1350000),
-    21781: (450000, 30000, 900000, 350000)
-}
-
-
-class ProfileValidation(object):
+class ProfileValidation(SrsValidation):
 
     def __init__(self):
         self._linestring = None
         self._layers = None
         self._nb_points = None
         self._ma_offset = None
-
-    def srs_guesser(self):
-        sr = None
-        if self.linestring is not None:
-            for epsg, bbox in bboxes.iteritems():
-                dtm_poly = Polygon([
-                    (bbox[0], bbox[1]),
-                    (bbox[2], bbox[1]),
-                    (bbox[2], bbox[3]),
-                    (bbox[0], bbox[3])])
-                if dtm_poly.contains(self.linestring):
-                    sr = epsg
-                    break
-        return sr
 
     @property
     def linestring(self):
@@ -58,14 +39,17 @@ class ProfileValidation(object):
     def linestring(self, value):
         if value is None:
             raise HTTPBadRequest("Missing parameter geom")
-        try:
-            geom = geojson.loads(value, object_hook=geojson.GeoJSON.to_instance)
-        except ValueError:
-            raise HTTPBadRequest("Error loading geometry in JSON string")
-        try:
-            shape = asShape(geom)
-        except Exception:
-            raise HTTPBadRequest("Error converting JSON to Shape")
+        if isinstance(value, unicode):
+            try:
+                geom = geojson.loads(value, object_hook=geojson.GeoJSON.to_instance)
+            except ValueError:
+                raise HTTPBadRequest("Error loading geometry in JSON string")
+            try:
+                shape = asShape(geom)
+            except Exception:
+                raise HTTPBadRequest("Error converting JSON to Shape")
+        else:
+            shape = value
         try:
             shape.is_valid
         except Exception:
@@ -87,8 +71,8 @@ class ProfileValidation(object):
 
     @sr.setter
     def sr(self, value):
-        if value not in (21781, 2056):
-            raise HTTPBadRequest("Please provide a valid number for the spatial reference system model 21781 or 2056")
+        if value not in self.supported_srs:
+            raise HTTPBadRequest("Please provide a valid number for the spatial reference system model (on of {})".format(self.supported_srs))
         self._sr = value
 
     @nb_points.setter

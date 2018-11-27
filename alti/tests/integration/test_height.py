@@ -18,7 +18,7 @@ class TestHeightView(TestsBase):
         self.assertEqual(resp.json['height'], '560.2')
 
     def test_height_no_sr_using_wrong_coordinates(self):
-        self.testapp.get('/rest/services/height', params={'easting': '7.66', 'northing': '46.7'}, headers=self.headers, status=400)
+        self.testapp.get('/rest/services/height', params={'easting': '102', 'northing': '-46.7'}, headers=self.headers, status=400)
 
     def test_height_using_unknown_sr(self):
         self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1', 'sr': 666}, headers=self.headers, status=400)
@@ -111,8 +111,10 @@ class TestHeightView(TestsBase):
         resp_lv03 = self.testapp.get('/rest/services/height', params={'easting': '652741.57', 'northing': '154231.64', 'layers': 'DTM2'}, headers=self.headers, status=200)
         resp_lv95 = self.testapp.get('/rest/services/height', params={'easting': '2652741.5', 'northing': '1154231.4', 'layers': 'DTM2'}, headers=self.headers, status=200)
         resp_wgs84 = self.testapp.get('/rest/services/height', params={'easting': '8.12617', 'northing': '46.53730', 'layers': 'DTM2'}, headers=self.headers, status=200)
+        resp_webmerc = self.testapp.get('/rest/services/height', params={'easting': '904601.0976097584', 'northing': '5866874.330271561', 'layers': 'DTM2'}, headers=self.headers, status=200)
 
         height = resp_lv95.json['height']
 
         self.assertEqual(resp_lv03.json['height'], height)
         self.assertEqual(resp_wgs84.json['height'], height)
+        self.assertEqual(resp_webmerc.json['height'], height)

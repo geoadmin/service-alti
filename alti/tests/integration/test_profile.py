@@ -38,7 +38,7 @@ class TestProfileView(TestsBase):
 
     def test_profile_invalide_sr_json_valid(self):
         resp = self.testapp.get('/rest/services/profile.json', params={'sr': 666, 'geom': create_json(3, 21781)}, headers=self.headers, status=400)
-        resp.mustcontain("Please provide a valid number for the spatial reference system model 21781 or 2056")
+        resp.mustcontain("Please provide a valid number for the spatial reference system model")
 
     def test_profile_lv95_json_valid(self):
         self.testapp.get('/rest/services/profile.json', params={'sr': 2056, 'geom': create_json(4, 2056)}, headers=self.headers, status=200)

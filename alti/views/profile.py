@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import math
+from shapely.geometry import LineString
 from pyramid.view import view_config
 
+from alti.lib.helpers import transform_shape
 from alti.lib.validation.profile import ProfileValidation
 from alti.lib.raster.georaster import get_raster
-from alti.lib.validation import srs_guesser
 
-from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import HTTPBadRequest, HTTPInternalServerError
 
 
 class Profile(ProfileValidation):
@@ -16,7 +17,12 @@ class Profile(ProfileValidation):
         super(Profile, self).__init__()
         self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default', 200))
         self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', 500))
+        self.native_srs = int(request.registry.settings.get('native_srs', 2056))
+        supported_srs = request.registry.settings.get('supported_srs', '2056,21781')
+        self.supported_srs = map(int,supported_srs.split(','))
+
         self.linestring = request.params.get('geom')
+
         if 'layers' in request.params:
             self.layers = request.params.get('layers')
         else:
@@ -28,10 +34,17 @@ class Profile(ProfileValidation):
         if 'sr' in request.params:
             self.sr = int(request.params.get('sr'))
         else:
-            sr = srs_guesser(self.linestring)
+            sr = self.srs_guesser(self.linestring)
             if sr is None:
                 raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
             self.sr = sr
+        if self.sr not in (2056, 21781):
+            self._linestring = transform_shape(self.linestring, self.sr, self.native_srs)
+            self.sr_in = self.native_srs
+        else:
+            self.sr_in = self.sr
+        # Rounding: 6th decimal is about 0.11m at equateur
+        self.digits = 6 if self.sr == 4326 else 1
         self.ma_offset = request.params.get('offset')
         self.request = request
 
@@ -47,8 +60,9 @@ class Profile(ProfileValidation):
 
     def _compute_points(self):
         """Compute the alt=fct(dist) array and store it in c.points"""
-        rasters = [get_raster(layer, self.sr) for layer in self.layers]
+        rasters = [get_raster(layer, self.sr_in) for layer in self.layers]
         # Simplify input line with a tolerance of 2 m
+        # TODO adapt to projection
         if self.nb_points < len(self.linestring.coords):
             linestring = self.linestring.simplify(12.5)
         else:
@@ -81,7 +95,7 @@ class Profile(ProfileValidation):
                     s += zvalues[self.layers[i]][p] * factor(k)
                     d += factor(k)
                 zvalues2[self.layers[i]].append(s / d)
-
+        # TODO: distance on sphere/ellipsoid
         dist = 0
         prev_coord = None
         if self.json:
@@ -93,6 +107,14 @@ class Profile(ProfileValidation):
                 profile['headers'].append(i)
             profile['headers'].append('Easting')
             profile['headers'].append('Northing')
+
+        if self.sr_in != self.sr:
+            try:
+                line = LineString(coords)
+                reproj_line = transform_shape(line, self.native_srs, self.sr)
+                coords = list(reproj_line.coords)
+            except:
+                raise HTTPInternalServerError('Cannot reproject coordinates back to {}'.format(self.sr))
 
         for j in xrange(0, len(coords)):
             if prev_coord is not None:
@@ -108,16 +130,16 @@ class Profile(ProfileValidation):
                     profile.append({
                         'alts': alts,
                         'dist': rounded_dist,
-                        'easting': self._filter_coordinate(coords[j][0]),
-                        'northing': self._filter_coordinate(coords[j][1])
+                        'easting': self._filter_coordinate(coords[j][0], digits=self.digits),
+                        'northing': self._filter_coordinate(coords[j][1], digits=self.digits)
                     })
                 # For csv file
                 else:
                     temp = [rounded_dist]
                     for i in alts.iteritems():
                         temp.append(i[1])
-                    temp.append(self._filter_coordinate(coords[j][0]))
-                    temp.append(self._filter_coordinate(coords[j][1]))
+                    temp.append(self._filter_coordinate(coords[j][0], digits=self.digits))
+                    temp.append(self._filter_coordinate(coords[j][1], digits=self.digits))
                     profile['rows'].append(temp)
             prev_coord = coords[j]
         return profile
@@ -168,10 +190,10 @@ class Profile(ProfileValidation):
         else:
             return None
 
-    def _filter_dist(self, dist):
+    def _filter_dist(self, dist, digits=1):
         # 10cm accuracy is enough for distances
-        return round(dist, 1)
+        return round(dist, digits)
 
-    def _filter_coordinate(self, coords):
+    def _filter_coordinate(self, coords, digits=3):
         # 1mm accuracy is enough for distances
-        return round(coords, 3)
+        return round(coords, digits)
