@@ -19,7 +19,7 @@ class Profile(ProfileValidation):
         self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', 500))
         self.native_srs = int(request.registry.settings.get('native_srs', 2056))
         supported_srs = request.registry.settings.get('supported_srs', '2056,21781')
-        self.supported_srs = map(int,supported_srs.split(','))
+        self.supported_srs = map(int, supported_srs.split(','))
 
         self.linestring = request.params.get('geom')
 

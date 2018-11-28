@@ -16,7 +16,7 @@ class Height(HeightValidation):
         super(Height, self).__init__()
         self.native_srs = int(request.registry.settings.get('native_srs', 2056))
         supported_srs = request.registry.settings.get('supported_srs', '2056,21781')
-        self.supported_srs = map(int,supported_srs.split(','))
+        self.supported_srs = map(int, supported_srs.split(','))
 
         if 'easting' in request.params:
             self.lon = request.params.get('easting')
