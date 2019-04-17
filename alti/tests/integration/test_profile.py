@@ -6,13 +6,17 @@ from shapely.geometry import Point, LineString, mapping
 from alti.tests.integration import TestsBase
 
 
+LINESTRING_LV03 = '{"type":"LineString","coordinates":[[630000,170000],[634000,173000],[631000,173000]]}'
+
+
 def generate_random_coord(srid):
     if srid == 2056:
-        minx, miny = 2650000, 1200000
-        maxx, maxy = 2750000, 1280000
+        minx, miny = 2628750, 1170000
+        maxx, maxy = 2637500, 1176000
     else:
-        minx, miny = 650000, 200000
-        maxx, maxy = 750000, 280000
+        minx, miny = 628750, 170000
+        maxx, maxy = 637500, 176000
+
     yield random.randint(minx, maxx), random.randint(miny, maxy)
 
 
@@ -44,23 +48,23 @@ class TestProfileView(TestsBase):
         self.testapp.get('/rest/services/profile.json', params={'sr': 2056, 'geom': create_json(4, 2056)}, headers=self.headers, status=200)
 
     def test_profile_lv03_json_valid(self):
-        params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}'}
+        params = {'geom': LINESTRING_LV03}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json[0]['dist'], 0)
-        self.assertEqual(resp.json[0]['alts']['DTM25'], 1138)
-        self.assertEqual(resp.json[0]['easting'], 550050)
-        self.assertEqual(resp.json[0]['northing'], 206550)
+        self.assertEqual(resp.json[0]['dist'], 40)
+        self.assertEqual(resp.json[0]['alts']['DTM25'], 568.2)
+        self.assertEqual(resp.json[0]['easting'], 630032)
+        self.assertEqual(resp.json[0]['northing'], 170024)
 
     def test_profile_lv03_json_2_models(self):
-        params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}', 'elevation_models': 'DTM25,DTM2'}
+        params = {'geom': LINESTRING_LV03, 'elevation_models': 'DTM25,DTM2'}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json[0]['dist'], 0)
-        self.assertEqual(resp.json[0]['alts']['DTM25'], 1138)
-        self.assertEqual(resp.json[0]['alts']['DTM2'], 1139)
-        self.assertEqual(resp.json[0]['easting'], 550050)
-        self.assertEqual(resp.json[0]['northing'], 206550)
+        self.assertEqual(resp.json[1]['dist'], 40)
+        self.assertEqual(resp.json[1]['alts']['DTM25'], 568.2)
+        self.assertEqual(resp.json[1]['alts']['DTM2'], 568.3)
+        self.assertEqual(resp.json[1]['easting'], 630032)
+        self.assertEqual(resp.json[1]['northing'], 170024)
 
     def test_profile_lv03_layers(self):
         params = {'geom': create_json(4, 21781), 'layers': 'DTM25,DTM2'}
@@ -110,10 +114,10 @@ class TestProfileView(TestsBase):
         resp.mustcontain('Error converting JSON to Shape')
 
     def test_profile_lv03_json_nb_points(self):
-        params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}', 'nb_points': '150'}
+        params = {'geom': LINESTRING_LV03, 'nb_points': '150'}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(len(resp.json), 151)
+        self.assertEqual(len(resp.json), 150)
 
     def test_profile_lv03_json_simplify_linestring(self):
         params = {'geom': create_json(4, 21781), 'nb_points': '1'}
@@ -136,10 +140,10 @@ class TestProfileView(TestsBase):
         resp.mustcontain("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'")
 
     def test_profile_lv03_json_default_nb_points(self):
-        params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}'}
+        params = {'geom': LINESTRING_LV03}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         pnts = resp.json
-        self.assertEqual(len(pnts), 201)
+        self.assertEqual(len(pnts), 200)
 
     def test_profile_lv03_csv_valid(self):
         params = {'geom': create_json(4, 21781)}
@@ -162,7 +166,7 @@ class TestProfileView(TestsBase):
         resp.mustcontain('Invalid Linestring syntax')
 
     def test_profile_lv03_json_offset(self):
-        params = {'geom': '{"type":"LineString","coordinates":[[550050,206550],[556950,204150],[561050,207950]]}', 'offset': '1'}
+        params = {'geom': LINESTRING_LV03, 'offset': '1'}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         self.assertTrue(resp.content_type == 'application/json')
 

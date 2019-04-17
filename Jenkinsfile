@@ -8,6 +8,7 @@ node(label: "jenkins-slave") {
     }
     stage("Build") {
       sh 'source rc_ci && make cleanall all'
+      echo sh(returnStdout: true, script: 'env')
     }
     stage("Lint") {
       sh 'make lint'

@@ -3,6 +3,9 @@ Altitude data for test
 
 The area is a tile around Interlaken (BE)
 
+![Extent of tile 1208-4.bt](interlaken.png)
+
+
     gdalinfo data/swissalti3d/2m/1208-4.bt 
     Driver: BT/VTP .bt (Binary Terrain) 1.3 Format
     Files: data/swissalti3d/2m/1208-4.bt
