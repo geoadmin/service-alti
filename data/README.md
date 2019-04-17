@@ -3,7 +3,7 @@ Altitude data for test
 
 The area is a tile around Interlaken (BE)
 
-![Extent of tile 1208-4.bt](https://github.com/geoadmin/service-alti/raw/test_data/data/interlaken.png)
+![Extent of tile 1208-4.bt](interlaken.png)
 
 
     gdalinfo data/swissalti3d/2m/1208-4.bt 
