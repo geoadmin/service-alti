@@ -3,6 +3,12 @@
 from alti.tests.integration import TestsBase
 
 
+# LVO3
+X, Y, Z, ZZ = '632510.0', '170755.0', '568.2', '567.5'
+# LV95
+E, N = '2632510.0', '1170755.0'
+
+
 class TestHeightView(TestsBase):
 
     def setUp(self):
@@ -10,12 +16,12 @@ class TestHeightView(TestsBase):
         self.headers = {'X-SearchServer-Authorized': 'true'}
 
     def test_height_no_sr_asuming_lv03(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1'}, headers=self.headers, status=200)
-        self.assertEqual(resp.json['height'], '560.2')
+        resp = self.testapp.get('/rest/services/height', params={'easting': X, 'northing': Y}, headers=self.headers, status=200)
+        self.assertEqual(resp.json['height'], '567.6')
 
     def test_height_no_sr_asuming_lv95(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '2600000.1', 'northing': '1200000.1'}, headers=self.headers, status=200)
-        self.assertEqual(resp.json['height'], '560.2')
+        resp = self.testapp.get('/rest/services/height', params={'easting': E, 'northing': N}, headers=self.headers, status=200)
+        self.assertEqual(resp.json['height'], ZZ)
 
     def test_height_no_sr_using_wrong_coordinates(self):
         self.testapp.get('/rest/services/height', params={'easting': '7.66', 'northing': '46.7'}, headers=self.headers, status=400)
@@ -30,17 +36,17 @@ class TestHeightView(TestsBase):
         self.testapp.get('/rest/services/height', params={'easting': '2600000.1', 'northing': '1200000.1', 'sr': 21781}, headers=self.headers, status=400)
 
     def test_height_lv95_valid(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '2600000.1', 'northing': '1200000.1'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': E, 'northing': N}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '560.2')
+        self.assertEqual(resp.json['height'], ZZ)
 
     def test_height_lv95_outofbound(self):
         self.testapp.get('/rest/services/height', params={'easting': '2200000.1', 'northing': '1780000.1'}, headers=self.headers, status=400)
 
     def test_height_lv03_valid(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': X, 'northing': Y}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '560.2')
+        self.assertEqual(resp.json['height'], '567.6')
 
     def test_height_lv03_none(self):
         resp = self.testapp.get('/rest/services/height', params={'easting': '600000', 'northing': '0'}, headers=self.headers, status=400)
@@ -53,29 +59,29 @@ class TestHeightView(TestsBase):
         resp.mustcontain('Please provide numerical values for the parameter \'northing\'/\'lat\'')
 
     def test_height_lv03_valid_with_lonlat(self):
-        resp = self.testapp.get('/rest/services/height', params={'lon': '604726.8', 'lat': '195738.1'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'lon': X, 'lat': Y}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '509.4')
+        self.assertEqual(resp.json['height'], '567.6')
 
     def test_height_lv03_with_dtm2(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '604726.8', 'northing': '195738.1', 'layers': 'DTM2'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': X, 'northing': Y, 'layers': 'DTM2'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '509.5')
+        self.assertEqual(resp.json['height'], '568.2')
 
     def test_height_lv03_with_dtm2_elevModel(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '604726.8', 'northing': '195738.1', 'elevation_model': 'DTM2'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': X, 'northing': Y, 'elevation_model': 'DTM2'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '509.5')
+        self.assertEqual(resp.json['height'], Z)
 
     def test_height_lv03_with_comb(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1', 'layers': 'COMB'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': X, 'northing': Y, 'layers': 'COMB'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '553.6')
+        self.assertEqual(resp.json['height'], Z)
 
     def test_height_lv03_with_comb_elevModel(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '600000.1', 'northing': '200000.1', 'elevation_model': 'COMB'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': X, 'northing': Y, 'elevation_model': 'COMB'}, headers=self.headers, status=200)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertEqual(resp.json['height'], '553.6')
+        self.assertEqual(resp.json['height'], Z)
 
     def test_height_lv03_wrong_layer(self):
         resp = self.testapp.get('/rest/services/height', params={'easting': '600000', 'northing': '200000', 'layers': 'TOTO'}, headers=self.headers, status=400)
@@ -94,7 +100,7 @@ class TestHeightView(TestsBase):
         resp.mustcontain("Please provide numerical values")
 
     def test_height_lv03_with_callback_valid(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '600000', 'northing': '200000', 'callback': 'cb_'}, headers=self.headers, status=200)
+        resp = self.testapp.get('/rest/services/height', params={'easting': X, 'northing': Y, 'callback': 'cb_'}, headers=self.headers, status=200)
         self.assertTrue(resp.content_type == 'application/javascript')
         resp.mustcontain('cb_({')
 
