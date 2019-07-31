@@ -103,36 +103,14 @@ class Profile(ProfileValidation):
         coordinates = self.__create_points(self.linestring.coords, self.nb_points_max, self.resolution)
 
         # extract z values (altitude over distance) for coordinates
-        z_values = {}
-        for i in xrange(0, len(self.layers)):
-            z_values[self.layers[i]] = []
-            for j in xrange(0, len(coordinates)):
-                z = rasters[i].getVal(coordinates[j][0], coordinates[j][1])
-                z_values[self.layers[i]].append(z)
+        z_values = self.__extract_z_values(rasters, coordinates)
 
-        # if offset is defined, do the smoothing
-        if self.offset > 0:
-            z_values_with_smoothing = {}
-            for i in xrange(0, len(self.layers)):
-                z_values_with_smoothing[self.layers[i]] = []
-                for j in xrange(0, len(z_values[self.layers[i]])):
-                    s = 0
-                    d = 0
-                    if z_values[self.layers[i]][j] is None:
-                        z_values_with_smoothing[self.layers[i]].append(None)
-                        continue
-                    for k in xrange(-self.offset, self.offset + 1):
-                        p = j + k
-                        if p < 0 or p >= len(z_values[self.layers[i]]):
-                            continue
-                        if z_values[self.layers[i]][p] is None:
-                            continue
-                        s += z_values[self.layers[i]][p] * Profile.__factor(k)
-                        d += Profile.__factor(k)
-                    z_values_with_smoothing[self.layers[i]].append(s / d)
-            # overriding zValues when smoothing has been done
-            z_values = z_values_with_smoothing
+        return self.__create_response(coordinates,
+                                      # if offset is defined, do the smoothing
+                                      self.__smooth(z_values) if self.offset > 0 else z_values,
+                                      output_to_json)
 
+    def __create_response(self, coordinates, z_values, output_to_json):
         total_distance = 0
         previous_coordinates = None
         if output_to_json:
@@ -173,11 +151,26 @@ class Profile(ProfileValidation):
             previous_coordinates = coordinates[j]
         return profile
 
-    @staticmethod
-    def __distance_between(coord1, coord2):
-        """Compute the distance between 2 points"""
-        return math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) +
-                         math.pow(coord1[1] - coord2[1], 2.0))
+    def __smooth(self, z_values):
+        z_values_with_smoothing = {}
+        for i in xrange(0, len(self.layers)):
+            z_values_with_smoothing[self.layers[i]] = []
+            for j in xrange(0, len(z_values[self.layers[i]])):
+                s = 0
+                d = 0
+                if z_values[self.layers[i]][j] is None:
+                    z_values_with_smoothing[self.layers[i]].append(None)
+                    continue
+                for k in xrange(-self.offset, self.offset + 1):
+                    p = j + k
+                    if p < 0 or p >= len(z_values[self.layers[i]]):
+                        continue
+                    if z_values[self.layers[i]][p] is None:
+                        continue
+                    s += z_values[self.layers[i]][p] * Profile.__factor(k)
+                    d += Profile.__factor(k)
+                z_values_with_smoothing[self.layers[i]].append(s / d)
+        return z_values_with_smoothing
 
     def __create_points(self, coordinates, nb_points_allowed, resolution):
         """
@@ -224,6 +217,21 @@ class Profile(ProfileValidation):
                 result.append([coordinate[0], coordinate[1]])
             previous_coordinate = coordinate
         return result
+
+    def __extract_z_values(self, rasters, coordinates):
+        z_values = {}
+        for i in xrange(0, len(self.layers)):
+            z_values[self.layers[i]] = []
+            for j in xrange(0, len(coordinates)):
+                z = rasters[i].getVal(coordinates[j][0], coordinates[j][1])
+                z_values[self.layers[i]].append(z)
+        return z_values
+
+    @staticmethod
+    def __distance_between(coord1, coord2):
+        """Compute the distance between 2 points"""
+        return math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) +
+                         math.pow(coord1[1] - coord2[1], 2.0))
 
     @staticmethod
     def __factor(x):
