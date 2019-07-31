@@ -204,7 +204,8 @@ class Profile(ProfileValidation):
         verified_resolution = resolution
         if total_distance / resolution + len(coordinates) > nb_points_allowed:
             # if greater, calculate a new resolution that will results in a fewer amount of points
-            self.altered_resolution = True
+            # we return a special http code for this case (see https://github.com/geoadmin/service-alti/issues/43)
+            self.request.response.status = 203
             verified_resolution = filter_distance(total_distance / (nb_points_allowed + len(coordinates)))
 
         # filling each segment with points spaced by 'verified_resolution'
