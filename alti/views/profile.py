@@ -3,6 +3,8 @@
 import math
 from pyramid.view import view_config
 
+from shapely.geometry import LineString
+
 from alti.lib.helpers import filter_altitude, filter_coordinate, filter_distance
 from alti.lib.validation.profile import ProfileValidation
 from alti.lib.raster.georaster import get_raster
@@ -76,6 +78,8 @@ class Profile(ProfileValidation):
                 self.resolution = 2
         else:
             self.resolution = 2
+        # flag to track if the resolution had to be changed to accommodate for max number of points
+        self.altered_resolution = False
 
         # keeping the request for later use
         self.request = request
@@ -96,7 +100,7 @@ class Profile(ProfileValidation):
 
         # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
         # a 2m mesh, so no need to go beyond that)
-        coordinates = Profile.__create_points(self.linestring.coords, self.nb_points, self.resolution)
+        coordinates = self.__create_points(self.linestring.coords, self.nb_points_max, self.resolution)
 
         # extract z values (altitude over distance) for coordinates
         z_values = {}
@@ -175,43 +179,49 @@ class Profile(ProfileValidation):
         return math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) +
                          math.pow(coord1[1] - coord2[1], 2.0))
 
-    @staticmethod
-    def __create_points(coords, nb_points, resolution):
+    def __create_points(self, coordinates, nb_points_allowed, resolution):
         """
-            Add some points in order to reach roughly the asked
+            Add some points in order to reach roughly the allowed
             number of points.
         """
 
-        if nb_points is None or nb_points is 0:
-            return coords
+        if nb_points_allowed is None or nb_points_allowed is 0:
+            return coordinates
 
-        total_length = 0
-        prev_coord = None
-        for coord in coords:
-            if prev_coord is not None:
-                total_length += Profile.__distance_between(prev_coord, coord)
-            prev_coord = coord
+        # calculate total distance for the entire geom
+        total_distance = 0
+        previous_coordinate = None
+        for coordinate in coordinates:
+            if previous_coordinate is not None:
+                total_distance += Profile.__distance_between(previous_coordinate, coordinate)
+            previous_coordinate = coordinate
 
-        if total_length == 0.0:
-            return coords
+        if total_distance == 0.0:
+            return coordinates
 
+        # checking if total distance divided by resolution is an amount of point smaller or equals to
+        # max number of points allowed
+        verified_resolution = resolution
+        if total_distance / resolution + len(coordinates) > nb_points_allowed:
+            # if greater, calculate a new resolution that will results in a fewer amount of points
+            self.altered_resolution = True
+            verified_resolution = filter_distance(total_distance / (nb_points_allowed + len(coordinates)))
+
+        # filling each segment with points spaced by 'verified_resolution'
         result = []
-        prev_coord = None
-        for coord in coords:
-            if prev_coord is not None:
-                cur_length = Profile.__distance_between(prev_coord, coord)
-                cur_nb_points = int(nb_points * cur_length / total_length + 0.5)
-                if cur_nb_points < 1:
-                    cur_nb_points = 1
-                dx = (coord[0] - prev_coord[0]) / float(cur_nb_points)
-                dy = (coord[1] - prev_coord[1]) / float(cur_nb_points)
-                for i in xrange(1, cur_nb_points + 1):
-                    result.append(
-                        [prev_coord[0] + dx * i,
-                         prev_coord[1] + dy * i])
+        previous_coordinate = None
+        for coordinate in coordinates:
+            if previous_coordinate is not None:
+                line = LineString([previous_coordinate, coordinate])
+                line_length = line.length
+                line_length_covered = 0
+                while line_length_covered < line_length:
+                    line_length_covered += verified_resolution
+                    point_along_line = line.interpolate(line_length_covered)
+                    result.append([point_along_line.x, point_along_line.y])
             else:
-                result.append([coord[0], coord[1]])
-            prev_coord = coord
+                result.append([coordinate[0], coordinate[1]])
+            previous_coordinate = coordinate
         return result
 
     @staticmethod
