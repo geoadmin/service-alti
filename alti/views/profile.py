@@ -12,13 +12,14 @@ from alti.lib.validation import srs_guesser
 
 from pyramid.httpexceptions import HTTPBadRequest
 
+PROFILE_MAX_AMOUNT_POINTS = 500
+
 
 class Profile(ProfileValidation):
 
     def __init__(self, request):
         super(Profile, self).__init__()
-        self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default', 200))
-        self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', 500))
+        self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', PROFILE_MAX_AMOUNT_POINTS))
 
         # param geom, list of coordinates defining the line on which we want a profile
         if 'geom' in request.params:
@@ -36,19 +37,9 @@ class Profile(ProfileValidation):
         elif 'elevation_models' in request.params:
             self.layers = request.params.get('elevation_models')
         else:
-            self.layers = ['COMB']
+            self.layers = 'COMB'
 
-        # param nbPoints (or nb_points), define how much point we want to have in the profile output
-        # if not defined, a calculation will be made in order to have as many points as possible, taking into account
-        # the resolution param bellow (max number of points is a hard limit, so if filling the coords every 'resolution'
-        # leads to to much points, 'resolution' will be increased to accommodate and not overcome the hard limitation
-        # on how much point is possible in a profile)
-        if 'nbPoints' in request.params:
-            self.nb_points = request.params.get('nbPoints')
-        elif 'nb_points' in request.params:
-            self.nb_points = request.params.get('nb_points')
-
-        # param sr (or projection, sr meaning "système de référence"), which Swiss projection to use.
+        # param sr (or projection, sr meaning spatial reference), which Swiss projection to use.
         # Possible values are expressed in int, so value for EPSG:2056 (LV95) is 2056
         # and value for EPSG:21781 (LV03) is 21781
         # if this param is not present, it will be guessed from the coordinates present in the param geom
@@ -60,14 +51,12 @@ class Profile(ProfileValidation):
             sr = srs_guesser(self.linestring)
             if sr is None:
                 raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
-            self.sr = sr
+            self.projection = sr
 
         # param offset, used for smoothing. define how many coordinates should be included
         # in the window used for smoothing. If not defined (or value is zero) smoothing is disabled.
         if 'offset' in request.params:
-            self.offset = int(request.params.get('offset'))
-        else:
-            self.offset = 0
+            self.offset = request.params.get('offset')
 
         # param resolution, how far away each point should be when the line defined in geom is filled up with points
         # by default, will be 2 meter as this is the meshing of the raster model. Any value below 2 meters will be
@@ -76,8 +65,10 @@ class Profile(ProfileValidation):
             self.resolution = int(request.params.get('resolution'))
             if self.resolution < 2:
                 self.resolution = 2
+            self.is_custom_resolution = True
         else:
             self.resolution = 2
+            self.is_custom_resolution = False
 
         if 'only_requested_points' in request.params:
             self.only_requested_points = bool(request.params.get('only_requested_points'))
@@ -99,14 +90,14 @@ class Profile(ProfileValidation):
         """Compute the alt=fct(dist) array and store it in c.points"""
 
         # get raster data from georaster.py (layers is sometime referred as elevation_models in request parameters)
-        rasters = [get_raster(layer, self.sr) for layer in self.layers]
+        rasters = [get_raster(layer, self.projection) for layer in self.layers]
 
         if self.only_requested_points:
             coordinates = self.linestring.coords
         else:
             # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
             # a 2m mesh, so no need to go beyond that)
-            coordinates = self.__create_points(self.linestring.coords, self.nb_points_max, self.resolution)
+            coordinates = self.__create_points(self.linestring.coords)
 
         # extract z values (altitude over distance) for coordinates
         z_values = self.__extract_z_values(rasters, coordinates)
@@ -144,7 +135,8 @@ class Profile(ProfileValidation):
                         'alts': alts,
                         'dist': rounded_dist,
                         'easting': filter_coordinate(coordinates[j][0]),
-                        'northing': filter_coordinate(coordinates[j][1])
+                        'northing': filter_coordinate(coordinates[j][1]),
+                        'total': len(coordinates)
                     })
                 # For csv file
                 else:
@@ -178,14 +170,11 @@ class Profile(ProfileValidation):
                 z_values_with_smoothing[self.layers[i]].append(s / d)
         return z_values_with_smoothing
 
-    def __create_points(self, coordinates, nb_points_allowed, resolution):
+    def __create_points(self, coordinates):
         """
             Add some points in order to reach roughly the allowed
             number of points.
         """
-
-        if nb_points_allowed is None or nb_points_allowed is 0:
-            return coordinates
 
         # calculate total distance for the entire geom
         total_distance = 0
@@ -198,14 +187,19 @@ class Profile(ProfileValidation):
         if total_distance == 0.0:
             return coordinates
 
+        total_distance = filter_distance(total_distance)
+
         # checking if total distance divided by resolution is an amount of point smaller or equals to
         # max number of points allowed
-        verified_resolution = resolution
-        if total_distance / resolution + len(coordinates) > nb_points_allowed:
+        verified_resolution = self.resolution
+        if total_distance / self.resolution + len(coordinates) > self.nb_points_max:
             # if greater, calculate a new resolution that will results in a fewer amount of points
             # we return a special http code for this case (see https://github.com/geoadmin/service-alti/issues/43)
-            self.request.response.status = 203
-            verified_resolution = filter_distance(total_distance / (nb_points_allowed + len(coordinates)))
+            # if the user has provided a custom resolution, we notify him that we had to change it by returning
+            # HTTP 203 as a response
+            if self.is_custom_resolution:
+                self.request.response.status = 203
+            verified_resolution = total_distance / (self.nb_points_max - len(coordinates))
 
         # filling each segment with points spaced by 'verified_resolution'
         result = []

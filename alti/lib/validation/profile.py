@@ -17,8 +17,8 @@ class ProfileValidation(object):
     def __init__(self):
         self._linestring = None
         self._layers = None
-        self._nb_points = None
-        self._ma_offset = None
+        self._offset = None
+        self._projection = None
 
     def srs_guesser(self):
         sr = None
@@ -43,16 +43,12 @@ class ProfileValidation(object):
         return self._layers
 
     @property
-    def sr(self):
-        return self._sr
+    def projection(self):
+        return self._projection
 
     @property
-    def nb_points(self):
-        return self._nb_points
-
-    @property
-    def ma_offset(self):
-        return self._ma_offset
+    def offset(self):
+        return self._offset
 
     @linestring.setter
     def linestring(self, value):
@@ -76,7 +72,7 @@ class ProfileValidation(object):
     @layers.setter
     def layers(self, value):
         if value is None:
-            self._layers = ['DTM25']
+            self._layers = ['COMB']
         else:
             value = value.split(',')
             for i in value:
@@ -85,29 +81,19 @@ class ProfileValidation(object):
             value.sort()
             self._layers = value
 
-    @sr.setter
-    def sr(self, value):
+    @projection.setter
+    def projection(self, value):
         if value not in (21781, 2056):
             raise HTTPBadRequest("Please provide a valid number for the spatial reference system model 21781 or 2056")
-        self._sr = value
+        self._projection = value
 
-    @nb_points.setter
-    def nb_points(self, value):
+    @offset.setter
+    def offset(self, value):
         if value is None:
-            self._nb_points = self.nb_points_default
+            self._offset = 3
         else:
-            if value.isdigit() and int(value) <= self.nb_points_max:
-                self._nb_points = int(value)
-            else:
-                raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
-                    " smaller than {}".format(self.nb_points_max))
-
-    @ma_offset.setter
-    def ma_offset(self, value):
-        if value is None:
-            self._ma_offset = 3
-        else:
+            print value
             if value.isdigit():
-                self._ma_offset = int(value)
+                self._offset = int(value)
             else:
                 raise HTTPBadRequest("Please provide a numerical value for the parameter 'offset'")
