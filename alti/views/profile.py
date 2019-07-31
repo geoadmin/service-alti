@@ -78,8 +78,11 @@ class Profile(ProfileValidation):
                 self.resolution = 2
         else:
             self.resolution = 2
-        # flag to track if the resolution had to be changed to accommodate for max number of points
-        self.altered_resolution = False
+
+        if 'only_requested_points' in request.params:
+            self.only_requested_points = bool(request.params.get('only_requested_points'))
+        else:
+            self.only_requested_points = False
 
         # keeping the request for later use
         self.request = request
@@ -98,9 +101,12 @@ class Profile(ProfileValidation):
         # get raster data from georaster.py (layers is sometime referred as elevation_models in request parameters)
         rasters = [get_raster(layer, self.sr) for layer in self.layers]
 
-        # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
-        # a 2m mesh, so no need to go beyond that)
-        coordinates = self.__create_points(self.linestring.coords, self.nb_points_max, self.resolution)
+        if self.only_requested_points:
+            coordinates = self.linestring.coords
+        else:
+            # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
+            # a 2m mesh, so no need to go beyond that)
+            coordinates = self.__create_points(self.linestring.coords, self.nb_points_max, self.resolution)
 
         # extract z values (altitude over distance) for coordinates
         z_values = self.__extract_z_values(rasters, coordinates)
