@@ -26,17 +26,24 @@ def get_raster(name, sr):
 
 def init_rasterfiles(datapath, preloadtypes):
     global _rasterfiles
+    # elevation models are :
+    # - DTM25 : an old model with a mesh of 25 meters that stretches a little bit outside of Switzerland's borders
+    # - DTM2 : a more recent model with a mesh of 2 meters, but doesn't cover a lot of land outside of Switzerland
+    # - COMB : a mix of the two, when there's no data on DTM2, DTM25 is requested.
     _rasterfiles = {
+        # LV03
         21781: {
             'DTM25': datapath + 'dhm25_25_matrix/mm0001.shp',
             'DTM2': datapath + 'swissalti3d/2m/index.shp',
             'COMB': datapath + 'swissalti3d/kombo_2m_dhm25/index.shp'
         },
+        # LV95
         2056: {
             'DTM25': datapath + 'dhm25_25_matrix_lv95/mm0001.shp',
             'DTM2': datapath + 'swissalti3d/2m_lv95/index.shp',
             'COMB': datapath + 'swissalti3d/kombo_2m_dhm25_lv95/index.shp'
         }
+        # for other projections, results are reprojected from LV95 model
     }
     try:
         for preloadtype in preloadtypes:
