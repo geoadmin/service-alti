@@ -245,7 +245,7 @@ class TestProfileView(TestsBase):
 
     def test_profile_with_resolution_too_big(self):
         resp = self.testapp.get('/rest/services/profile.json', params={
-            'geom': create_json(3, 21781),
+            'geom': '{"type":"LineString","coordinates":[[2608510.5,1208524.8],[2627173.0,1185316.6]]}',
             'resolution': 3
         }, headers=self.headers, status=203)
         self.assertTrue(resp.content_type == 'application/json')

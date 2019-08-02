@@ -135,8 +135,7 @@ class Profile(ProfileValidation):
                         'alts': alts,
                         'dist': rounded_dist,
                         'easting': filter_coordinate(coordinates[j][0]),
-                        'northing': filter_coordinate(coordinates[j][1]),
-                        'total': len(coordinates)
+                        'northing': filter_coordinate(coordinates[j][1])
                     })
                 # For csv file
                 else:
