@@ -4,7 +4,7 @@ import json
 import random
 from shapely.geometry import Point, LineString, mapping
 from alti.tests.integration import TestsBase
-from alti.views.profile import PROFILE_MAX_AMOUNT_POINTS
+from alti.views.profile import PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
 
 
 def generate_random_coord(srid):
@@ -192,6 +192,7 @@ class TestProfileView(TestsBase):
         params = {'geom': LINESTRING_VALID_LV03}
         resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
         pnts = resp.json
+        self.assertEqual(len(pnts), PROFILE_DEFAULT_AMOUNT_POINTS)
         self.assertLess(len(pnts), PROFILE_MAX_AMOUNT_POINTS)
 
     def test_profile_lv03_csv_valid(self):
