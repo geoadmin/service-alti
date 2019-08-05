@@ -13,6 +13,7 @@ from alti.lib.validation import srs_guesser
 from pyramid.httpexceptions import HTTPBadRequest
 
 PROFILE_MAX_AMOUNT_POINTS = 500
+PROFILE_DEFAULT_AMOUNT_POINTS = 200
 
 
 class Profile(ProfileValidation):
@@ -20,6 +21,8 @@ class Profile(ProfileValidation):
     def __init__(self, request):
         super(Profile, self).__init__()
         self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', PROFILE_MAX_AMOUNT_POINTS))
+        self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default',
+                                                                   PROFILE_DEFAULT_AMOUNT_POINTS))
 
         # param geom, list of coordinates defining the line on which we want a profile
         if 'geom' in request.params:
@@ -38,6 +41,14 @@ class Profile(ProfileValidation):
             self.layers = request.params.get('elevation_models')
         else:
             self.layers = 'COMB'
+
+        # number of points wanted in the final profile.
+        if 'nbPoints' in request.params:
+            self.nb_points = request.params.get('nbPoints')
+        elif 'nb_points' in request.params:
+            self.nb_points = request.params.get('nb_points')
+        else:
+            self.nb_points = self.nb_points_default
 
         # param sr (or projection, sr meaning spatial reference), which Swiss projection to use.
         # Possible values are expressed in int, so value for EPSG:2056 (LV95) is 2056
@@ -70,6 +81,8 @@ class Profile(ProfileValidation):
             self.resolution = 2
             self.is_custom_resolution = False
 
+        # param only_requested_points, which is flag that when set to True will make
+        # the profile with only the given points in geom (no filling points)
         if 'only_requested_points' in request.params:
             self.only_requested_points = bool(request.params.get('only_requested_points'))
         else:
@@ -97,7 +110,7 @@ class Profile(ProfileValidation):
         else:
             # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
             # a 2m mesh, so no need to go beyond that)
-            coordinates = self.__create_points(self.linestring.coords)
+            coordinates = self.__create_points(self.linestring.coords, self.nb_points)
 
         # extract z values (altitude over distance) for coordinates
         z_values = self.__extract_z_values(rasters, coordinates)
@@ -169,7 +182,7 @@ class Profile(ProfileValidation):
                 z_values_with_smoothing[self.layers[i]].append(s / d)
         return z_values_with_smoothing
 
-    def __create_points(self, coordinates):
+    def __create_points(self, coordinates, nb_points):
         """
             Add some points in order to reach roughly the allowed
             number of points.
@@ -191,14 +204,14 @@ class Profile(ProfileValidation):
         # checking if total distance divided by resolution is an amount of point smaller or equals to
         # max number of points allowed
         verified_resolution = self.resolution
-        if total_distance / self.resolution + len(coordinates) > self.nb_points_max:
+        if total_distance / self.resolution + len(coordinates) > nb_points:
             # if greater, calculate a new resolution that will results in a fewer amount of points
             # we return a special http code for this case (see https://github.com/geoadmin/service-alti/issues/43)
             # if the user has provided a custom resolution, we notify him that we had to change it by returning
             # HTTP 203 as a response
             if self.is_custom_resolution:
                 self.request.response.status = 203
-            verified_resolution = total_distance / (self.nb_points_max - len(coordinates))
+            verified_resolution = total_distance / (nb_points - len(coordinates))
 
         # filling each segment with points spaced by 'verified_resolution'
         result = []
