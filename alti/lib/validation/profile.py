@@ -68,9 +68,11 @@ class ProfileValidation(object):
 
     @nb_points.setter
     def nb_points(self, value):
-        print "value is : " + repr(value) + " is int : " + repr(isinstance(value, int))
         if value is None:
             self._nb_points = self.nb_points_default
+        elif (isinstance(value, int) or value.isdigit()) and int(value) <= 1:
+            raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points' greater "
+                                 "or equal to 2")
         elif (isinstance(value, int) or value.isdigit()) and int(value) <= self.nb_points_max:
             self._nb_points = int(value)
         else:
@@ -88,7 +90,6 @@ class ProfileValidation(object):
         if value is None:
             self._offset = 3
         else:
-            print value
             if value.isdigit():
                 self._offset = int(value)
             else:

@@ -20,7 +20,8 @@ class Profile(ProfileValidation):
 
     def __init__(self, request):
         super(Profile, self).__init__()
-        self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', PROFILE_MAX_AMOUNT_POINTS))
+        self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum',
+                                                               PROFILE_MAX_AMOUNT_POINTS))
         self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default',
                                                                    PROFILE_DEFAULT_AMOUNT_POINTS))
 
@@ -45,10 +46,13 @@ class Profile(ProfileValidation):
         # number of points wanted in the final profile.
         if 'nbPoints' in request.params:
             self.nb_points = request.params.get('nbPoints')
+            self.is_custom_nb_points = True
         elif 'nb_points' in request.params:
             self.nb_points = request.params.get('nb_points')
+            self.is_custom_nb_points = True
         else:
             self.nb_points = self.nb_points_default
+            self.is_custom_nb_points = False
 
         # param sr (or projection, sr meaning spatial reference), which Swiss projection to use.
         # Possible values are expressed in int, so value for EPSG:2056 (LV95) is 2056
@@ -87,6 +91,12 @@ class Profile(ProfileValidation):
             self.only_requested_points = bool(request.params.get('only_requested_points'))
         else:
             self.only_requested_points = False
+
+        # param distinct_points, which if set true will add the points given in param geom into the profile
+        if 'distinct_points' in request.params:
+            self.distinct_points = bool(request.params.get('distinct_points'))
+        else:
+            self.distinct_points = False
 
         # keeping the request for later use
         self.request = request
@@ -184,9 +194,14 @@ class Profile(ProfileValidation):
 
     def __create_points(self, coordinates, nb_points):
         """
-            Add some points in order to reach roughly the allowed
-            number of points.
+            Add some points in order to reach the requested number of points. Points will be added as close as possible
+            as to not exceed the altitude model meshing (which is 2 meters).
         """
+
+        # if param distinct_points is True, we count how many coordinates we have received in geom and adapt
+        # resolution accordingly (to reach nb_points), if set to False we count two extra points (one for the first and
+        # one for last point, which will be included anyway)
+        nb_extra_points = len(coordinates) if self.distinct_points is True else 2
 
         # calculate total distance for the entire geom
         total_distance = 0
@@ -196,38 +211,78 @@ class Profile(ProfileValidation):
                 total_distance += Profile.__distance_between(previous_coordinate, coordinate)
             previous_coordinate = coordinate
 
-        if total_distance == 0.0:
+        if total_distance <= 0.0 or len(coordinates) >= nb_points:
             return coordinates
 
-        total_distance = filter_distance(total_distance)
-
         # checking if total distance divided by resolution is an amount of point smaller or equals to
-        # max number of points allowed
+        # number of points requested
         verified_resolution = self.resolution
-        if total_distance / self.resolution + len(coordinates) > nb_points:
-            # if greater, calculate a new resolution that will results in a fewer amount of points
+        if total_distance / self.resolution + nb_extra_points > nb_points:
+            # if greater, calculate a new resolution that will match the requested amount of points
             # we return a special http code for this case (see https://github.com/geoadmin/service-alti/issues/43)
-            # if the user has provided a custom resolution, we notify him that we had to change it by returning
-            # HTTP 203 as a response
-            if self.is_custom_resolution:
+            # if the user has provided a custom resolution, or a specific number of points
+            # we notify him that we had to change it by returning HTTP 203 as a response
+            if self.is_custom_resolution or self.is_custom_nb_points:
                 self.request.response.status = 203
-            verified_resolution = total_distance / (nb_points - len(coordinates))
+            verified_resolution = round(total_distance / (nb_points - nb_extra_points), 3)
 
         # filling each segment with points spaced by 'verified_resolution'
+        # here's a quick recap on how it works
+        # geom: p1 - - - - - - - - - p2 - - - - - - - - - - p3
+        # result: p1 = p = p = p = p = p - p2 - p = p = p = p = p = p = p - p3
+        # where '=' sign means a distance equal to the verified_resolution, the tricky part is the intersection with
+        # p2, where we need to place p2 in the middle of a verified_resolution (sum of both '-' around p2 equals
+        # verified_distance), if we do not do that, the result will have fewer points as required by the param nb_points
+        # whether p2 will be added to the list depends on param 'distinct_points'
         result = []
         previous_coordinate = None
+        # used for keeping the resolution going in between points in the middle of a segment (see p2 above)
+        leftover_distance = 0
         for coordinate in coordinates:
             if previous_coordinate is not None:
                 line = LineString([previous_coordinate, coordinate])
-                line_length = line.length
+                line_length = round(line.length, 3)
                 line_length_covered = 0
+                previous_point = None
+
                 while line_length_covered < line_length:
-                    line_length_covered += verified_resolution
+                    # generating next point along the line
+                    if leftover_distance > 0:
+                        line_length_covered += leftover_distance
+                        leftover_distance = 0
+                    else:
+                        line_length_covered += verified_resolution
                     point_along_line = line.interpolate(line_length_covered)
-                    result.append([point_along_line.x, point_along_line.y])
+
+                    # if this is the last point of the line, we have to remember the distance between the previous
+                    # and the last point, so that we can place the first point of the next segment at exactly
+                    # the resolution (see explanations above)
+                    if previous_point is not None and (line_length_covered + verified_resolution) > line_length:
+                        leftover_distance = round(verified_resolution - LineString([previous_point,
+                                                                                    point_along_line]).length, 3)
+                    previous_point = point_along_line
+
+                    if self.distinct_points is True or leftover_distance == 0:
+                        result.append([filter_coordinate(point_along_line.x),
+                                       filter_coordinate(point_along_line.y)])
+
             else:
-                result.append([coordinate[0], coordinate[1]])
+                # placing the first point of the geom
+                result.append([filter_coordinate(coordinate[0]),
+                               filter_coordinate(coordinate[1])])
+
             previous_coordinate = coordinate
+
+        # placing the last point of the geom in case it wasn't added above (when param distinct_points is False)
+        if self.distinct_points is False:
+            result.append([filter_coordinate(previous_coordinate[0]),
+                           filter_coordinate(previous_coordinate[1])])
+
+        # if we couldn't match nb_points because we were asked for too much point for a small distance (only one point
+        # is placed every two meters) we return HTTP 203
+        if self.is_custom_nb_points and nb_points > len(result):
+            self.request.response.status = 203
+
         return result
 
     def __extract_z_values(self, rasters, coordinates):
@@ -242,8 +297,7 @@ class Profile(ProfileValidation):
     @staticmethod
     def __distance_between(coord1, coord2):
         """Compute the distance between 2 points"""
-        return math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) +
-                         math.pow(coord1[1] - coord2[1], 2.0))
+        return filter_distance(math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) + math.pow(coord1[1] - coord2[1], 2.0)))
 
     @staticmethod
     def __factor(x):
