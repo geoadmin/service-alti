@@ -27,12 +27,12 @@ class TestHeightView(TestsBase):
         self.headers = {'X-SearchServer-Authorized': 'true'}
 
     def test_height_no_sr_assuming_lv03(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '632510.0', 'northing': '170755.0'}, headers=self.headers, status=200)
-        self.assertEqual(resp.json['height'], '567.6')
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
+                             expected_height=HEIGHT_DTM25)
 
     def test_height_no_sr_assuming_lv95(self):
-        resp = self.testapp.get('/rest/services/height', params={'easting': '2632510.0', 'northing': '1170755.0'}, headers=self.headers, status=200)
-        self.assertEqual(resp.json['height'], '567.6')
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV95, 'northing': NORTH_LV95}),
+                             expected_height=HEIGHT_DTM25)
 
     def test_height_no_sr_using_wrong_coordinates(self):
         self.__test_get(params={'easting': '7.66', 'northing': '46.7'},

@@ -24,12 +24,12 @@ class ProfileValidation(object):
         return self._layers
 
     @property
-    def nb_points(self):
-        return self._nb_points
-
-    @property
     def projection(self):
         return self._projection
+
+    @property
+    def nb_points(self):
+        return self._nb_points
 
     @property
     def offset(self):
@@ -66,6 +66,12 @@ class ProfileValidation(object):
             value.sort()
             self._layers = value
 
+    @projection.setter
+    def projection(self, value):
+        if value not in (21781, 2056):
+            raise HTTPBadRequest("Please provide a valid number for the spatial reference system model 21781 or 2056")
+        self._projection = value
+
     @nb_points.setter
     def nb_points(self, value):
         if value is None:
@@ -78,12 +84,6 @@ class ProfileValidation(object):
         else:
             raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
                                  " smaller than {}".format(self.nb_points_max))
-
-    @projection.setter
-    def projection(self, value):
-        if value not in (21781, 2056):
-            raise HTTPBadRequest("Please provide a valid number for the spatial reference system model 21781 or 2056")
-        self._projection = value
 
     @offset.setter
     def offset(self, value):
