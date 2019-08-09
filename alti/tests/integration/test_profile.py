@@ -266,7 +266,7 @@ class TestProfileView(TestsBase):
         self.assertTrue(resp.content_type == 'application/json')
 
     def test_profile_lv95_nb_points_exceeds_resolution_meshing(self):
-        resp = self.__get_json_profile(params={'geom': '{"type": "LineString", "coordinates": [[2601180.3, 1196948.3], [2601148.4, 1196914.8]]}',
+        resp = self.__get_json_profile(params={'geom': TestProfileView.__LINESTRING_VALID_LV95,
                                                'nb_points': 150},
                                        expected_status=203)
         self.assertTrue(resp.content_type == 'application/json')
