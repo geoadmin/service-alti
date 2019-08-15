@@ -100,7 +100,7 @@ class TestProfileView(TestsBase):
         self.assertEqual(resp.content_type, 'application/json')
         second_point = resp.json[1]
         self.assertEqual(second_point['dist'], 40.4)
-        self.assertEqual(second_point['alts']['DTM25'], 567.9)
+        self.assertEqual(second_point['alts']['DTM25'], 568.4)
         self.assertEqual(second_point['alts']['DTM2'], 568.5)
         self.assertEqual(second_point['easting'], 630032.323)
         self.assertEqual(second_point['northing'], 170024.242)

@@ -28,7 +28,8 @@ node(label: "jenkins-slave") {
   }
   finally {
     stage("Clean") {
-      cleanWs()
+      sh 'make cleanall'
+      sh 'git clean -dx --force'
     }
   }
 }
