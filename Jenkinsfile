@@ -7,11 +7,14 @@ node(label: "jenkins-slave") {
       checkout scm
     }
     stage("Build") {
-      sh 'source rc_ci && make cleanall all'
+      sh 'source rc_ci && make cleanall setup templates'
       echo sh(returnStdout: true, script: 'env')
     }
     stage("Lint") {
       sh 'make lint'
+    }
+    stage("Fix rights") {
+      sh 'make fixrights'
     }
     stage("Test") {
       parallel (
