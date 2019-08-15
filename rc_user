@@ -3,7 +3,7 @@ export USERNAME=$(whoami)
 export APACHE_BASE_PATH=$USERNAME
 export API_URL=//mf-chsdi3.dev.bgdi.ch/$USERNAME
 export MODWSGI_CONFIG=development.ini
-export DTM_BASE_PATH=/var/local/geodata/bund/swisstopo/
+export DTM_BASE_PATH=${PWD}/data/
 if [ -f rc_user_$USERNAME ]; then
   echo 'Sourcing:'
   echo rc_user_$USERNAME
