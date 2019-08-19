@@ -165,7 +165,7 @@ class TestProfileView(TestsBase):
                                                'nb_points': '150'},
                                        expected_status=203)
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertGreaterEqual(len(resp.json), 150)
+        self.assertNotEqual(len(resp.json), 150)
 
     def test_profile_lv03_json_simplify_linestring(self):
         resp = self.__get_json_profile(params={'geom': create_json(4, 21781),
@@ -174,7 +174,7 @@ class TestProfileView(TestsBase):
         self.assertEqual(resp.content_type, 'application/json')
 
     def test_profile_lv03_json_nbPoints(self):
-        resp = self.__get_json_profile(params={'geom': create_json(4, 21781),
+        resp = self.__get_json_profile(params={'geom': LINESTRING_SMALL_LINE_LV03,
                                                'nbPoints': '150'},
                                        expected_status=203)
 
@@ -266,7 +266,7 @@ class TestProfileView(TestsBase):
         self.assertTrue(resp.content_type == 'application/json')
 
     def test_profile_lv95_nb_points_exceeds_resolution_meshing(self):
-        resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV95,
+        resp = self.__get_json_profile(params={'geom': LINESTRING_SMALL_LINE_LV95,
                                                'nb_points': 150},
                                        expected_status=203)
         self.assertTrue(resp.content_type == 'application/json')
