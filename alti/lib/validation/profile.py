@@ -3,7 +3,7 @@
 import geojson
 from pyramid.httpexceptions import HTTPBadRequest
 
-from shapely.geometry import asShape
+from shapely.geometry import shape
 
 
 class ProfileValidation(object):
@@ -44,15 +44,15 @@ class ProfileValidation(object):
         except ValueError:
             raise HTTPBadRequest("Error loading geometry in JSON string")
         try:
-            shape = asShape(geom)
+            geomToShape = shape(geom)
         except Exception:
             raise HTTPBadRequest("Error converting JSON to Shape")
         try:
-            shape.is_valid
+            geomToShape.is_valid
         except Exception:
             raise HTTPBadRequest("Invalid Linestring syntax")
 
-        self._linestring = shape
+        self._linestring = geomToShape
 
     @layers.setter
     def layers(self, value):

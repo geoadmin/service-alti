@@ -27,8 +27,8 @@ apache_entry_path = ${apache_entry_path}
 address_search_referers = localhost,admin.ch,awk.ch,cadastre.ch,rspp.ch,rollstuhlparkplatz.ch,placehandicape.ch,parcheggiodisabili.chi,zh.ch
 http_proxy = ${http_proxy}
 
-profile_nb_points_default = 200
-profile_nb_points_maximum = 500
+profile_nb_points_default = 2000
+profile_nb_points_maximum = 5000
 
 ###
 # wsgi server configuration

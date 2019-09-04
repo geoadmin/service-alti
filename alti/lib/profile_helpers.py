@@ -1,13 +1,14 @@
 import math
 
 from shapely.geometry import LineString
+from scipy.spatial.distance import pdist, squareform
 
 from alti.lib.raster.georaster import get_raster
 from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
 
 
-PROFILE_MAX_AMOUNT_POINTS = 500
-PROFILE_DEFAULT_AMOUNT_POINTS = 200
+PROFILE_MAX_AMOUNT_POINTS = 10000
+PROFILE_DEFAULT_AMOUNT_POINTS = 2000
 
 
 def get_profile(geom=None,
@@ -15,8 +16,6 @@ def get_profile(geom=None,
                 layers=None,
                 nb_points=PROFILE_DEFAULT_AMOUNT_POINTS,
                 offset=0,
-                resolution=2,
-                distinct_points=False,
                 only_requested_points=False,
                 output_to_json=True):
     """Compute the alt=fct(dist) array and store it in c.points"""
@@ -32,26 +31,18 @@ def get_profile(geom=None,
         # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
         # a 2m mesh, so no need to go beyond that)
         coordinates = __create_points(coordinates=geom.coords,
-                                      nb_points=nb_points,
-                                      resolution=resolution,
-                                      distinct_points=distinct_points)
+                                      nb_points=nb_points)
 
     # extract z values (altitude over distance) for coordinates
-    z_values = __extract_z_values(layers, rasters, coordinates)
+    z_values = __extract_z_values(layers=layers,
+                                  rasters=rasters,
+                                  coordinates=coordinates)
 
     return __create_profile(layers=layers,
                             coordinates=coordinates,
                             # if offset is defined, do the smoothing
                             z_values=__smooth(layers, offset, z_values) if offset > 0 else z_values,
                             output_to_json=output_to_json)
-
-
-def is_resolution_possible_with_nb_points(coordinates, nb_points, resolution, distinct_points=False):
-    verified_resolution = __compute_resolution(coordinates=coordinates,
-                                               nb_points=nb_points,
-                                               resolution=resolution,
-                                               distinct_points=distinct_points)
-    return verified_resolution == resolution
 
 
 def __create_profile(layers, coordinates, z_values, output_to_json):
@@ -73,8 +64,7 @@ def __create_profile(layers, coordinates, z_values, output_to_json):
         alts = {}
         for i in xrange(0, len(layers)):
             if z_values[layers[i]][j] is not None:
-                alts[layers[i]] = filter_altitude(
-                    z_values[layers[i]][j])
+                alts[layers[i]] = filter_altitude(z_values[layers[i]][j])
         if len(alts) > 0:
             rounded_dist = filter_distance(total_distance)
             if output_to_json:
@@ -96,34 +86,7 @@ def __create_profile(layers, coordinates, z_values, output_to_json):
     return profile
 
 
-def __compute_resolution(coordinates, nb_points, resolution, distinct_points=False):
-
-    # if param distinct_points is True, we count how many coordinates we have received in geom and adapt
-    # resolution accordingly (to reach nb_points), if set to False we count two extra points (one for the first and
-    # one for last point, which will be included anyway)
-    nb_extra_points = len(coordinates) if distinct_points is True else 2
-
-    # calculate total distance for the entire geom
-    total_distance = 0
-    previous_coordinate = None
-    for coordinate in coordinates:
-        if previous_coordinate is not None:
-            total_distance += __distance_between(previous_coordinate, coordinate)
-        previous_coordinate = coordinate
-
-    # checking if total distance divided by resolution is an amount of point smaller or equals to
-    # number of points requested
-    if total_distance / resolution + nb_extra_points > nb_points:
-        # if greater, calculate a new resolution that will match the requested amount of points
-        # we return a special http code for this case (see https://github.com/geoadmin/service-alti/issues/43)
-        # if the user has provided a custom resolution, or a specific number of points
-        # we notify him that we had to change it by returning HTTP 203 as a response
-        return round(total_distance / (nb_points - nb_extra_points), 3)
-    else:
-        return round(resolution, 3)
-
-
-def __create_points(coordinates, nb_points, resolution, distinct_points):
+def __create_points(coordinates, nb_points):
     """
         Add some points in order to reach the requested number of points. Points will be added as close as possible
         as to not exceed the altitude model meshing (which is 2 meters).
@@ -132,75 +95,76 @@ def __create_points(coordinates, nb_points, resolution, distinct_points):
     if len(coordinates) >= nb_points:
         return coordinates
 
-    # checking if total distance divided by resolution is an amount of point smaller or equals to
-    # number of points requested
-    verified_resolution = __compute_resolution(coordinates=coordinates,
-                                               nb_points=nb_points,
-                                               resolution=resolution,
-                                               distinct_points=distinct_points)
+    # calculating distances between each points, and total distance
+    distances_squareform = squareform(pdist(coordinates))
+    amount_distances = len(distances_squareform)
+    distances = [0] * (amount_distances - 1)
+    for i in range(0, amount_distances - 1):
+        distances[i] = distances_squareform[i][i + 1]
+    total_distance = sum(distances)
+    # total_distance will be used as a divisor later, we have to check it's not zero
+    if total_distance == 0:
+        return coordinates
 
-    # filling each segment with points spaced by 'verified_resolution'
-    # here's a quick recap on how it works
-    # geom: p1 - - - - - - - - - p2 - - - - - - - - - - p3
-    # result: p1 = p = p = p = p = p - p2 - p = p = p = p = p = p = p - p3
-    # where '=' sign means a distance equal to the verified_resolution, the tricky part is the intersection with
-    # p2, where we need to place p2 in the middle of a verified_resolution (sum of both '-' around p2 equals
-    # verified_distance), if we do not do that, the result will have fewer points as required by the param nb_points
-    # whether p2 will be added to the list depends on param 'distinct_points'
     result = []
     previous_coordinate = None
-    # used for keeping the resolution going in between points in the middle of a segment (see p2 above)
-    leftover_distance = 0
-    for coordinate in coordinates:
+    # for each segment, we will add points in between on a prorata basis (longer segments will have more points)
+    for i in range(0, len(coordinates)):
         if previous_coordinate is not None:
-            line = LineString([previous_coordinate, coordinate])
-            line_length = round(line.length, 3)
-            line_length_covered = 0
-            previous_point = None
-
-            while line_length_covered < line_length:
-                # generating next point along the line
-                if leftover_distance > 0:
-                    line_length_covered += leftover_distance
-                    leftover_distance = 0
-                else:
-                    line_length_covered += verified_resolution
-                point_along_line = line.interpolate(line_length_covered)
-
-                # if this is the last point of the line, we have to remember the distance between the previous
-                # and the last point, so that we can place the first point of the next segment at exactly
-                # the resolution (see explanations above)
-                if previous_point is not None and (line_length_covered + verified_resolution) > line_length:
-                    leftover_distance = round(verified_resolution - LineString([previous_point,
-                                                                                point_along_line]).length, 3)
-                previous_point = point_along_line
-
-                if distinct_points is True or leftover_distance == 0:
-                    result.append([filter_coordinate(point_along_line.x),
-                                   filter_coordinate(point_along_line.y)])
-
-        else:
-            # placing the first point of the geom
-            result.append([filter_coordinate(coordinate[0]),
-                           filter_coordinate(coordinate[1])])
-
-        previous_coordinate = coordinate
-
-    # placing the last point of the geom in case it wasn't added above (when param distinct_points is False)
-    if distinct_points is False:
-        result.append([filter_coordinate(previous_coordinate[0]),
-                       filter_coordinate(previous_coordinate[1])])
+            result.append(previous_coordinate)
+            # preparing segment properties before placing points
+            segment_length = distances[i - 1]
+            # if segment length is smaller than tiles resolution (2m) we don't add extra points
+            if segment_length > 2:
+                segment = LineString([previous_coordinate, coordinates[i]])
+                # here is the prorata ratio : if a segment makes X% of the total length, X% of total points will
+                # be added to this segment
+                ratio_distance = segment_length / total_distance
+                # rounding number of points down to the closest integer (casting to int will ignore anything after coma)
+                nb_points_for_this_segment = int(nb_points * ratio_distance)
+                # little protection against division by zero
+                if nb_points_for_this_segment > 0:
+                    segment_resolution = segment_length / nb_points_for_this_segment
+                    # if segment resolution is smaller than 2m, we force the resolution as it's wasteful to go below
+                    if segment_resolution < 2:
+                        segment_resolution = 2
+                    segment_length_covered = 0
+                    nb_points_placed = 0
+                    while not nb_points_placed == nb_points_for_this_segment \
+                            and segment_length_covered < segment_length:
+                        nb_points_placed += 1
+                        segment_length_covered += segment_resolution
+                        new_point = segment.interpolate(nb_points_placed * segment_resolution)
+                        result.append([new_point.x, new_point.y])
+        previous_coordinate = coordinates[i]
 
     return result
 
 
 def __extract_z_values(layers, rasters, coordinates):
     z_values = {}
+    # keeping track of tiles that have been used for another coordinates (usually coordinates are close together)
+    # this way we increase our chances to find the required tile without looking on the whole country tiles
+    tiles = []
     for i in xrange(0, len(layers)):
         z_values[layers[i]] = []
         for j in xrange(0, len(coordinates)):
-            z = rasters[i].getVal(coordinates[j][0], coordinates[j][1])
+            x = coordinates[j][0]
+            y = coordinates[j][1]
+            z = None
+            # looking into already used tile if this point is not included
+            for already_used_tile in tiles:
+                if already_used_tile.contains(x, y):
+                    z = already_used_tile.get_height_for_coordinate(x, y)
+                    break
+            if z is None:
+                tile = rasters[i].get_tile(x, y)
+                tiles.append(tile)
+                z = tile.get_height_for_coordinate(x, y)
             z_values[layers[i]].append(z)
+    # at the end we close all tile files
+    for tile in tiles:
+        tile.close_file()
     return z_values
 
 

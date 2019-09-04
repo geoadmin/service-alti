@@ -4,7 +4,7 @@ import json
 import random
 from shapely.geometry import Point, LineString, mapping
 from alti.tests.integration import TestsBase
-from alti.views.profile import PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
+from alti.lib.profile_helpers import PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
 
 
 def generate_random_coord(srid):
@@ -88,10 +88,10 @@ class TestProfileView(TestsBase):
         self.assertEqual(first_point['easting'], 630000)
         self.assertEqual(first_point['northing'], 170000)
         second_point = resp.json[1]
-        self.assertEqual(second_point['dist'], 40.4)
-        self.assertEqual(second_point['alts']['COMB'], 568.5)
-        self.assertEqual(second_point['easting'], 630032.323)
-        self.assertEqual(second_point['northing'], 170024.242)
+        self.assertEqual(second_point['dist'], 4)
+        self.assertEqual(second_point['alts']['COMB'], 567.4)
+        self.assertEqual(second_point['easting'], 630003.2)
+        self.assertEqual(second_point['northing'], 170002.4)
 
     def test_profile_lv03_json_2_models(self):
         resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV03,
@@ -99,11 +99,11 @@ class TestProfileView(TestsBase):
                                        expected_status=200)
         self.assertEqual(resp.content_type, 'application/json')
         second_point = resp.json[1]
-        self.assertEqual(second_point['dist'], 40.4)
-        self.assertEqual(second_point['alts']['DTM25'], 568.4)
-        self.assertEqual(second_point['alts']['DTM2'], 568.5)
-        self.assertEqual(second_point['easting'], 630032.323)
-        self.assertEqual(second_point['northing'], 170024.242)
+        self.assertEqual(second_point['dist'], 4)
+        self.assertEqual(second_point['alts']['DTM25'], 567.4)
+        self.assertEqual(second_point['alts']['DTM2'], 567.4)
+        self.assertEqual(second_point['easting'], 630003.2)
+        self.assertEqual(second_point['northing'], 170002.4)
 
     def test_profile_lv03_layers(self):
         resp = self.__get_json_profile(params={'geom': create_json(4, 21781),
@@ -227,7 +227,7 @@ class TestProfileView(TestsBase):
     def test_profile_lv03_json_invalid_linestring(self):
         resp = self.__get_json_profile(params={'geom': '{"type":"LineString","coordinates":[[550050,206550]]}'},
                                        expected_status=400)
-        resp.mustcontain('Invalid Linestring syntax')
+        resp.mustcontain('Error converting JSON to Shape')
 
     def test_profile_lv03_json_offset(self):
         resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV03,
@@ -257,12 +257,6 @@ class TestProfileView(TestsBase):
     def test_profile_lv95(self):
         resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV95},
                                        expected_status=200)
-        self.assertTrue(resp.content_type == 'application/json')
-
-    def test_profile_lv95_with_resolution_too_big(self):
-        resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV95,
-                                               'resolution': 3},
-                                       expected_status=203)
         self.assertTrue(resp.content_type == 'application/json')
 
     def test_profile_lv95_nb_points_exceeds_resolution_meshing(self):
