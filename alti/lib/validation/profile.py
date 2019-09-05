@@ -56,7 +56,7 @@ class ProfileValidation(object):
 
     @linestring.setter
     def linestring(self, value):
-        if value is None:
+        if value is None or value == '':
             raise HTTPBadRequest("Missing parameter geom")
         try:
             geom = geojson.loads(value, object_hook=geojson.GeoJSON.to_instance)
