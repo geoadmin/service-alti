@@ -1,18 +1,3 @@
-function buildUrl(url, parameters) {
-    let qs = "";
-    for (const key in parameters) {
-        if (parameters.hasOwnProperty(key)) {
-            const value = parameters[key];
-            qs +=
-                encodeURIComponent(key) + "=" + encodeURIComponent(value) + "&";
-        }
-    }
-    if (qs.length > 0) {
-        qs = qs.substring(0, qs.length - 1); //chop off last "&"
-        url = url + "?" + qs;
-    }
-    return url;
-}
 
 function reverseProfile(profile) {
     let reversedProfile = $.extend(true, [], profile).reverse();
@@ -33,12 +18,16 @@ function trendDifference(trendPreOverhaul, trendPostOverhaul) {
 }
 
 function getProfile(wanderwegMetadata, callback) {
-    fetch(buildUrl('http://10.220.4.219/rest/services/profile.json', {
-        'geom': JSON.stringify(wanderwegMetadata.geojson),
-        'elevation_models': 'COMB',
-        'projection': 2056,
-        'offset': 0
-    }))
+    const urlParams = '?elevation_models=COMB&projection=2056&offset=0';
+    const requestConfig = {
+        method: 'POST',
+        headers: {
+            'Referer': 'http://service-alti.int.bgdi.ch/'
+        },
+        body: JSON.stringify(wanderwegMetadata.geojson)
+    };
+    const startTimePreOverhaul = moment();
+    fetch('http://service-alti.int.bgdi.ch/ltbtp_geojson_in_body/rest/services/profile.json' + urlParams, requestConfig)
     .then(response => response.json())
     .then(profile => {
         const time = hikingTime(profile),
@@ -52,42 +41,43 @@ function getProfile(wanderwegMetadata, callback) {
                 'startToFinish': startToFinishDeltaWithOfficial,
                 'finishToStart': finishToStartDeltaWithOfficial,
             },
-        }
-    });
-    fetch(buildUrl('rest/services/profile.json', {
-        'geom': JSON.stringify(wanderwegMetadata.geojson),
-        'elevation_models': 'COMB',
-        'projection': 2056,
-        'offset': 0
-    }))
-    .then(response => {
-        if (!response.ok) throw Error(response.status); else return response;
-    })
-    .then(response => response.json())
-    .then(profile => {
-        wanderwegMetadata.profile = profile;
-        const time = hikingTime(profile),
-              timeReversed = hikingTime(reverseProfile(profile)),
-              startToFinishDeltaWithOfficial = Math.abs(wanderwegMetadata.officialTime.startToFinish - time),
-              finishToStartDeltaWithOfficial = Math.abs(wanderwegMetadata.officialTime.finishToStart - timeReversed);
-        wanderwegMetadata.geoadminHikingTime = {
-            'startToFinish': time,
-            'finishToStart': timeReversed,
-            'deltaWithOfficial': {
-                'startToFinish': startToFinishDeltaWithOfficial,
-                'finishToStart': finishToStartDeltaWithOfficial,
-            },
-            'trend': {
-                'startToFinish': trendDifference(wanderwegMetadata.timePreOverhaul.deltaWithOfficial.startToFinish, startToFinishDeltaWithOfficial),
-                'finishToStart': trendDifference(wanderwegMetadata.timePreOverhaul.deltaWithOfficial.finishToStart, finishToStartDeltaWithOfficial)
-            }
+            'timeForRequest': moment.duration(moment().diff(startTimePreOverhaul))
         };
-        callback();
-    })
-    .catch(error => {
-        console.log('Error while requesting profile for "' + wanderwegMetadata.name + '"', error);
-        callback();
-    })
+        // requesting post overhaul profile
+        const startTimePostOverhaul = moment();
+        fetch('rest/services/profile.json' + urlParams, requestConfig)
+        .then(response => {
+            if (!response.ok) throw Error(response.status); else return response;
+        })
+        .then(response => response.json())
+        .then(profile => {
+            wanderwegMetadata.profile = profile;
+            const time = hikingTime(profile),
+                  timeReversed = hikingTime(reverseProfile(profile)),
+                  startToFinishDeltaWithOfficial = Math.abs(wanderwegMetadata.officialTime.startToFinish - time),
+                  finishToStartDeltaWithOfficial = Math.abs(wanderwegMetadata.officialTime.finishToStart - timeReversed),
+                  timeForRequest = moment.duration(moment().diff(startTimePostOverhaul));
+            wanderwegMetadata.geoadminHikingTime = {
+                'startToFinish': time,
+                'finishToStart': timeReversed,
+                'deltaWithOfficial': {
+                    'startToFinish': startToFinishDeltaWithOfficial,
+                    'finishToStart': finishToStartDeltaWithOfficial,
+                },
+                'timeForRequest': timeForRequest,
+                'trend': {
+                    'startToFinish': trendDifference(wanderwegMetadata.timePreOverhaul.deltaWithOfficial.startToFinish, startToFinishDeltaWithOfficial),
+                    'finishToStart': trendDifference(wanderwegMetadata.timePreOverhaul.deltaWithOfficial.finishToStart, finishToStartDeltaWithOfficial),
+                    'timeForRequest': () => timeForRequest - wanderwegMetadata.timePreOverhaul.timeForRequest
+                }
+            };
+            callback();
+        })
+        .catch(error => {
+            console.log('Error while requesting profile for "' + wanderwegMetadata.name + '"', error);
+            callback();
+        })
+    });
 }
 
 const app = new Vue({
@@ -113,7 +103,7 @@ const app = new Vue({
                     let pendingRequestsCounter = 0;
                     let finishedRequestsCounter = 0;
                     const maxConcurrentRequests = 1;
-                    const debug_nb_request_max = 3; //json.length;
+                    const debug_nb_request_max = 100; //json.length;
 
                     const _getProfileRecurse = () => {
                         if (pendingRequestsCounter === 0 && currentIndex < debug_nb_request_max - 1) {

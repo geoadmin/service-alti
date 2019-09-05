@@ -23,6 +23,7 @@
                         <th colspan="2">Official (ASTRA) [minutes]</th>
                         <th colspan="3">Geoadmin pre-overhaul [minutes]</th>
                         <th colspan="4">Geoadmin post-overhaul [minutes]</th>
+                        <th colspan="3">Request time [ms]</th>
                     </tr>
                     <tr>
                         <th>Name</th>
@@ -34,6 +35,9 @@
                         <th>s &#8614; f</th>
                         <th>f &#8614; s</th>
                         <th>&Delta; official</th>
+                        <th>trend</th>
+                        <th>Pre-overhaul</th>
+                        <th>Post-overhaul</th>
                         <th>trend</th>
                     </tr>
                 </thead>
@@ -59,10 +63,21 @@
                                 {{ data.geoadminHikingTime.trend.finishToStart }}
                             </span>
                         </td>
+                        <td v-if="data.timePreOverhaul.timeForRequest">{{ data.timePreOverhaul.timeForRequest.asMilliseconds() }}</td>
+                        <td v-if="data.geoadminHikingTime">{{ data.geoadminHikingTime.timeForRequest.asMilliseconds() }}</td>
+                        <td v-if="data.geoadminHikingTime && data.timePreOverhaul.timeForRequest">
+                            <span v-bind:class="{ 'text-danger': data.geoadminHikingTime.trend.timeForRequest() > 0, 'text-success': data.geoadminHikingTime.trend.timeForRequest() < 0 }">
+                                <i class="fas" v-bind:class="{ 'fa-arrow-up': data.geoadminHikingTime.trend.timeForRequest() > 0, 'fa-arrow-down': data.geoadminHikingTime.trend.timeForRequest() < 0 }"></i>
+                                {{ data.geoadminHikingTime.trend.timeForRequest() }}
+                            </span>
+                        </td>
                         <td v-if="!data.geoadminHikingTime">N/A</td>
                         <td v-if="!data.geoadminHikingTime">N/A</td>
                         <td v-if="!data.geoadminHikingTime">N/A</td>
                         <td v-if="!data.geoadminHikingTime">N/A</td>
+                        <td v-if="!data.timePreOverhaul.timeForRequest">N/A</td>
+                        <td v-if="!data.geoadminHikingTime">N/A</td>
+                        <td v-if="!data.geoadminHikingTime || !data.timePreOverhaul.timeForRequest">N/A</td>
                     </tr>
                 </tbody>
             </table>
@@ -72,6 +87,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
+    <script src="https://momentjs.com/downloads/moment-with-locales.js"></script>
     <script src="https://kit.fontawesome.com/94b67b71c9.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue"></script>
     <script src="./static/stats/app.js"></script>
