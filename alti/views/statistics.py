@@ -4,6 +4,9 @@ from pyramid.view import view_config
 from pyramid.response import Response
 from pyramid.renderers import render_to_response
 
+import logging
+log = logging.getLogger('alti')
+
 # DATA_FOLDER = "/home/ltbtp/hikingtime_evaluation/"
 DATA_FOLDER = "/var/local/geodata/bund/swisstopo/swissalti3d/hikingtime_analysis/"
 
@@ -60,5 +63,8 @@ class StatisticsView(object):
 
     @view_config(route_name='stats_data')
     def stats_data(self):
-        metadata = load_json("metadata.json")
-        return Response(body=prepare_data(metadata), status=200)
+        try:
+            metadata = load_json("metadata.json")
+            return Response(body=prepare_data(metadata), status=200)
+        except Exception as e:
+            log.error('Error while loading statistic data (Exception: %s)' % e)
