@@ -27,7 +27,7 @@ function getProfile(wanderwegMetadata, callback) {
         body: JSON.stringify(wanderwegMetadata.geojson)
     };
     const startTimePreOverhaul = moment();
-    fetch('http://service-alti.int.bgdi.ch/ltbtp_geojson_in_body/rest/services/profile.json' + urlParams, requestConfig)
+    fetch('http://10.220.4.219/ltbtp_geojson_in_body/rest/services/profile.json' + urlParams, requestConfig)
     .then(response => response.json())
     .then(profile => {
         const time = hikingTime(profile),
