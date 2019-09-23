@@ -93,7 +93,8 @@ def __create_points(coordinates, nb_points):
     """
 
     if len(coordinates) >= nb_points:
-        return coordinates
+        # Simplify input line with a tolerance of 2 m
+        return LineString(coordinates).simplify(12.5).coords
 
     # calculating distances between each points, and total distance
     distances_squareform = squareform(pdist(coordinates))
