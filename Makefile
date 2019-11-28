@@ -250,8 +250,9 @@ requirements.txt:
 	@echo "${GREEN}Setting up virtual environement...${RESET}";
 	@if [ ! -d $(INSTALL_DIRECTORY) ]; \
 	then \
-		virtualenv $(INSTALL_DIRECTORY); \
-		${PIP_CMD} install --upgrade pip==9.0.1 setuptools --index-url ${PYPI_URL} ; \
+# forcing python to version 2.7 while waiting for upgrade to python 3.X
+		virtualenv -p /usr/bin/python2.7 $(INSTALL_DIRECTORY); \
+		${PIP_CMD} install --upgrade pip==19.3.1 setuptools --index-url ${PYPI_URL} ; \
 	fi
 	${PIP_CMD} install --index-url ${PYPI_URL} -e .
 
