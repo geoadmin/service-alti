@@ -264,3 +264,4 @@ class TestProfileView(TestsBase):
                                                'nb_points': 150},
                                        expected_status=203)
         self.assertTrue(resp.content_type == 'application/json')
+        self.assertNotEqual(len(resp.json), 150)

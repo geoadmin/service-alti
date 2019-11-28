@@ -1,3 +1,5 @@
+const newBranchName = 'ltbtp_profile_cleanup';
+
 
 function reverseProfile(profile) {
     let reversedProfile = $.extend(true, [], profile).reverse();
@@ -27,7 +29,7 @@ function getProfile(wanderwegMetadata, callback) {
         body: JSON.stringify(wanderwegMetadata.geojson)
     };
     const startTimePreOverhaul = moment();
-    fetch('http://10.220.4.219/ltbtp_geojson_in_body/rest/services/profile.json' + urlParams, requestConfig)
+    fetch('http://service-alti.int.bgdi.ch/rest/services/profile.json' + urlParams, requestConfig)
     .then(response => response.json())
     .then(profile => {
         const time = hikingTime(profile),
@@ -45,7 +47,7 @@ function getProfile(wanderwegMetadata, callback) {
         };
         // requesting post overhaul profile
         const startTimePostOverhaul = moment();
-        fetch('rest/services/profile.json' + urlParams, requestConfig)
+        fetch('http://service-alti.int.bgdi.ch/' + newBranchName + '/rest/services/profile.json' + urlParams, requestConfig)
         .then(response => {
             if (!response.ok) throw Error(response.status); else return response;
         })
