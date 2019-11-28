@@ -3,7 +3,7 @@ SHELL = /bin/bash
 APACHE_ENTRY_PATH := $(shell if [ '$(APACHE_BASE_PATH)' = 'main' ]; then echo ''; else echo /$(APACHE_BASE_PATH); fi)
 KEEP_VERSION ?= 'false'
 LAST_VERSION := $(shell if [ -f '.venv/last-version' ]; then cat .venv/last-version 2> /dev/null; else echo '-none-'; fi)
-VERSION := $(shell if [ '$(KEEP_VERSION)' = 'true' ] && [ '$(LAST_VERSION)' != '-none-' ]; then echo $(LAST_VERSION); else python -c "print __import__('time').strftime('%s')"; fi)
+VERSION := $(shell if [ '$(KEEP_VERSION)' = 'true' ] && [ '$(LAST_VERSION)' != '-none-' ]; then echo $(LAST_VERSION); else date '+%Y%m%d%H%M' fi)
 BRANCH_STAGING := $(shell if [ '$(DEPLOY_TARGET)' = 'dev' ]; then echo 'test'; else echo 'integration'; fi)
 BRANCH_TO_DELETE :=
 CURRENT_DIRECTORY := $(shell pwd)
