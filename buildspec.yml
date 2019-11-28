@@ -7,6 +7,8 @@ env:
 
 phases:
   install:
+    runtime-versions:
+      python: 3.7
     commands:
       - echo "Installing python 2.7"
       - echo SHELL=$SHELL
