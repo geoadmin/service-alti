@@ -16,7 +16,10 @@ class Profile(ProfileValidation):
         super(Profile, self).__init__()
         self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default', 200))
         self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', 500))
-        self.linestring = request.params.get('geom')
+        if 'geom' in request.params:
+            self.linestring = request.params.get('geom')
+        else:
+            self.linestring = request.body
         if 'layers' in request.params:
             self.layers = request.params.get('layers')
         else:
