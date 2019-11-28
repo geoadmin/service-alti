@@ -52,7 +52,7 @@ phases:
   build:
     commands:
       - echo Build started on $(date)
-      - make cleanall user
+      - source rc_ci && make cleanall all
 
   post_build:
     commands:
