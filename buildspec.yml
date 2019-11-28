@@ -2,7 +2,6 @@ version: 0.2
 
 env:
   variables:
-    SHELL: /bin/bash
     AWS_DEFAULT_REGION: eu-west-1
 
 phases:
@@ -11,13 +10,11 @@ phases:
       python: 3.7
     commands:
       - echo "Installing python 2.7"
-      - echo SHELL=$SHELL
       - apt-get update && apt-get install -y python2.7 python2.7-dev virtualenv
-      - bash --version
 
   pre_build:
     commands:
-      - echo Configuring stuff...
+      - echo "Configuring stuff..."
       - aws --version
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - GITHUB_BRANCH=${CODEBUILD_WEBHOOK_HEAD_REF#refs/heads/*}
@@ -59,4 +56,3 @@ phases:
       - echo Build completed on `date`
       - echo Testing
       - make test
-      - echo "Great success"
