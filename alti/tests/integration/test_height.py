@@ -7,7 +7,7 @@ EAST_LV03, NORTH_LV03 = '632510.0', '170755.0'
 # LV95
 EAST_LV95, NORTH_LV95 = '2632510.0', '1170755.0'
 # Expected results
-HEIGHT_DTM2, HEIGHT_DTM25 = '568.2', '567.6'
+HEIGHT_DTM2, HEIGHT_DTM25, HEIGHT_DTM25_LV95 = '568.2', '567.6', '567.5'
 
 
 class TestHeightView(TestsBase):
@@ -32,7 +32,7 @@ class TestHeightView(TestsBase):
 
     def test_height_no_sr_assuming_lv95(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV95, 'northing': NORTH_LV95}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM25_LV95)
 
     def test_height_no_sr_using_wrong_coordinates(self):
         self.__test_get(params={'easting': '7.66', 'northing': '46.7'},
@@ -52,7 +52,7 @@ class TestHeightView(TestsBase):
 
     def test_height_lv95_valid(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV95, 'northing': NORTH_LV95}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM25_LV95)
 
     def test_height_lv95_outofbound(self):
         self.__test_get(params={'easting': '2200000.1', 'northing': '1780000.1'},
