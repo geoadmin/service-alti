@@ -32,7 +32,13 @@ def create_json(nb_pts, srid=2056):
 ENDPOINT_FOR_JSON_PROFILE = '/rest/services/profile.json'
 ENDPOINT_FOR_CSV_PROFILE = '/rest/services/profile.csv'
 
-LINESTRING_VALID_LV03 = '{\"type\":\"LineString\",\"coordinates\":[[630000, 170000],[634000, 173000],[631000, 173000]]}'
+POINT_1_LV03 = [630000, 170000]
+POINT_2_LV03 = [634000, 173000]
+POINT_3_LV03 = [631000, 173000]
+LINESTRING_VALID_LV03 = '{\"type\":\"LineString\",\"coordinates\":[' \
+                        + str(POINT_1_LV03) + ',' \
+                        + str(POINT_2_LV03) + ',' \
+                        + str(POINT_3_LV03) + ']}'
 
 LINESTRING_VALID_LV95 = '{"type":"LineString","coordinates":[[2629499.8,1170351.9],[2635488.4,1173402.0]]}'
 LINESTRING_SMALL_LINE_LV03 = '{"type":"LineString","coordinates":[[632092.11, 171171.07],[632084.41, 171237.67]]}'
@@ -60,6 +66,15 @@ class TestProfileView(TestsBase):
                                  body,
                                  headers=self.headers,
                                  status=expected_status)
+
+    def __verify_point_is_present(self, response, point, msg="point not present"):
+        self.assertEquals(response.content_type, "application/json")
+        self.assertEqual(len(point), 2, msg="Point must be a [x,y] point")
+        present = False
+        for profile_point in response.json:
+            if point[0] == profile_point['easting'] and point[1] == profile_point['northing']:
+                present = True
+        self.assertTrue(present, msg=msg)
 
     def setUp(self):
         super(TestProfileView, self).setUp()
@@ -92,6 +107,9 @@ class TestProfileView(TestsBase):
         self.assertEqual(second_point['alts']['COMB'], 567.4)
         self.assertEqual(second_point['easting'], 630003.2)
         self.assertEqual(second_point['northing'], 170002.4)
+        self.__verify_point_is_present(resp, POINT_1_LV03)
+        self.__verify_point_is_present(resp, POINT_2_LV03)
+        self.__verify_point_is_present(resp, POINT_3_LV03)
 
     def test_profile_lv03_json_2_models(self):
         resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV03,
@@ -104,6 +122,9 @@ class TestProfileView(TestsBase):
         self.assertEqual(second_point['alts']['DTM2'], 567.4)
         self.assertEqual(second_point['easting'], 630003.2)
         self.assertEqual(second_point['northing'], 170002.4)
+        self.__verify_point_is_present(resp, POINT_1_LV03)
+        self.__verify_point_is_present(resp, POINT_2_LV03)
+        self.__verify_point_is_present(resp, POINT_3_LV03)
 
     def test_profile_lv03_layers(self):
         resp = self.__get_json_profile(params={'geom': create_json(4, 21781),
@@ -126,9 +147,10 @@ class TestProfileView(TestsBase):
         resp.mustcontain("No 'sr' given and cannot be guessed from 'geom'")
 
     def test_profile_lv03_layers_none2(self):
-        resp = self.__get_json_profile(params={'geom': '{"type":"LineString","coordinates":[[550050,-206550],[556950,204150],[561050,207950]]}',
-                                               'layers': 'DTM25,DTM2'},
-                                       expected_status=400)
+        resp = self.__get_json_profile(
+            params={'geom': '{"type":"LineString","coordinates":[[550050,-206550],[556950,204150],[561050,207950]]}',
+                    'layers': 'DTM25,DTM2'},
+            expected_status=400)
         resp.mustcontain("No 'sr' given and cannot be guessed from 'geom'")
 
     def test_profile_lv03_json_2_models_notvalid(self):
@@ -265,3 +287,27 @@ class TestProfileView(TestsBase):
                                        expected_status=203)
         self.assertTrue(resp.content_type == 'application/json')
         self.assertNotEqual(len(resp.json), 150)
+
+    def test_profile_points_given_in_geom_are_in_profile(self):
+        point1, point2, point3, point4, point5, point6, point7 = [2631599.9, 1171895.0], [2631960.5, 1171939.7], \
+                                                                 [2632384.3, 1171798.3], [2632600.9, 1171525.6], \
+                                                                 [2632633.5, 1171204.0], [2632622.1, 1171025.3], \
+                                                                 [2632820.8, 1170741.8]
+        multipoint_geom = '{\"type\":\"LineString\",\"coordinates\":[' \
+                          + str(point1) + ',' \
+                          + str(point2) + ',' \
+                          + str(point3) + ',' \
+                          + str(point4) + ',' \
+                          + str(point5) + ',' \
+                          + str(point6) + ',' \
+                          + str(point7) \
+                          + ']}'
+        resp = self.__get_json_profile(params={'geom': multipoint_geom},
+                                       expected_status=200)
+        self.__verify_point_is_present(resp, point1, msg="point1 not present")
+        self.__verify_point_is_present(resp, point2, msg="point2 not present")
+        self.__verify_point_is_present(resp, point3, msg="point3 not present")
+        self.__verify_point_is_present(resp, point4, msg="point4 not present")
+        self.__verify_point_is_present(resp, point5, msg="point5 not present")
+        self.__verify_point_is_present(resp, point6, msg="point6 not present")
+        self.__verify_point_is_present(resp, point7, msg="point7 not present")
