@@ -13,7 +13,7 @@ class ProfileValidation(object):
         self._layers = None
         self._nb_points = None
         self._offset = None
-        self._projection = None
+        self._spatial_reference = None
 
     @property
     def linestring(self):
@@ -24,8 +24,8 @@ class ProfileValidation(object):
         return self._layers
 
     @property
-    def projection(self):
-        return self._projection
+    def spatial_reference(self):
+        return self._spatial_reference
 
     @property
     def nb_points(self):
@@ -66,11 +66,11 @@ class ProfileValidation(object):
             value.sort()
             self._layers = value
 
-    @projection.setter
-    def projection(self, value):
+    @spatial_reference.setter
+    def spatial_reference(self, value):
         if value not in (21781, 2056):
             raise HTTPBadRequest("Please provide a valid number for the spatial reference system model 21781 or 2056")
-        self._projection = value
+        self._spatial_reference = value
 
     @nb_points.setter
     def nb_points(self, value):

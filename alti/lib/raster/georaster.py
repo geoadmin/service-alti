@@ -19,7 +19,7 @@ def get_raster(name, sr):
     if not result:
         result = GeoRaster(_rasterfiles[sr][name])
         _rasters[filename] = result
-        log.debug("GeoRaster for " + repr(filename) + " has been added in the cache")
+        log.debug("GeoRaster for {} has been added in the cache".format(repr(filename)))
     return result
 
 

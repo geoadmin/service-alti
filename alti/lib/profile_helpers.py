@@ -6,13 +6,12 @@ from scipy.spatial.distance import pdist, squareform
 from alti.lib.raster.georaster import get_raster
 from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
 
-
 PROFILE_MAX_AMOUNT_POINTS = 10000
 PROFILE_DEFAULT_AMOUNT_POINTS = 2000
 
 
 def get_profile(geom=None,
-                projection=None,
+                spatial_reference=None,
                 layers=None,
                 nb_points=PROFILE_DEFAULT_AMOUNT_POINTS,
                 offset=0,
@@ -23,29 +22,29 @@ def get_profile(geom=None,
     # get raster data from georaster.py (layers is sometime referred as elevation_models in request parameters)
     if layers is None:
         layers = []
-    rasters = [get_raster(layer, projection) for layer in layers]
+    rasters = [get_raster(layer, spatial_reference) for layer in layers]
 
     if only_requested_points:
         coordinates = geom.coords
     else:
         # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
         # a 2m mesh, so no need to go beyond that)
-        coordinates = __create_points(coordinates=geom.coords,
-                                      nb_points=nb_points)
+        coordinates = _create_points(coordinates=geom.coords,
+                                     nb_points=nb_points)
 
     # extract z values (altitude over distance) for coordinates
-    z_values = __extract_z_values(layers=layers,
-                                  rasters=rasters,
-                                  coordinates=coordinates)
+    z_values = _extract_z_values(layers=layers,
+                                 rasters=rasters,
+                                 coordinates=coordinates)
 
-    return __create_profile(layers=layers,
-                            coordinates=coordinates,
-                            # if offset is defined, do the smoothing
-                            z_values=__smooth(layers, offset, z_values) if offset > 0 else z_values,
-                            output_to_json=output_to_json)
+    return _create_profile(layers=layers,
+                           coordinates=coordinates,
+                           # if offset is defined, do the smoothing
+                           z_values=_smooth(layers, offset, z_values) if offset > 0 else z_values,
+                           output_to_json=output_to_json)
 
 
-def __create_profile(layers, coordinates, z_values, output_to_json):
+def _create_profile(layers, coordinates, z_values, output_to_json):
     total_distance = 0
     previous_coordinates = None
     if output_to_json:
@@ -60,7 +59,7 @@ def __create_profile(layers, coordinates, z_values, output_to_json):
 
     for j in xrange(0, len(coordinates)):
         if previous_coordinates is not None:
-            total_distance += __distance_between(previous_coordinates, coordinates[j])
+            total_distance += _distance_between(previous_coordinates, coordinates[j])
         alts = {}
         for i in xrange(0, len(layers)):
             if z_values[layers[i]][j] is not None:
@@ -86,7 +85,7 @@ def __create_profile(layers, coordinates, z_values, output_to_json):
     return profile
 
 
-def __create_points(coordinates, nb_points):
+def _create_points(coordinates, nb_points):
     """
         Add some points in order to reach the requested number of points. Points will be added as close as possible
         as to not exceed the altitude model meshing (which is 2 meters).
@@ -142,7 +141,7 @@ def __create_points(coordinates, nb_points):
     return result
 
 
-def __extract_z_values(layers, rasters, coordinates):
+def _extract_z_values(layers, rasters, coordinates):
     z_values = {}
     # keeping track of tiles that have been used for another coordinates (usually coordinates are close together)
     # this way we increase our chances to find the required tile without looking on the whole country tiles
@@ -169,7 +168,7 @@ def __extract_z_values(layers, rasters, coordinates):
     return z_values
 
 
-def __smooth(layers, offset, z_values):
+def _smooth(layers, offset, z_values):
     z_values_with_smoothing = {}
     for i in xrange(0, len(layers)):
         z_values_with_smoothing[layers[i]] = []
@@ -185,16 +184,16 @@ def __smooth(layers, offset, z_values):
                     continue
                 if z_values[layers[i]][p] is None:
                     continue
-                s += z_values[layers[i]][p] * __factor(k)
-                d += __factor(k)
+                s += z_values[layers[i]][p] * _factor(k)
+                d += _factor(k)
             z_values_with_smoothing[layers[i]].append(s / d)
     return z_values_with_smoothing
 
 
-def __distance_between(coord1, coord2):
+def _distance_between(coord1, coord2):
     """Compute the distance between 2 points"""
     return filter_distance(math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) + math.pow(coord1[1] - coord2[1], 2.0)))
 
 
-def __factor(x):
+def _factor(x):
     return float(1) / (abs(x) + 1)

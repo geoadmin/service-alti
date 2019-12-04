@@ -56,14 +56,14 @@ class Profile(ProfileValidation):
         # and value for EPSG:21781 (LV03) is 21781
         # if this param is not present, it will be guessed from the coordinates present in the param geom
         if 'sr' in request.params:
-            self.projection = int(request.params.get('sr'))
+            self.spatial_reference = int(request.params.get('sr'))
         elif 'projection' in request.params:
-            self.projection = int(request.params.get('projection'))
+            self.spatial_reference = int(request.params.get('projection'))
         else:
             sr = srs_guesser(self.linestring)
             if sr is None:
                 raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
-            self.projection = sr
+            self.spatial_reference = sr
 
         # param offset, used for smoothing. define how many coordinates should be included
         # in the window used for smoothing. If not defined (or value is zero) smoothing is disabled.
@@ -105,7 +105,7 @@ class Profile(ProfileValidation):
 
     def __get_profile_from_helper(self, output_to_json=True):
         profile = get_profile(geom=self.linestring,
-                              projection=self.projection,
+                              spatial_reference=self.spatial_reference,
                               layers=self.layers,
                               nb_points=self.nb_points,
                               offset=self.offset,

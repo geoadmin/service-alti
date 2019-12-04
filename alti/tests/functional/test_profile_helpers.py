@@ -18,7 +18,7 @@ class TestProfileHelpers(TestCase):
         tile_mock.get_height_for_coordinate.return_value = 12.34567
         mock_get_raster.return_value = georaster_mock
         response = get_profile(geom=FAKE_GEOM,
-                               projection=2056,
+                               spatial_reference=2056,
                                layers=['COMB'],
                                nb_points=2,
                                offset=0,
