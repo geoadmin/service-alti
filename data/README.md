@@ -24,3 +24,11 @@ The area is a tile around Interlaken (BE)
     Band 1 Block=1x3000 Type=Float32, ColorInterp=Undefined
       NoData Value=-32768
       Unit Type: m
+
+## Regenerate tiles from EFS
+
+To regenerate tiles (because they are updated from time to time), you can run
+```
+make generatetesttile
+```
+Access to the EFS is needed for this Makefile target to work properly. It will regenerate `data/` folder with what is on the EFS.
