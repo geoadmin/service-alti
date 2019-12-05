@@ -217,15 +217,8 @@ class TestProfileView(TestsBase):
     def test_profile_lv03_json_default_nb_points(self):
         resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV03},
                                        expected_status=200)
-        self.assertEqual(len(resp.json), PROFILE_DEFAULT_AMOUNT_POINTS)
-        self.assertLess(len(resp.json), PROFILE_MAX_AMOUNT_POINTS)
-
-    def test_profile_lv03_json_no_more_than_max_nb_points(self):
-        params = {'geom': LINESTRING_VALID_LV03}
-        resp = self.testapp.get('/rest/services/profile.json', params=params, headers=self.headers, status=200)
-        pnts = resp.json
-        self.assertEqual(len(pnts), PROFILE_DEFAULT_AMOUNT_POINTS)
-        self.assertLess(len(pnts), PROFILE_MAX_AMOUNT_POINTS)
+        self.assertGreaterEqual(len(resp.json), PROFILE_DEFAULT_AMOUNT_POINTS)
+        self.assertLessEqual(len(resp.json), PROFILE_MAX_AMOUNT_POINTS)
 
     def test_profile_lv03_csv_valid(self):
         resp = self.__get_csv_with_params(params={'geom': create_json(4, 21781)},
