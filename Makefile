@@ -119,7 +119,7 @@ shell:
 
 .PHONY: test
 test:
-	PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
+	source rc_ci && PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
 
 .PHONY: lint
 lint:
@@ -287,3 +287,7 @@ clean:
 cleanall: clean
 	rm -rf .venv
 	rm -rf *.egg-info
+
+.PHONY: generatetesttile
+generatetesttile:
+	$(SHELL) ./scripts/generate-test-data.sh
