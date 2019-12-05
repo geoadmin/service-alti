@@ -43,7 +43,8 @@ function getProfile(wanderwegMetadata, callback) {
                 'startToFinish': startToFinishDeltaWithOfficial,
                 'finishToStart': finishToStartDeltaWithOfficial,
             },
-            'timeForRequest': moment.duration(moment().diff(startTimePreOverhaul))
+            'timeForRequest': moment.duration(moment().diff(startTimePreOverhaul)),
+            'amountPoints': profile.length
         };
         // requesting post overhaul profile
         const startTimePostOverhaul = moment();
@@ -71,7 +72,8 @@ function getProfile(wanderwegMetadata, callback) {
                     'startToFinish': trendDifference(wanderwegMetadata.timePreOverhaul.deltaWithOfficial.startToFinish, startToFinishDeltaWithOfficial),
                     'finishToStart': trendDifference(wanderwegMetadata.timePreOverhaul.deltaWithOfficial.finishToStart, finishToStartDeltaWithOfficial),
                     'timeForRequest': () => timeForRequest - wanderwegMetadata.timePreOverhaul.timeForRequest
-                }
+                },
+                'amountPoints': profile.length
             };
             callback();
         })
@@ -105,7 +107,7 @@ const app = new Vue({
                     let pendingRequestsCounter = 0;
                     let finishedRequestsCounter = 0;
                     const maxConcurrentRequests = 1;
-                    const debug_nb_request_max = 100; //json.length;
+                    const debug_nb_request_max = json.length;
 
                     const _getProfileRecurse = () => {
                         if (pendingRequestsCounter === 0 && currentIndex < debug_nb_request_max - 1) {

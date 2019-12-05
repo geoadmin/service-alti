@@ -21,9 +21,10 @@
                     <tr>
                         <td></td>
                         <th colspan="2">Official (ASTRA) [minutes]</th>
-                        <th colspan="3">Geoadmin pre-overhaul [minutes]</th>
-                        <th colspan="4">Geoadmin post-overhaul [minutes]</th>
+                        <th colspan="3">Geoadmin before [minutes]</th>
+                        <th colspan="4">Geoadmin after [minutes]</th>
                         <th colspan="3">Request time [ms]</th>
+                        <th colspan="2"># points</th>
                     </tr>
                     <tr>
                         <th>Name</th>
@@ -36,9 +37,11 @@
                         <th>f &#8614; s</th>
                         <th>&Delta; official</th>
                         <th>trend</th>
-                        <th>Pre-overhaul</th>
-                        <th>Post-overhaul</th>
+                        <th>Before</th>
+                        <th>After</th>
                         <th>trend</th>
+                        <th>Before</th>
+                        <th>After</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -71,6 +74,12 @@
                                 {{ data.geoadminHikingTime.trend.timeForRequest() }}
                             </span>
                         </td>
+                        <td v-if="data.timePreOverhaul">
+                            {{ data.timePreOverhaul.amountPoints }}
+                        </td>
+                        <td v-if="data.geoadminHikingTime">
+                            {{ data.geoadminHikingTime.amountPoints }}
+                        </td>
                         <td v-if="!data.geoadminHikingTime">N/A</td>
                         <td v-if="!data.geoadminHikingTime">N/A</td>
                         <td v-if="!data.geoadminHikingTime">N/A</td>
@@ -78,6 +87,8 @@
                         <td v-if="!data.timePreOverhaul.timeForRequest">N/A</td>
                         <td v-if="!data.geoadminHikingTime">N/A</td>
                         <td v-if="!data.geoadminHikingTime || !data.timePreOverhaul.timeForRequest">N/A</td>
+                        <td v-if="!data.geoadminHikingTime">N/A</td>
+                        <td v-if="!data.geoadminHikingTime">N/A</td>
                     </tr>
                 </tbody>
             </table>
