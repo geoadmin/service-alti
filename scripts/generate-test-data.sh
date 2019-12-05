@@ -31,7 +31,8 @@ function transformMatrix {
   mv -f "$tmp_dir"/"$1"/mm0001_warp.bt "$tmp_dir"/"$1"/mm0001.bt
   cp "$tmp_dir"/"$1"/* "$project_folder"/data/"$1"
   # regenerating shapefile index
-  gdaltindex -t_srs EPSG:"$2" "$project_folder"/data/"$1"/mm0001.shp "$project_folder"/data/"$1"/mm0001.bt
+  cd "$project_folder"/data/"$1"/ || exit 1
+  gdaltindex -t_srs EPSG:"$2" mm0001.shp mm0001.bt
 }
 
 # copy "the" tile into data/ and regenerate index shapefile
@@ -39,7 +40,8 @@ function transformTileAndIndex {
   cp $data_folder/swissalti3d/"$1"/1208-4.bt "$project_folder"/data/swissalti3d/"$1"
   # regenerating shapefile
   rm -f "$project_folder"/data/swissalti3d/"$1"/index.*
-  gdaltindex "$project_folder"/data/swissalti3d/"$1"/index.shp "$project_folder"/data/swissalti3d/"$1"/1208-4.bt
+  cd "$project_folder"/data/swissalti3d/"$1"/ || exit 1
+  gdaltindex index.shp 1208-4.bt
 }
 
 if [[ -d /var/local/geodata/ ]]; then
