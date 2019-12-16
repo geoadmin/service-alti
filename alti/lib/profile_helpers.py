@@ -91,10 +91,6 @@ def _create_points(coordinates, nb_points):
         as to not exceed the altitude model meshing (which is 2 meters).
     """
 
-    if len(coordinates) >= nb_points:
-        # Simplify input line with a tolerance of 2 m
-        return LineString(coordinates).simplify(12.5).coords
-
     # calculating distances between each points, and total distance
     distances_squareform = squareform(pdist(coordinates))
     amount_distances = len(distances_squareform)
