@@ -88,7 +88,7 @@ help:
 
 .PHONY: user
 user:
-	source $(USER_SOURCE) && make all
+	. $(USER_SOURCE) && make all
 
 .PHONY: all
 all: setup templates lint fixrights test
@@ -99,15 +99,15 @@ templates: .venv/last-version apache/wsgi.conf development.ini production.ini
 
 .PHONY: dev
 dev:
-	source rc_dev && make all
+	. rc_dev && make all
 
 .PHONY: int
 int:
-	source rc_int && make all
+	. rc_int && make all
 
 .PHONY: prod
 prod:
-	source rc_prod && make all
+	. rc_prod && make all
 
 .PHONY: serve
 serve:
@@ -119,7 +119,7 @@ shell:
 
 .PHONY: test
 test:
-	source rc_ci && PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
+	. rc_ci && PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
 
 .PHONY: lint
 lint:
