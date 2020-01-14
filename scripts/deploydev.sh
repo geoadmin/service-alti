@@ -53,7 +53,7 @@ else
 fi
 
 # Build the project
-. rc_dev
+. ./rc_dev
 make all
 
 exit_code=$?

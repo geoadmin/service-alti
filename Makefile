@@ -18,7 +18,7 @@ PYTHON_FILES := $(shell find alti/* -path alti/static -prune -o -type f -name "*
 SHORTENER_ALLOWED_DOMAINS := admin.ch, swisstopo.ch, bgdi.ch
 SHORTENER_ALLOWED_HOSTS :=
 TEMPLATE_FILES := $(shell find -type f -name "*.in" -print)
-USER_SOURCE ?= rc_user
+USER_SOURCE ?= ./rc_user
 WSGI_APP := $(CURRENT_DIRECTORY)/apache/application.wsgi
 PYPI_URL ?= https://pypi.org/simple/
 
@@ -99,15 +99,15 @@ templates: .venv/last-version apache/wsgi.conf development.ini production.ini
 
 .PHONY: dev
 dev:
-	. rc_dev && make all
+	. ./rc_dev && make all
 
 .PHONY: int
 int:
-	. rc_int && make all
+	. ./rc_int && make all
 
 .PHONY: prod
 prod:
-	. rc_prod && make all
+	. ./rc_prod && make all
 
 .PHONY: serve
 serve:
@@ -119,7 +119,7 @@ shell:
 
 .PHONY: test
 test:
-	. rc_ci && PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
+	. ./rc_ci && PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
 
 .PHONY: lint
 lint:
