@@ -23,7 +23,7 @@ make cleanall
 # This creates the branch configuration
 make setup
 make rc_branch DEPLOY_TARGET=dev
-source rc_branch
+. rc_branch
 make all
 make deploy/deploy-branch.cfg
 make deploy/conf/00-branch.conf

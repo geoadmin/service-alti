@@ -9,12 +9,12 @@ while getopts "ipa" opt; do
   case "$opt" in
   i) nosetests_options="-e .*e2e.*"
      make clean
-     source rc_int
+     . rc_int
      make all
      ;;
   p) nosetests_options="-e .*e2e.*"
      make clean
-     source rc_prod
+     . rc_prod
      make all
      ;;
   a) nosetests_options=" "
