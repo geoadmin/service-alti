@@ -7,7 +7,7 @@ node(label: "jenkins-slave") {
       checkout scm
     }
     stage("Build") {
-      sh 'source rc_ci && make cleanall setup templates'
+      sh '. rc_ci && make cleanall setup templates'
       echo sh(returnStdout: true, script: 'env')
     }
     stage("Lint") {

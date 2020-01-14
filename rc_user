@@ -8,7 +8,7 @@ export DTM_BASE_PATH=/var/local/geodata/bund/swisstopo/
 if [ -f rc_user_$USERNAME ]; then
   echo 'Sourcing:'
   echo rc_user_$USERNAME
-  source rc_user_$USERNAME;
+  . rc_user_$USERNAME;
 else
   echo 'Please provide a custom config file using the pattern rc_user_$USERNAME'
 fi
