@@ -251,7 +251,7 @@ requirements.txt:
 	@if [ ! -d $(INSTALL_DIRECTORY) ]; \
 	then \
 		virtualenv -p /usr/bin/python2.7 $(INSTALL_DIRECTORY); \
-		${PIP_CMD} install --upgrade pip==19.3.1 setuptools --index-url ${PYPI_URL} ; \
+		${PIP_CMD} install --upgrade pip==19.3.1 setuptools==44.0.0 --index-url ${PYPI_URL} ; \
 	fi
 	${PIP_CMD} install --index-url ${PYPI_URL} -e .
 
