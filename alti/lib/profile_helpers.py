@@ -6,8 +6,8 @@ from scipy.spatial.distance import pdist, squareform
 from alti.lib.raster.georaster import get_raster
 from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
 
-PROFILE_MAX_AMOUNT_POINTS = 10000
-PROFILE_DEFAULT_AMOUNT_POINTS = 2000
+PROFILE_MAX_AMOUNT_POINTS = 500
+PROFILE_DEFAULT_AMOUNT_POINTS = 200
 
 
 def get_profile(geom=None,
