@@ -33,6 +33,8 @@ profile_nb_points_maximum = 5000
 ###
 # wsgi server configuration
 ###
+wsgi.multithread = True
+wsgi.multiprocess = True
 
 [server:main]
 use = egg:waitress#main
