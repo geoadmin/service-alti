@@ -18,7 +18,7 @@ PYTHON_FILES := $(shell find alti/* -path alti/static -prune -o -type f -name "*
 SHORTENER_ALLOWED_DOMAINS := admin.ch, swisstopo.ch, bgdi.ch
 SHORTENER_ALLOWED_HOSTS :=
 TEMPLATE_FILES := $(shell find -type f -name "*.in" -print)
-USER_SOURCE ?= ./rc_user
+USER_SOURCE ?= rc_user
 WSGI_APP := $(CURRENT_DIRECTORY)/apache/application.wsgi
 PYPI_URL ?= https://pypi.org/simple/
 
@@ -88,7 +88,7 @@ help:
 
 .PHONY: user
 user:
-	. $(USER_SOURCE) && make all
+	. ./$(USER_SOURCE) && make all
 
 .PHONY: all
 all: setup templates lint fixrights test
@@ -202,8 +202,8 @@ apache/application.wsgi: apache/application.wsgi.mako
 		--var "apache_base_path=$(APACHE_BASE_PATH)" \
 		--var "modwsgi_config=$(MODWSGI_CONFIG)" $< > $@
 
-apache/wsgi.conf.in:
-	@echo "${GREEN}Template file apache/wsgi.conf.in has changed${RESET}";
+apache/wsgi.conf.mako:
+	@echo "${GREEN}Template file apache/wsgi.conf.mako has changed${RESET}";
 apache/wsgi.conf: apache/wsgi.conf.mako apache/application.wsgi
 	@echo "${GREEN}Creating apache/wsgi.conf...${RESET}";
 	${MAKO_CMD} \
@@ -251,7 +251,7 @@ requirements.txt:
 	@if [ ! -d $(INSTALL_DIRECTORY) ]; \
 	then \
 		virtualenv -p /usr/bin/python2.7 $(INSTALL_DIRECTORY); \
-		${PIP_CMD} install --upgrade pip==19.3.1 setuptools==44.0.0 --index-url ${PYPI_URL} ; \
+		${PIP_CMD} install --upgrade pip==19.3.1 setuptools --index-url ${PYPI_URL} ; \
 	fi
 	${PIP_CMD} install --index-url ${PYPI_URL} -e .
 

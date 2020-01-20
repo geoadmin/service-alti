@@ -2,8 +2,6 @@
 
 from pyramid.view import view_config
 
-import cProfile
-
 from alti.lib.profile_helpers import get_profile, PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
 from alti.lib.validation.profile import ProfileValidation
 from alti.lib.validation import srs_guesser
@@ -77,27 +75,12 @@ class Profile(ProfileValidation):
         else:
             self.only_requested_points = False
 
-        if 'debug_profile' in request.params:
-            self.debug_profile = bool(request.params.get('debug_profile'))
-        else:
-            self.debug_profile = False
-
         # keeping the request for later use
         self.request = request
 
     @view_config(route_name='profile_json', renderer='jsonp', http_cache=0)
     def json(self):
-        if self.debug_profile:
-            profile = cProfile.Profile()
-            try:
-                profile.enable()
-                result = self.__get_profile_from_helper(True)
-                profile.disable()
-                return result
-            finally:
-                profile.dump_stats("/var/tmp/service_alti_profile.prof")
-        else:
-            return self.__get_profile_from_helper(True)
+        return self.__get_profile_from_helper(True)
 
     @view_config(route_name='profile_csv', renderer='csv', http_cache=0)
     def csv(self):
@@ -114,8 +97,6 @@ class Profile(ProfileValidation):
         # If profile calculation resulted in a lower number of point than requested (because there's no need to add
         # points closer to each other than the min resolution of 2m), we return HTTP 203 to notify that nb_points
         # couldn't be match.
-        # Same thing if the user gave a specific resolution to use, but that resulted in too much point and thus the
-        # resolution had to be lowered.
         if self.is_custom_nb_points and len(profile) < self.nb_points:
             self.request.response.status = 203
         return profile
