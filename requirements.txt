@@ -13,6 +13,6 @@ regex==2014.2.19
 scipy==1.2.2
 Shapely==1.6.4.post2
 six==1.10.0
-waitress==1.1.0
+waitress==1.4.2
 WebOb==1.8.3
 WebTest==2.0.32
