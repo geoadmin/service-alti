@@ -87,12 +87,7 @@ def _create_profile(layers, coordinates, z_values, output_to_json):
     return profile
 
 
-def _create_points(coordinates, smart_filling, nb_points):
-    """
-        Add some points in order to reach the requested number of points. Points will be added as close as possible
-        as to not exceed the altitude model meshing (which is 2 meters).
-    """
-
+def _smart_fill(coordinates, nb_points):
     # calculating distances between each points, and total distance
     distances_squareform = squareform(pdist(coordinates))
     amount_distances = len(distances_squareform)
@@ -137,6 +132,54 @@ def _create_points(coordinates, smart_filling, nb_points):
         previous_coordinate = coordinates[i]
 
     return result
+
+
+def _dumb_fill(coordinates, nb_points):
+    """
+        Add some points in order to reach roughly the asked
+        number of points.
+    """
+    total_length = 0
+    prev_coord = None
+    for coord in coordinates:
+        if prev_coord is not None:
+            total_length += _distance_between(prev_coord, coord)
+        prev_coord = coord
+
+    if total_length == 0.0:
+        return coordinates
+
+    result = []
+    prev_coord = None
+    for coord in coordinates:
+        if prev_coord is not None:
+            cur_length = _distance_between(prev_coord, coord)
+            cur_nb_points = int((nb_points - 1) * cur_length / total_length + 0.5)
+            if cur_nb_points < 1:
+                cur_nb_points = 1
+            dx = (coord[0] - prev_coord[0]) / float(cur_nb_points)
+            dy = (coord[1] - prev_coord[1]) / float(cur_nb_points)
+            for i in xrange(1, cur_nb_points + 1):
+                result.append(
+                    [prev_coord[0] + dx * i,
+                     prev_coord[1] + dy * i])
+        else:
+            result.append([coord[0], coord[1]])
+        prev_coord = coord
+
+    return result
+
+
+def _create_points(coordinates, smart_filling, nb_points):
+    """
+        Add some points in order to reach the requested number of points. If smart_filling is true, points will be added
+        as close as possible as to not exceed the altitude model meshing (which is 2 meters). If not, they will be just
+        thrown at equal distance without any regards to model resolution.
+    """
+    if smart_filling:
+        return _smart_fill(coordinates, nb_points)
+    else:
+        return _dumb_fill(coordinates, nb_points)
 
 
 def _extract_z_values(layers, rasters, coordinates):

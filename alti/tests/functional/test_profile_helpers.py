@@ -48,9 +48,15 @@ class TestProfileHelpers(unittest.TestCase):
                          msg="with 'dumb' filling, there should be no regard to resolution and default amount of "
                              "points has to be used (default: {}, actual: {})".format(PROFILE_DEFAULT_AMOUNT_POINTS,
                                                                                       len(response)))
-        # checking values, it should switch to the next value every 200 / 20 iteration
+        # checking values, it should switch to the next value every 20 iteration
         for i in range(len(response)):
-            self.assertEqual(response[i]['alts']['COMB'], VALUES_FOR_EACH_2M_STEP[i / 10])
+            value = response[i]['alts']['COMB']
+            value_index = 0 if i < 20 else 10 if i == 199 else i / 20
+            expected_value = round(VALUES_FOR_EACH_2M_STEP[value_index] * 10.0) / 10.0
+            self.assertEqual(value,
+                             expected_value,
+                             msg="Wrong value at index {} (tile index: {}, expected: {}, actual: {}".
+                             format(i, value_index, expected_value, value))
 
     @patch('alti.lib.profile_helpers.get_raster')
     def test_with_smart_filling(self, mock_get_raster):

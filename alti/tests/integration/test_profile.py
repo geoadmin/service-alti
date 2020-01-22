@@ -94,7 +94,8 @@ class TestProfileView(TestsBase):
                                 expected_status=200)
 
     def test_profile_lv03_json_valid(self):
-        resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV03},
+        resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV03,
+                                               'smart_filling': True},
                                        expected_status=200)
         self.assertEqual(resp.content_type, 'application/json')
         first_point = resp.json[0]
@@ -107,17 +108,14 @@ class TestProfileView(TestsBase):
         self.assertEqual(second_point['alts']['COMB'], 568.5)
         self.assertEqual(second_point['easting'], 630032.0)
         self.assertEqual(second_point['northing'], 170024.0)
-        # self.assertEqual(second_point['dist'], 4)
-        # self.assertEqual(second_point['alts']['COMB'], 567.4)
-        # self.assertEqual(second_point['easting'], 630003.2)
-        # self.assertEqual(second_point['northing'], 170002.4)
         self.__verify_point_is_present(resp, POINT_1_LV03)
         self.__verify_point_is_present(resp, POINT_2_LV03)
         self.__verify_point_is_present(resp, POINT_3_LV03)
 
     def test_profile_lv03_json_2_models(self):
         resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV03,
-                                               'elevation_models': 'DTM25,DTM2'},
+                                               'elevation_models': 'DTM25,DTM2',
+                                               'smart_filling': True},
                                        expected_status=200)
         self.assertEqual(resp.content_type, 'application/json')
         second_point = resp.json[1]
@@ -126,11 +124,6 @@ class TestProfileView(TestsBase):
         self.assertEqual(second_point['alts']['DTM2'], 568.5)
         self.assertEqual(second_point['easting'], 630032.0)
         self.assertEqual(second_point['northing'], 170024.0)
-        # self.assertEqual(second_point['dist'], 4)
-        # self.assertEqual(second_point['alts']['DTM25'], 567.4)
-        # self.assertEqual(second_point['alts']['DTM2'], 567.4)
-        # self.assertEqual(second_point['easting'], 630003.2)
-        # self.assertEqual(second_point['northing'], 170002.4)
         self.__verify_point_is_present(resp, POINT_1_LV03)
         self.__verify_point_is_present(resp, POINT_2_LV03)
         self.__verify_point_is_present(resp, POINT_3_LV03)
@@ -193,6 +186,7 @@ class TestProfileView(TestsBase):
         # as 150 is too much for this profile (distance between points will be smaller than 2m resolution of the
         # altitude model), the service will return 203 and a smaller amount of points
         resp = self.__get_json_profile(params={'geom': LINESTRING_SMALL_LINE_LV03,
+                                               'smart_filling': True,
                                                'nb_points': '150'},
                                        expected_status=203)
         self.assertEqual(resp.content_type, 'application/json')
@@ -206,6 +200,7 @@ class TestProfileView(TestsBase):
 
     def test_profile_lv03_json_nbPoints(self):
         resp = self.__get_json_profile(params={'geom': LINESTRING_SMALL_LINE_LV03,
+                                               'smart_filling': True,
                                                'nbPoints': '150'},
                                        expected_status=203)
 
@@ -285,6 +280,7 @@ class TestProfileView(TestsBase):
 
     def test_profile_lv95_nb_points_exceeds_resolution_meshing(self):
         resp = self.__get_json_profile(params={'geom': LINESTRING_SMALL_LINE_LV95,
+                                               'smart_filling': True,
                                                'nb_points': 150},
                                        expected_status=203)
         self.assertTrue(resp.content_type == 'application/json')
