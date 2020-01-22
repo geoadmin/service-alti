@@ -16,6 +16,7 @@ def get_profile(geom=None,
                 nb_points=PROFILE_DEFAULT_AMOUNT_POINTS,
                 offset=0,
                 only_requested_points=False,
+                smart_filling=False,
                 output_to_json=True):
     """Compute the alt=fct(dist) array and store it in c.points"""
 
@@ -30,6 +31,7 @@ def get_profile(geom=None,
         # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
         # a 2m mesh, so no need to go beyond that)
         coordinates = _create_points(coordinates=geom.coords,
+                                     smart_filling=smart_filling,
                                      nb_points=nb_points)
 
     # extract z values (altitude over distance) for coordinates
@@ -85,7 +87,7 @@ def _create_profile(layers, coordinates, z_values, output_to_json):
     return profile
 
 
-def _create_points(coordinates, nb_points):
+def _create_points(coordinates, smart_filling, nb_points):
     """
         Add some points in order to reach the requested number of points. Points will be added as close as possible
         as to not exceed the altitude model meshing (which is 2 meters).

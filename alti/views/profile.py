@@ -23,8 +23,6 @@ class Profile(ProfileValidation):
             self.linestring = request.params.get('geom')
         elif request.body is not None:
             self.linestring = request.body
-        else:
-            self.linestring = request.body
         if not self.linestring:
             raise HTTPBadRequest("No 'geom' given, cannot create a profile without coordinates")
 
@@ -75,6 +73,13 @@ class Profile(ProfileValidation):
         else:
             self.only_requested_points = False
 
+        # flag that define if filling has to be smart, aka to take resolution into account (so that there's not two
+        # points closer than what the resolution is) or if points are placed without care for that.
+        if 'smart_filling' in request.params:
+            self.smart_filling = bool(request.params.get('smart_filling'))
+        else:
+            self.smart_filling = False
+
         # keeping the request for later use
         self.request = request
 
@@ -93,6 +98,7 @@ class Profile(ProfileValidation):
                               nb_points=self.nb_points,
                               offset=self.offset,
                               only_requested_points=self.only_requested_points,
+                              smart_filling=self.smart_filling,
                               output_to_json=output_to_json)
         # If profile calculation resulted in a lower number of point than requested (because there's no need to add
         # points closer to each other than the min resolution of 2m), we return HTTP 203 to notify that nb_points
