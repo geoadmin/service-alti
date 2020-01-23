@@ -28,9 +28,9 @@ def prepare_mock(mock_get_raster):
 
 class TestProfileHelpers(unittest.TestCase):
 
-    def __prepare_mock_and_test(self, mock, smart_filling):
+    def __prepare_mock_and_test(self, mock, smart_filling, geom=FAKE_GEOM):
         prepare_mock(mock)
-        response = get_profile(geom=FAKE_GEOM,
+        response = get_profile(geom=geom,
                                spatial_reference=2056,
                                layers=['COMB'],
                                offset=0,
@@ -77,3 +77,22 @@ class TestProfileHelpers(unittest.TestCase):
                              expected,
                              msg="Values don't match at index {} (expected: {}, actual: {})".
                              format(i, expected, value))
+
+    @patch('alti.lib.profile_helpers.get_raster')
+    def test_smart_filling_must_keep_points_from_geom(self, mock_get_raster):
+        # preparing fake data to be feed to mocks (has to cover overall the same ground as FAKE_GEOM otherwise
+        # we would have to prepare another mock tile)
+        extra_point_north = 1199981
+        extra_point_east = 2600000
+        geom_with_multiple_points = LineString([(2600000, 1199980),
+                                                (extra_point_east, extra_point_north),
+                                                (2600000, 1200000)])
+        response = self.__prepare_mock_and_test(mock_get_raster, smart_filling=True, geom=geom_with_multiple_points)
+        self.assertEqual(len(response),
+                         12,
+                         msg="There should be an extra points at (2600000, 1199981) included in the result (even though"
+                             "it is closer to other points than the resolution, as it was in geom it must be included")
+        # there should be our extra point at index 1, just after the first point
+        extra_point = response[1]
+        self.assertEqual(extra_point['easting'], extra_point_east)
+        self.assertEqual(extra_point['northing'], extra_point_north)
