@@ -3,13 +3,7 @@
 import geojson
 from pyramid.httpexceptions import HTTPBadRequest
 
-from shapely.geometry import asShape, Polygon
-
-
-bboxes = {
-    2056: (2450000, 1030000, 2900000, 1350000),
-    21781: (450000, 30000, 900000, 350000)
-}
+from shapely.geometry import shape
 
 
 class ProfileValidation(object):
@@ -18,21 +12,8 @@ class ProfileValidation(object):
         self._linestring = None
         self._layers = None
         self._nb_points = None
-        self._ma_offset = None
-
-    def srs_guesser(self):
-        sr = None
-        if self.linestring is not None:
-            for epsg, bbox in bboxes.iteritems():
-                dtm_poly = Polygon([
-                    (bbox[0], bbox[1]),
-                    (bbox[2], bbox[1]),
-                    (bbox[2], bbox[3]),
-                    (bbox[0], bbox[3])])
-                if dtm_poly.contains(self.linestring):
-                    sr = epsg
-                    break
-        return sr
+        self._offset = None
+        self._spatial_reference = None
 
     @property
     def linestring(self):
@@ -43,16 +24,16 @@ class ProfileValidation(object):
         return self._layers
 
     @property
-    def sr(self):
-        return self._sr
+    def spatial_reference(self):
+        return self._spatial_reference
 
     @property
     def nb_points(self):
         return self._nb_points
 
     @property
-    def ma_offset(self):
-        return self._ma_offset
+    def offset(self):
+        return self._offset
 
     @linestring.setter
     def linestring(self, value):
@@ -63,20 +44,20 @@ class ProfileValidation(object):
         except ValueError:
             raise HTTPBadRequest("Error loading geometry in JSON string")
         try:
-            shape = asShape(geom)
+            geomToShape = shape(geom)
         except Exception:
             raise HTTPBadRequest("Error converting JSON to Shape")
         try:
-            shape.is_valid
+            geomToShape.is_valid
         except Exception:
             raise HTTPBadRequest("Invalid Linestring syntax")
 
-        self._linestring = shape
+        self._linestring = geomToShape
 
     @layers.setter
     def layers(self, value):
         if value is None:
-            self._layers = ['DTM25']
+            self._layers = ['COMB']
         else:
             value = value.split(',')
             for i in value:
@@ -85,29 +66,31 @@ class ProfileValidation(object):
             value.sort()
             self._layers = value
 
-    @sr.setter
-    def sr(self, value):
+    @spatial_reference.setter
+    def spatial_reference(self, value):
         if value not in (21781, 2056):
             raise HTTPBadRequest("Please provide a valid number for the spatial reference system model 21781 or 2056")
-        self._sr = value
+        self._spatial_reference = value
 
     @nb_points.setter
     def nb_points(self, value):
         if value is None:
             self._nb_points = self.nb_points_default
+        elif (isinstance(value, int) or value.isdigit()) and int(value) <= 1:
+            raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points' greater "
+                                 "or equal to 2")
+        elif (isinstance(value, int) or value.isdigit()) and int(value) <= self.nb_points_max:
+            self._nb_points = int(value)
         else:
-            if value.isdigit() and int(value) <= self.nb_points_max:
-                self._nb_points = int(value)
-            else:
-                raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
-                    " smaller than {}".format(self.nb_points_max))
+            raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
+                                 " smaller than {}".format(self.nb_points_max))
 
-    @ma_offset.setter
-    def ma_offset(self, value):
+    @offset.setter
+    def offset(self, value):
         if value is None:
-            self._ma_offset = 3
+            self._offset = 3
         else:
             if value.isdigit():
-                self._ma_offset = int(value)
+                self._offset = int(value)
             else:
                 raise HTTPBadRequest("Please provide a numerical value for the parameter 'offset'")

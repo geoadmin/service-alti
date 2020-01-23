@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source .venv/bin/activate
+. .venv/bin/activate
 python scripts/generate-linestring.py 5000
 PAYLOAD=$(cat payload.json)
 curl -F "geom=${PAYLOAD}" \

@@ -15,11 +15,11 @@ echo "Target is: $TARGET"
 if [[ $CODE_DIR == */branch/* ]]; then
   make clean
   make rc_branch DEPLOY_TARGET=$TARGET
-  source rc_branch
+  . ./rc_branch
   make templates
-elif [[ -f rc_$TARGET ]]; then
+elif [[ -f ./rc_$TARGET ]]; then
   make clean
-  source rc_$TARGET
+  . ./rc_$TARGET
   make templates
 fi
 

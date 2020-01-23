@@ -28,11 +28,13 @@ address_search_referers = localhost,admin.ch,awk.ch,cadastre.ch,rspp.ch,rollstuh
 http_proxy = ${http_proxy}
 
 profile_nb_points_default = 200
-profile_nb_points_maximum = 500
+profile_nb_points_maximum = 5000
 
 ###
 # wsgi server configuration
 ###
+wsgi.multithread = True
+wsgi.multiprocess = True
 
 [server:main]
 use = egg:waitress#main

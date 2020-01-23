@@ -20,6 +20,7 @@ def main(global_config, **settings):
     # renderers
     config.add_renderer('jsonp', JSONP(param_name='callback', indent=None, separators=(',', ':')))
     config.add_renderer('csv', CSVRenderer)
+    config.include('pyramid_mako')
 
     # route definitions
     config.add_route('profile_json', '/rest/services/profile.json')
@@ -28,6 +29,9 @@ def main(global_config, **settings):
 
     config.add_route('checker', '/checker')
     config.add_route('checker_dev', '/checker_dev')
+
+    config.add_route('stats', '/stats')
+    config.add_route('stats_data', '/stats_data')
 
     config.add_static_view('static', 'alti:static')
     config.add_static_view('/', 'alti:static/')

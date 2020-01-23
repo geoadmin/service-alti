@@ -88,10 +88,10 @@ help:
 
 .PHONY: user
 user:
-	source $(USER_SOURCE) && make all
+	. ./$(USER_SOURCE) && make all
 
 .PHONY: all
-all: setup templates lint fixrights
+all: setup templates lint fixrights test
 
 setup: .venv .venv/hooks
 
@@ -99,15 +99,15 @@ templates: .venv/last-version apache/wsgi.conf development.ini production.ini
 
 .PHONY: dev
 dev:
-	source rc_dev && make all
+	. ./rc_dev && make all
 
 .PHONY: int
 int:
-	source rc_int && make all
+	. ./rc_int && make all
 
 .PHONY: prod
 prod:
-	source rc_prod && make all
+	. ./rc_prod && make all
 
 .PHONY: serve
 serve:
@@ -119,7 +119,7 @@ shell:
 
 .PHONY: test
 test:
-	source rc_ci && PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
+	. ./rc_ci && PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
 
 .PHONY: lint
 lint:
@@ -202,9 +202,9 @@ apache/application.wsgi: apache/application.wsgi.mako
 		--var "apache_base_path=$(APACHE_BASE_PATH)" \
 		--var "modwsgi_config=$(MODWSGI_CONFIG)" $< > $@
 
-apache/wsgi.conf.in:
-	@echo "${GREEN}Template file apache/wsgi.conf.in has changed${RESET}";
-apache/wsgi.conf: apache/wsgi.conf.in apache/application.wsgi
+apache/wsgi.conf.mako:
+	@echo "${GREEN}Template file apache/wsgi.conf.mako has changed${RESET}";
+apache/wsgi.conf: apache/wsgi.conf.mako apache/application.wsgi
 	@echo "${GREEN}Creating apache/wsgi.conf...${RESET}";
 	${MAKO_CMD} \
 		--var "apache_entry_path=$(APACHE_ENTRY_PATH)" \
@@ -260,7 +260,7 @@ requirements.txt:
 	if [ ! -d ".git" ]; then git init; fi
 	rm -rf .venv/git-secrets
 	git clone https://github.com/awslabs/git-secrets .venv/git-secrets
-	cd .venv/git-secrets && make install PREFIX=..
+	cd .venv/git-secrets  && git reset --hard 635895a8d1b7c976ac9794cef420f8dc111a24d4 && make install PREFIX=..
 	(git config --local --get-regexp secret && git config --remove-section secrets) || cd
 	.venv/bin/git-secrets --register-aws
 

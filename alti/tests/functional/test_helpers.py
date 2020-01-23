@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from alti.lib.helpers import float_raise_nan, filter_alt
+from alti.lib.helpers import float_raise_nan, filter_altitude
 
 
 class Test_Helpers(unittest.TestCase):
@@ -15,10 +15,10 @@ class Test_Helpers(unittest.TestCase):
 
     def test_filter_alt(self):
         alt = 100.0
-        self.assertEqual(alt, filter_alt(alt))
+        self.assertEqual(alt, filter_altitude(alt))
         alt = -100.0
-        self.assertEqual(None, filter_alt(alt))
+        self.assertEqual(None, filter_altitude(alt))
         alt = None
-        self.assertEqual(alt, filter_alt(alt))
+        self.assertEqual(alt, filter_altitude(alt))
         alt = 100.111
-        self.assertEqual(100.1, filter_alt(alt))
+        self.assertEqual(100.1, filter_altitude(alt))

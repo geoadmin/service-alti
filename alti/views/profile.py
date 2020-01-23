@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import math
 from pyramid.view import view_config
 
+from alti.lib.profile_helpers import get_profile, PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
 from alti.lib.validation.profile import ProfileValidation
-from alti.lib.raster.georaster import get_raster
 from alti.lib.validation import srs_guesser
 
 from pyramid.httpexceptions import HTTPBadRequest
@@ -14,167 +13,96 @@ class Profile(ProfileValidation):
 
     def __init__(self, request):
         super(Profile, self).__init__()
-        self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default', 200))
-        self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum', 500))
+        self.nb_points_max = int(request.registry.settings.get('profile_nb_points_maximum',
+                                                               PROFILE_MAX_AMOUNT_POINTS))
+        self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default',
+                                                                   PROFILE_DEFAULT_AMOUNT_POINTS))
+
+        # param geom, list of coordinates defining the line on which we want a profile
         if 'geom' in request.params:
             self.linestring = request.params.get('geom')
-        else:
+        elif request.body is not None:
             self.linestring = request.body
+        if not self.linestring:
+            raise HTTPBadRequest("No 'geom' given, cannot create a profile without coordinates")
+
+        # param layers (or elevations_models), define on which elevation model the profile has to be made.
+        # Possible values are DTM25, DTM2 and COMB (have a look at georaster.py for more info on this)
+        # default value is COMB
         if 'layers' in request.params:
             self.layers = request.params.get('layers')
-        else:
+        elif 'elevation_models' in request.params:
             self.layers = request.params.get('elevation_models')
+        else:
+            self.layers = 'COMB'
+
+        # number of points wanted in the final profile.
         if 'nbPoints' in request.params:
             self.nb_points = request.params.get('nbPoints')
-        else:
+            self.is_custom_nb_points = True
+        elif 'nb_points' in request.params:
             self.nb_points = request.params.get('nb_points')
+            self.is_custom_nb_points = True
+        else:
+            self.nb_points = self.nb_points_default
+            self.is_custom_nb_points = False
+
+        # param sr (or projection, sr meaning spatial reference), which Swiss projection to use.
+        # Possible values are expressed in int, so value for EPSG:2056 (LV95) is 2056
+        # and value for EPSG:21781 (LV03) is 21781
+        # if this param is not present, it will be guessed from the coordinates present in the param geom
         if 'sr' in request.params:
-            self.sr = int(request.params.get('sr'))
+            self.spatial_reference = int(request.params.get('sr'))
+        elif 'projection' in request.params:
+            self.spatial_reference = int(request.params.get('projection'))
         else:
             sr = srs_guesser(self.linestring)
             if sr is None:
                 raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
-            self.sr = sr
-        self.ma_offset = request.params.get('offset')
+            self.spatial_reference = sr
+
+        # param offset, used for smoothing. define how many coordinates should be included
+        # in the window used for smoothing. If not defined (or value is zero) smoothing is disabled.
+        if 'offset' in request.params:
+            self.offset = request.params.get('offset')
+
+        # param only_requested_points, which is flag that when set to True will make
+        # the profile with only the given points in geom (no filling points)
+        if 'only_requested_points' in request.params:
+            self.only_requested_points = bool(request.params.get('only_requested_points'))
+        else:
+            self.only_requested_points = False
+
+        # flag that define if filling has to be smart, aka to take resolution into account (so that there's not two
+        # points closer than what the resolution is) or if points are placed without care for that.
+        if 'smart_filling' in request.params:
+            self.smart_filling = bool(request.params.get('smart_filling'))
+        else:
+            self.smart_filling = False
+
+        # keeping the request for later use
         self.request = request
 
     @view_config(route_name='profile_json', renderer='jsonp', http_cache=0)
     def json(self):
-        self.json = True
-        return self._compute_points()
+        return self.__get_profile_from_helper(True)
 
     @view_config(route_name='profile_csv', renderer='csv', http_cache=0)
     def csv(self):
-        self.json = False
-        return self._compute_points()
+        return self.__get_profile_from_helper(False)
 
-    def _compute_points(self):
-        """Compute the alt=fct(dist) array and store it in c.points"""
-        rasters = [get_raster(layer, self.sr) for layer in self.layers]
-        # Simplify input line with a tolerance of 2 m
-        if self.nb_points < len(self.linestring.coords):
-            linestring = self.linestring.simplify(12.5)
-        else:
-            linestring = self.linestring
-
-        coords = self._create_points(linestring.coords, self.nb_points)
-        zvalues = {}
-        for i in xrange(0, len(self.layers)):
-            zvalues[self.layers[i]] = []
-            for j in xrange(0, len(coords)):
-                z = rasters[i].getVal(coords[j][0], coords[j][1])
-                zvalues[self.layers[i]].append(z)
-
-        factor = lambda x: float(1) / (abs(x) + 1)
-        zvalues2 = {}
-        for i in xrange(0, len(self.layers)):
-            zvalues2[self.layers[i]] = []
-            for j in xrange(0, len(zvalues[self.layers[i]])):
-                s = 0
-                d = 0
-                if zvalues[self.layers[i]][j] is None:
-                    zvalues2[self.layers[i]].append(None)
-                    continue
-                for k in xrange(-self.ma_offset, self.ma_offset + 1):
-                    p = j + k
-                    if p < 0 or p >= len(zvalues[self.layers[i]]):
-                        continue
-                    if zvalues[self.layers[i]][p] is None:
-                        continue
-                    s += zvalues[self.layers[i]][p] * factor(k)
-                    d += factor(k)
-                zvalues2[self.layers[i]].append(s / d)
-
-        dist = 0
-        prev_coord = None
-        if self.json:
-            profile = []
-        # If the renderer is a csv file
-        else:
-            profile = {'headers': ['Distance'], 'rows': []}
-            for i in self.layers:
-                profile['headers'].append(i)
-            profile['headers'].append('Easting')
-            profile['headers'].append('Northing')
-
-        for j in xrange(0, len(coords)):
-            if prev_coord is not None:
-                dist += self._dist(prev_coord, coords[j])
-            alts = {}
-            for i in xrange(0, len(self.layers)):
-                if zvalues2[self.layers[i]][j] is not None:
-                    alts[self.layers[i]] = self._filter_alt(
-                        zvalues2[self.layers[i]][j])
-            if len(alts) > 0:
-                rounded_dist = self._filter_dist(dist)
-                if self.json:
-                    profile.append({
-                        'alts': alts,
-                        'dist': rounded_dist,
-                        'easting': self._filter_coordinate(coords[j][0]),
-                        'northing': self._filter_coordinate(coords[j][1])
-                    })
-                # For csv file
-                else:
-                    temp = [rounded_dist]
-                    for i in alts.iteritems():
-                        temp.append(i[1])
-                    temp.append(self._filter_coordinate(coords[j][0]))
-                    temp.append(self._filter_coordinate(coords[j][1]))
-                    profile['rows'].append(temp)
-            prev_coord = coords[j]
+    def __get_profile_from_helper(self, output_to_json=True):
+        profile = get_profile(geom=self.linestring,
+                              spatial_reference=self.spatial_reference,
+                              layers=self.layers,
+                              nb_points=self.nb_points,
+                              offset=self.offset,
+                              only_requested_points=self.only_requested_points,
+                              smart_filling=self.smart_filling,
+                              output_to_json=output_to_json)
+        # If profile calculation resulted in a lower number of point than requested (because there's no need to add
+        # points closer to each other than the min resolution of 2m), we return HTTP 203 to notify that nb_points
+        # couldn't be match.
+        if self.is_custom_nb_points and len(profile) < self.nb_points:
+            self.request.response.status = 203
         return profile
-
-    def _dist(self, coord1, coord2):
-        """Compute the distance between 2 points"""
-        return math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) +
-                         math.pow(coord1[1] - coord2[1], 2.0))
-
-    def _create_points(self, coords, nbPoints):
-        """
-            Add some points in order to reach roughly the asked
-            number of points.
-        """
-        totalLength = 0
-        prev_coord = None
-        for coord in coords:
-            if prev_coord is not None:
-                totalLength += self._dist(prev_coord, coord)
-            prev_coord = coord
-
-        if totalLength == 0.0:
-            return coords
-
-        result = []
-        prev_coord = None
-        for coord in coords:
-            if prev_coord is not None:
-                cur_length = self._dist(prev_coord, coord)
-                cur_nb_points = int(nbPoints * cur_length / totalLength + 0.5)
-                if cur_nb_points < 1:
-                    cur_nb_points = 1
-                dx = (coord[0] - prev_coord[0]) / float(cur_nb_points)
-                dy = (coord[1] - prev_coord[1]) / float(cur_nb_points)
-                for i in xrange(1, cur_nb_points + 1):
-                    result.append(
-                        [prev_coord[0] + dx * i,
-                         prev_coord[1] + dy * i])
-            else:
-                result.append([coord[0], coord[1]])
-            prev_coord = coord
-        return result
-
-    def _filter_alt(self, alt):
-        if alt is not None and alt > 0.0:
-            # 10cm accuracy is enough for altitudes
-            return round(alt, 1)
-        else:
-            return None
-
-    def _filter_dist(self, dist):
-        # 10cm accuracy is enough for distances
-        return round(dist, 1)
-
-    def _filter_coordinate(self, coords):
-        # 1mm accuracy is enough for distances
-        return round(coords, 3)

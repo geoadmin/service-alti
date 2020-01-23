@@ -11,7 +11,22 @@ def float_raise_nan(val):
     return ret
 
 
-def filter_alt(alt):
-    if alt is not None and alt > 0.0:
+def filter_altitude(altitude):
+    """Returns the altitude given in parameter, rounded one decimal place"""
+    if altitude is not None and altitude > 0.0:
         # 10cm accuracy is enough for altitudes
-        return round(alt, 1)
+        return round(altitude, 1)
+    else:
+        return None
+
+
+def filter_distance(distance):
+    """Returns the distance given in parameter rounded one decimal place"""
+    # 10cm accuracy is enough for distances
+    return round(distance, 1)
+
+
+def filter_coordinate(coordinate):
+    """Returns the coordinate given in parameter, rounder three decimal places"""
+    # 1mm accuracy is enough for coordinates
+    return round(coordinate, 3)
