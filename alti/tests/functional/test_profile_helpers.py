@@ -53,7 +53,7 @@ class TestProfileHelpers(unittest.TestCase):
         # value index : 0 .... 0   1 .... 1   2 .... etc ...  9   10
         for i in range(len(response)):
             value = response[i]['alts']['COMB']
-            value_index = 0 if i < 20 else 10 if i == 199 else i / 20
+            value_index = 10 if i == 199 else i / 20
             expected_value = round(VALUES_FOR_EACH_2M_STEP[value_index] * 10.0) / 10.0
             self.assertEqual(value,
                              expected_value,
