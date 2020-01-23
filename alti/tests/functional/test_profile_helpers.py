@@ -48,7 +48,9 @@ class TestProfileHelpers(unittest.TestCase):
                          msg="with 'dumb' filling, there should be no regard to resolution and default amount of "
                              "points has to be used (default: {}, actual: {})".format(PROFILE_DEFAULT_AMOUNT_POINTS,
                                                                                       len(response)))
-        # checking values, it should switch to the next value every 20 iteration
+        # checking values, it should switch to the next value every 20 iteration (point in profile)
+        # i           : 0 .... 19 20 .... 39 40 .... etc ... 198 199 (exception with the last point)
+        # value index : 0 .... 0   1 .... 1   2 .... etc ...  9   10
         for i in range(len(response)):
             value = response[i]['alts']['COMB']
             value_index = 0 if i < 20 else 10 if i == 199 else i / 20
