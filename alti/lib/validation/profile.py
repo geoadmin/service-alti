@@ -4,9 +4,11 @@ import geojson
 from pyramid.httpexceptions import HTTPBadRequest
 
 from shapely.geometry import shape
+from alti.lib.validation import SrsValidation
+from alti.views.profile import PROFILE_DEFAULT_AMOUNT_POINTS, PROFILE_MAX_AMOUNT_POINTS
 
 
-class ProfileValidation(object):
+class ProfileValidation(SrsValidation):
 
     def __init__(self):
         self._linestring = None
@@ -69,21 +71,22 @@ class ProfileValidation(object):
     @spatial_reference.setter
     def spatial_reference(self, value):
         if value not in (21781, 2056):
-            raise HTTPBadRequest("Please provide a valid number for the spatial reference system model 21781 or 2056")
+            raise HTTPBadRequest("Please provide a valid number for the spatial reference system model (on of {})"
+                                 .format(self.supported_srs))
         self._spatial_reference = value
 
     @nb_points.setter
     def nb_points(self, value):
         if value is None:
-            self._nb_points = self.nb_points_default
+            self._nb_points = PROFILE_DEFAULT_AMOUNT_POINTS
         elif (isinstance(value, int) or value.isdigit()) and int(value) <= 1:
             raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points' greater "
                                  "or equal to 2")
-        elif (isinstance(value, int) or value.isdigit()) and int(value) <= self.nb_points_max:
+        elif (isinstance(value, int) or value.isdigit()) and int(value) <= PROFILE_MAX_AMOUNT_POINTS:
             self._nb_points = int(value)
         else:
             raise HTTPBadRequest("Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
-                                 " smaller than {}".format(self.nb_points_max))
+                                 " smaller than {}".format(PROFILE_MAX_AMOUNT_POINTS))
 
     @offset.setter
     def offset(self, value):

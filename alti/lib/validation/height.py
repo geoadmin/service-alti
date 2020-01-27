@@ -3,9 +3,10 @@
 from pyramid.httpexceptions import HTTPBadRequest
 
 from alti.lib.helpers import float_raise_nan
+from alti.lib.validation import SrsValidation
 
 
-class HeightValidation(object):
+class HeightValidation(SrsValidation):
 
     def __init__(self):
         self._lon = None
@@ -58,6 +59,6 @@ class HeightValidation(object):
 
     @sr.setter
     def sr(self, value):
-        if value not in (21781, 2056):
-            raise HTTPBadRequest("Please provide a valid number for the spatial reference system model 21781 or 2056")
+        if value not in self.supported_srs:
+            raise HTTPBadRequest("Please provide a valid number for the spatial reference system model ({})".format(self.supported_srs))
         self._sr = value

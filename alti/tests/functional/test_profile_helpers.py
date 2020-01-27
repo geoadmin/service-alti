@@ -31,7 +31,7 @@ class TestProfileHelpers(unittest.TestCase):
     def __prepare_mock_and_test(self, mock, smart_filling, geom=FAKE_GEOM):
         prepare_mock(mock)
         response = get_profile(geom=geom,
-                               spatial_reference=2056,
+                               spatial_reference_in=2056,
                                layers=['COMB'],
                                offset=0,
                                only_requested_points=False,

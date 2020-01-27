@@ -35,7 +35,7 @@ class TestHeightView(TestsBase):
                              expected_height=HEIGHT_DTM25)
 
     def test_height_no_sr_using_wrong_coordinates(self):
-        self.__test_get(params={'easting': '7.66', 'northing': '46.7'},
+        self.__test_get(params={'easting': '102', 'northing': '-46.7'},
                         expected_status=400)
 
     def test_height_using_unknown_sr(self):
@@ -129,3 +129,24 @@ class TestHeightView(TestsBase):
         resp = self.__test_get(params={'northing': '200000'},
                                expected_status=400)
         resp.mustcontain("Missing parameter 'easting'/'lon'")
+
+    def test_different_srs_return_same_height(self):
+        # Summit of Finsteraarhorn
+        resp_lv03 = self.__test_get(params={'easting': '652741.57', 'northing': '154231.64',
+                                            'layers': 'DTM2'},
+                                    expected_status=200)
+        resp_lv95 = self.__test_get(params={'easting': '2652741.5', 'northing': '1154231.4',
+                                            'layers': 'DTM2'},
+                                    expected_status=200)
+        resp_wgs84 = self.__test_get(params={'easting': '8.12617', 'northing': '46.53730',
+                                             'layers': 'DTM2'},
+                                     expected_status=200)
+        resp_webmerc = self.__test_get(params={'easting': '904601.0976097584', 'northing': '5866874.330271561',
+                                               'layers': 'DTM2'},
+                                       expected_status=200)
+
+        height = resp_lv95.json['height']
+
+        self.assertEqual(resp_lv03.json['height'], height)
+        self.assertEqual(resp_wgs84.json['height'], height)
+        self.assertEqual(resp_webmerc.json['height'], height)

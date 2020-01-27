@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
+from alti.lib.profile_helpers import get_profile, PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
 from pyramid.view import view_config
 
-from alti.lib.profile_helpers import get_profile, PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
+from alti.lib.helpers import transform_shape
 from alti.lib.validation.profile import ProfileValidation
-from alti.lib.validation import srs_guesser
 
 from pyramid.httpexceptions import HTTPBadRequest
 
@@ -17,6 +17,8 @@ class Profile(ProfileValidation):
                                                                PROFILE_MAX_AMOUNT_POINTS))
         self.nb_points_default = int(request.registry.settings.get('profile_nb_points_default',
                                                                    PROFILE_DEFAULT_AMOUNT_POINTS))
+        self.native_srs = int(request.registry.settings.get('native_srs', 2056))
+        self.supported_srs = map(int, request.registry.settings.get('supported_srs', '2056,21781').split(','))
 
         # param geom, list of coordinates defining the line on which we want a profile
         if 'geom' in request.params:
@@ -56,10 +58,15 @@ class Profile(ProfileValidation):
         elif 'projection' in request.params:
             self.spatial_reference = int(request.params.get('projection'))
         else:
-            sr = srs_guesser(self.linestring)
+            sr = self.srs_guesser(self.linestring)
             if sr is None:
                 raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
             self.spatial_reference = sr
+        if self.spatial_reference not in (2056, 21781):
+            self._linestring = transform_shape(self.linestring, self.spatial_reference, self.native_srs)
+            self.sr_in = self.native_srs
+        else:
+            self.sr_in = self.spatial_reference
 
         # param offset, used for smoothing. define how many coordinates should be included
         # in the window used for smoothing. If not defined (or value is zero) smoothing is disabled.
@@ -93,7 +100,9 @@ class Profile(ProfileValidation):
 
     def __get_profile_from_helper(self, output_to_json=True):
         profile = get_profile(geom=self.linestring,
-                              spatial_reference=self.spatial_reference,
+                              spatial_reference_in=self.sr_in,
+                              spatial_reference_out=self.spatial_reference,
+                              native_srs=self.native_srs,
                               layers=self.layers,
                               nb_points=self.nb_points,
                               offset=self.offset,
