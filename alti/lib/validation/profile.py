@@ -5,7 +5,9 @@ from pyramid.httpexceptions import HTTPBadRequest
 
 from shapely.geometry import shape
 from alti.lib.validation import SrsValidation
-from alti.views.profile import PROFILE_DEFAULT_AMOUNT_POINTS, PROFILE_MAX_AMOUNT_POINTS
+
+PROFILE_MAX_AMOUNT_POINTS = 5000
+PROFILE_DEFAULT_AMOUNT_POINTS = 200
 
 
 class ProfileValidation(SrsValidation):

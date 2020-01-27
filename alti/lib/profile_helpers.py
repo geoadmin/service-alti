@@ -6,9 +6,7 @@ from scipy.spatial.distance import pdist, squareform
 
 from alti.lib.raster.georaster import get_raster
 from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude, transform_shape
-
-PROFILE_MAX_AMOUNT_POINTS = 5000
-PROFILE_DEFAULT_AMOUNT_POINTS = 200
+from alti.lib.validation.profile import PROFILE_DEFAULT_AMOUNT_POINTS
 
 
 def get_profile(geom=None,
@@ -79,7 +77,7 @@ def _create_profile(layers,
         try:
             geom = LineString(coordinates)
             reprojected_geom = transform_shape(geom, native_srs, spatial_reference_out)
-            coords = list(reprojected_geom.coords)
+            coordinates = list(reprojected_geom.coords)
         except:
             raise HTTPInternalServerError('Cannot reproject coordinates back to {}'.format(spatial_reference_out))
 

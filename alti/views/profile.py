@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from alti.lib.profile_helpers import get_profile, PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
+from alti.lib.profile_helpers import get_profile
 from pyramid.view import view_config
 
 from alti.lib.helpers import transform_shape
-from alti.lib.validation.profile import ProfileValidation
+from alti.lib.validation.profile import ProfileValidation, PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
 
 from pyramid.httpexceptions import HTTPBadRequest
 

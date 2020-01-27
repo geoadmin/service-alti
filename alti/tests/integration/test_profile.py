@@ -4,7 +4,7 @@ import json
 import random
 from shapely.geometry import Point, LineString, mapping
 from alti.tests.integration import TestsBase
-from alti.lib.profile_helpers import PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
+from alti.lib.validation.profile import PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
 
 
 def generate_random_coord(srid):
