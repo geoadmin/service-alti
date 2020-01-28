@@ -28,11 +28,11 @@ class TestHeightView(TestsBase):
 
     def test_height_no_sr_assuming_lv03(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_no_sr_assuming_lv95(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV95, 'northing': NORTH_LV95}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_no_sr_using_wrong_coordinates(self):
         self.__test_get(params={'easting': '102', 'northing': '-46.7'},
@@ -52,7 +52,7 @@ class TestHeightView(TestsBase):
 
     def test_height_lv95_valid(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV95, 'northing': NORTH_LV95}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_lv95_outofbound(self):
         self.__test_get(params={'easting': '2200000.1', 'northing': '1780000.1'},
@@ -60,7 +60,7 @@ class TestHeightView(TestsBase):
 
     def test_height_lv03_valid(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_lv03_none(self):
         resp = self.__test_get(params={'easting': '600000', 'northing': '0'},
@@ -77,22 +77,26 @@ class TestHeightView(TestsBase):
 
     def test_height_lv03_valid_with_lonlat(self):
         self.__assert_height(response=self.__test_get(params={'lon': EAST_LV03, 'lat': NORTH_LV03}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_lv03_with_dtm2(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'layers': 'DTM2'}),
-                             expected_height=HEIGHT_DTM2)
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03,
+                                                              'layers': 'DTM25'}),
+                             expected_height=HEIGHT_DTM25)
 
     def test_height_lv03_with_dtm2_elevModel(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'elevation_model': 'DTM2'}),
-                             expected_height=HEIGHT_DTM2)
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03,
+                                                              'elevation_model': 'DTM25'}),
+                             expected_height=HEIGHT_DTM25)
 
     def test_height_lv03_with_comb(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'layers': 'COMB'}),
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03,
+                                                              'layers': 'COMB'}),
                              expected_height=HEIGHT_DTM2)
 
     def test_height_lv03_with_comb_elevModel(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'elevation_model': 'COMB'}),
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03,
+                                                              'elevation_model': 'COMB'}),
                              expected_height=HEIGHT_DTM2)
 
     def test_height_lv03_wrong_layer(self):
@@ -131,18 +135,14 @@ class TestHeightView(TestsBase):
         resp.mustcontain("Missing parameter 'easting'/'lon'")
 
     def test_different_srs_return_same_height(self):
-        # Summit of Finsteraarhorn
-        resp_lv03 = self.__test_get(params={'easting': '652741.57', 'northing': '154231.64',
-                                            'layers': 'DTM2'},
+        # Summit of Roteflue (must be in the tile available to the CI)
+        resp_lv03 = self.__test_get(params={'easting': '633694.1', 'northing': '173983.8'},
                                     expected_status=200)
-        resp_lv95 = self.__test_get(params={'easting': '2652741.5', 'northing': '1154231.4',
-                                            'layers': 'DTM2'},
+        resp_lv95 = self.__test_get(params={'easting': '2633694.1', 'northing': '1173983.8'},
                                     expected_status=200)
-        resp_wgs84 = self.__test_get(params={'easting': '8.12617', 'northing': '46.53730',
-                                             'layers': 'DTM2'},
+        resp_wgs84 = self.__test_get(params={'easting': '7.87932', 'northing': '46.71621'},
                                      expected_status=200)
-        resp_webmerc = self.__test_get(params={'easting': '904601.0976097584', 'northing': '5866874.330271561',
-                                               'layers': 'DTM2'},
+        resp_webmerc = self.__test_get(params={'easting': '877121.89', 'northing': '5895874.72'},
                                        expected_status=200)
 
         height = resp_lv95.json['height']

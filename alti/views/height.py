@@ -31,7 +31,7 @@ class Height(HeightValidation):
         elif 'elevation_model' in request.params:
             self.layers = request.params.get('elevation_model')
         else:
-            self.layers = ['DTM25']
+            self.layers = ['DTM2']
         if 'sr' in request.params:
             self.sr = int(request.params.get('sr'))
         else:
