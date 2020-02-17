@@ -130,7 +130,6 @@ class TestProfileView(TestsBase):
             expected_status=400)
         resp.mustcontain("No 'sr' given and cannot be guessed from 'geom'")
 
-
     def test_profile_lv03_json_with_callback_valid(self):
         resp = self.__get_json_profile(params={'geom': create_json(4, 21781),
                                                'callback': 'cb_'},
