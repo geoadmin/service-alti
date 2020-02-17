@@ -36,8 +36,8 @@ class Height(HeightValidation):
 
     @view_config(route_name='height', renderer='jsonp', http_cache=0)
     def height(self):
-        rasters = get_raster(self.sr)
-        alt = filter_altitude(rasters[0].get_height_for_coordinate(self.lon, self.lat))
+        raster = get_raster(self.sr)
+        alt = filter_altitude(raster.get_height_for_coordinate(self.lon, self.lat))
         if alt is None:
             raise HTTPBadRequest('Requested coordinate ({},{}) out of bounds in sr {}'.format(self.lon, self.lat, self.sr))
 
