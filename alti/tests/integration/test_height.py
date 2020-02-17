@@ -87,7 +87,6 @@ class TestHeightView(TestsBase):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
                              expected_height=HEIGHT_DTM2)
 
-
     def test_height_lv03_wrong_lon_value(self):
         resp = self.__test_get(params={'lon': 'toto', 'northing': '200000'},
                                expected_status=400)
