@@ -84,7 +84,6 @@ class Profile(ProfileValidation):
     def __get_profile_from_helper(self, output_to_json=True):
         profile = get_profile(geom=self.linestring,
                               spatial_reference=self.spatial_reference,
-                              layers=self.layers,
                               nb_points=self.nb_points,
                               offset=self.offset,
                               only_requested_points=self.only_requested_points,
