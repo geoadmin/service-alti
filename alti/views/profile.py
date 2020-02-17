@@ -26,16 +26,6 @@ class Profile(ProfileValidation):
         if not self.linestring:
             raise HTTPBadRequest("No 'geom' given, cannot create a profile without coordinates")
 
-        # param layers (or elevations_models), define on which elevation model the profile has to be made.
-        # Possible values are DTM25, DTM2 and COMB (have a look at georaster.py for more info on this)
-        # default value is COMB
-        if 'layers' in request.params:
-            self.layers = request.params.get('layers')
-        elif 'elevation_models' in request.params:
-            self.layers = request.params.get('elevation_models')
-        else:
-            self.layers = 'COMB'
-
         # number of points wanted in the final profile.
         if 'nbPoints' in request.params:
             self.nb_points = request.params.get('nbPoints')

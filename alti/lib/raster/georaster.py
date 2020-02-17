@@ -12,43 +12,31 @@ _rasters = {}
 _rasterfiles = {}
 
 
-def get_raster(name, sr):
+def get_raster(sr):
     global _rasters
-    filename = "%s%s" % (sr, name)
-    result = _rasters.get(filename, None)
-    if not result:
-        result = GeoRaster(_rasterfiles[sr][name])
-        _rasters[filename] = result
-        log.debug("GeoRaster for {} has been added in the cache".format(repr(filename)))
+    result = _rasters.get(sr, None)
+    if result is None:
+        result = GeoRaster(_rasterfiles[sr])
+        _rasters[sr] = result
+        log.debug("GeoRaster for {} has been added in the cache".format(repr(sr)))
     return result
 
 
-def init_rasterfiles(datapath, preloadtypes):
+def init_rasterfiles(datapath, supported_spatial_references):
     global _rasterfiles
-    # elevation models are :
-    # - DTM25 : an old model with a mesh of 25 meters that stretches a little bit outside of Switzerland's borders
-    # - DTM2 : a more recent model with a mesh of 2 meters, but doesn't cover a lot of land outside of Switzerland
-    # - COMB : a mix of the two, when there's no data on DTM2, DTM25 is requested.
     _rasterfiles = {
         # LV03
-        21781: {
-            'DTM25': datapath + 'dhm25_25_matrix/mm0001.shp',
-            'DTM2': datapath + 'swissalti3d/2m/index.shp',
-            'COMB': datapath + 'swissalti3d/kombo_2m_dhm25/index.shp'
-        },
+        21781: datapath + 'swissalti3d/kombo_2m_dhm25/index.shp',
         # LV95
-        2056: {
-            'DTM25': datapath + 'dhm25_25_matrix_lv95/mm0001.shp',
-            'DTM2': datapath + 'swissalti3d/2m_lv95/index.shp',
-            'COMB': datapath + 'swissalti3d/kombo_2m_dhm25_lv95/index.shp'
-        }
+        2056:  datapath + 'swissalti3d/kombo_2m_dhm25_lv95/index.shp'
         # for other projections, results are reprojected from LV95 model
     }
     try:
-        for preloadtype in preloadtypes:
-            pt, sr = preloadtype
-            get_raster(pt, sr)
-            log.info('Preloading raster: %s - %s' % (pt, sr))
+        # this is currently the same as doing it for all rasterfiles, but if we support one day another projection and
+        # don't want to preload it, we have the possibility to do so.
+        for sr in supported_spatial_references:
+            get_raster(sr)
+            log.info('Preloading raster for spatial reference: %s' % sr)
 
     except Exception as e:
         log.error('Could not initialize raster files. Make sure they exist in the following directory: %s (Exception: %s)' % (datapath, e))
