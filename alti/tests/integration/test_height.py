@@ -79,31 +79,14 @@ class TestHeightView(TestsBase):
         self.__assert_height(response=self.__test_get(params={'lon': EAST_LV03, 'lat': NORTH_LV03}),
                              expected_height=HEIGHT_DTM25)
 
-    def test_height_lv03_with_dtm2(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'layers': 'DTM2'}),
-                             expected_height=HEIGHT_DTM2)
-
-    def test_height_lv03_with_dtm2_elevModel(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'elevation_model': 'DTM2'}),
-                             expected_height=HEIGHT_DTM2)
-
     def test_height_lv03_with_comb(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'layers': 'COMB'}),
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
                              expected_height=HEIGHT_DTM2)
 
     def test_height_lv03_with_comb_elevModel(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'elevation_model': 'COMB'}),
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
                              expected_height=HEIGHT_DTM2)
 
-    def test_height_lv03_wrong_layer(self):
-        resp = self.__test_get(params={'easting': '600000', 'northing': '200000', 'layers': 'TOTO'},
-                               expected_status=400)
-        resp.mustcontain("Please provide a valid name for the elevation")
-
-    def test_height_lv03_wrong_layer_elevModel(self):
-        resp = self.__test_get(params={'easting': '600000', 'northing': '200000', 'elevation_model': 'TOTO'},
-                               expected_status=400)
-        resp.mustcontain("Please provide a valid name for the elevation")
 
     def test_height_lv03_wrong_lon_value(self):
         resp = self.__test_get(params={'lon': 'toto', 'northing': '200000'},
