@@ -70,7 +70,7 @@ def _create_profile(coordinates, z_values, output_to_json):
             else:
                 temp = [rounded_dist]
                 if alt is not None:
-                    temp.append(alt[1])
+                    temp.append(alt)
                 temp.append(filter_coordinate(coordinates[j][0]))
                 temp.append(filter_coordinate(coordinates[j][1]))
                 profile['rows'].append(temp)
