@@ -38,7 +38,7 @@ def get_profile(geom=None,
 
     return _create_profile(coordinates=coordinates,
                            # if offset is defined, do the smoothing
-                           z_values=_smooth(layers, offset, z_values) if offset > 0 else z_values,
+                           z_values=_smooth(offset, z_values) if offset > 0 else z_values,
                            spatial_reference_in=spatial_reference_in,
                            spatial_reference_out=spatial_reference_out,
                            native_srs=native_srs,
