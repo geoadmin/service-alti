@@ -19,7 +19,7 @@ def get_profile(geom=None,
                 output_to_json=True):
     """Compute the alt=fct(dist) array and store it in c.points"""
 
-    # get raster data from georaster.py (layers is sometime referred as elevation_models in request parameters)
+    # get raster data from georaster.py
     raster = get_raster(spatial_reference)
 
     if only_requested_points:
