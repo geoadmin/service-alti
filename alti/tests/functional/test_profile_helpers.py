@@ -32,7 +32,6 @@ class TestProfileHelpers(unittest.TestCase):
         prepare_mock(mock)
         response = get_profile(geom=geom,
                                spatial_reference=2056,
-                               layers=['COMB'],
                                offset=0,
                                only_requested_points=False,
                                smart_filling=smart_filling,
@@ -52,7 +51,7 @@ class TestProfileHelpers(unittest.TestCase):
         # i           : 0 .... 19 20 .... 39 40 .... etc ... 198 199 (exception with the last point)
         # value index : 0 .... 0   1 .... 1   2 .... etc ...  9   10
         for i in range(len(response)):
-            value = response[i]['alts']['COMB']
+            value = response[i]['alts']
             value_index = 10 if i == 199 else i / 20
             expected_value = round(VALUES_FOR_EACH_2M_STEP[value_index] * 10.0) / 10.0
             self.assertEqual(value,
@@ -71,7 +70,7 @@ class TestProfileHelpers(unittest.TestCase):
         # each values should be present only once, so we can test them in sequence (with the exception of rounding,
         # the value at index 9 should be rounded to the first digit : 123.456 => 123.5)
         for i in range(len(response)):
-            value = response[i]['alts']['COMB']
+            value = response[i]['alts']
             expected = round(VALUES_FOR_EACH_2M_STEP[i] * 10.0) / 10.0
             self.assertEqual(value,
                              expected,

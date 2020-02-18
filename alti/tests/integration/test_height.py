@@ -28,11 +28,11 @@ class TestHeightView(TestsBase):
 
     def test_height_no_sr_assuming_lv03(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_no_sr_assuming_lv95(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV95, 'northing': NORTH_LV95}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_no_sr_using_wrong_coordinates(self):
         self.__test_get(params={'easting': '7.66', 'northing': '46.7'},
@@ -52,7 +52,7 @@ class TestHeightView(TestsBase):
 
     def test_height_lv95_valid(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV95, 'northing': NORTH_LV95}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_lv95_outofbound(self):
         self.__test_get(params={'easting': '2200000.1', 'northing': '1780000.1'},
@@ -60,7 +60,7 @@ class TestHeightView(TestsBase):
 
     def test_height_lv03_valid(self):
         self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
-                             expected_height=HEIGHT_DTM25)
+                             expected_height=HEIGHT_DTM2)
 
     def test_height_lv03_none(self):
         resp = self.__test_get(params={'easting': '600000', 'northing': '0'},
@@ -77,33 +77,15 @@ class TestHeightView(TestsBase):
 
     def test_height_lv03_valid_with_lonlat(self):
         self.__assert_height(response=self.__test_get(params={'lon': EAST_LV03, 'lat': NORTH_LV03}),
-                             expected_height=HEIGHT_DTM25)
-
-    def test_height_lv03_with_dtm2(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'layers': 'DTM2'}),
-                             expected_height=HEIGHT_DTM2)
-
-    def test_height_lv03_with_dtm2_elevModel(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'elevation_model': 'DTM2'}),
                              expected_height=HEIGHT_DTM2)
 
     def test_height_lv03_with_comb(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'layers': 'COMB'}),
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
                              expected_height=HEIGHT_DTM2)
 
     def test_height_lv03_with_comb_elevModel(self):
-        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03, 'elevation_model': 'COMB'}),
+        self.__assert_height(response=self.__test_get(params={'easting': EAST_LV03, 'northing': NORTH_LV03}),
                              expected_height=HEIGHT_DTM2)
-
-    def test_height_lv03_wrong_layer(self):
-        resp = self.__test_get(params={'easting': '600000', 'northing': '200000', 'layers': 'TOTO'},
-                               expected_status=400)
-        resp.mustcontain("Please provide a valid name for the elevation")
-
-    def test_height_lv03_wrong_layer_elevModel(self):
-        resp = self.__test_get(params={'easting': '600000', 'northing': '200000', 'elevation_model': 'TOTO'},
-                               expected_status=400)
-        resp.mustcontain("Please provide a valid name for the elevation")
 
     def test_height_lv03_wrong_lon_value(self):
         resp = self.__test_get(params={'lon': 'toto', 'northing': '200000'},

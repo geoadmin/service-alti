@@ -12,7 +12,6 @@ PROFILE_DEFAULT_AMOUNT_POINTS = 200
 
 def get_profile(geom=None,
                 spatial_reference=None,
-                layers=None,
                 nb_points=PROFILE_DEFAULT_AMOUNT_POINTS,
                 offset=0,
                 only_requested_points=False,
@@ -20,10 +19,8 @@ def get_profile(geom=None,
                 output_to_json=True):
     """Compute the alt=fct(dist) array and store it in c.points"""
 
-    # get raster data from georaster.py (layers is sometime referred as elevation_models in request parameters)
-    if layers is None:
-        layers = []
-    rasters = [get_raster(layer, spatial_reference) for layer in layers]
+    # get raster data from georaster.py
+    raster = get_raster(spatial_reference)
 
     if only_requested_points:
         coordinates = geom.coords
@@ -35,18 +32,16 @@ def get_profile(geom=None,
                                      nb_points=nb_points)
 
     # extract z values (altitude over distance) for coordinates
-    z_values = _extract_z_values(layers=layers,
-                                 rasters=rasters,
+    z_values = _extract_z_values(raster=raster,
                                  coordinates=coordinates)
 
-    return _create_profile(layers=layers,
-                           coordinates=coordinates,
+    return _create_profile(coordinates=coordinates,
                            # if offset is defined, do the smoothing
-                           z_values=_smooth(layers, offset, z_values) if offset > 0 else z_values,
+                           z_values=_smooth(offset, z_values) if offset > 0 else z_values,
                            output_to_json=output_to_json)
 
 
-def _create_profile(layers, coordinates, z_values, output_to_json):
+def _create_profile(coordinates, z_values, output_to_json):
     total_distance = 0
     previous_coordinates = None
     if output_to_json:
@@ -54,23 +49,19 @@ def _create_profile(layers, coordinates, z_values, output_to_json):
     else:
         # If the renderer is a csv file
         profile = {'headers': ['Distance'], 'rows': []}
-        for layer in layers:
-            profile['headers'].append(layer)
         profile['headers'].append('Easting')
         profile['headers'].append('Northing')
 
     for j in xrange(0, len(coordinates)):
         if previous_coordinates is not None:
             total_distance += _distance_between(previous_coordinates, coordinates[j])
-        alts = {}
-        for i in xrange(0, len(layers)):
-            if z_values[layers[i]][j] is not None:
-                alts[layers[i]] = filter_altitude(z_values[layers[i]][j])
-        if len(alts) > 0:
+        # if the altitude is under 0 meters or is None, filter altitude returns None
+        alt = filter_altitude(z_values[j])
+        if alt is not None:
             rounded_dist = filter_distance(total_distance)
             if output_to_json:
                 profile.append({
-                    'alts': alts,
+                    'alts': alt,
                     'dist': rounded_dist,
                     'easting': filter_coordinate(coordinates[j][0]),
                     'northing': filter_coordinate(coordinates[j][1])
@@ -78,8 +69,8 @@ def _create_profile(layers, coordinates, z_values, output_to_json):
             # For csv file
             else:
                 temp = [rounded_dist]
-                for i in alts.iteritems():
-                    temp.append(i[1])
+                if alt is not None:
+                    temp.append(alt)
                 temp.append(filter_coordinate(coordinates[j][0]))
                 temp.append(filter_coordinate(coordinates[j][1]))
                 profile['rows'].append(temp)
@@ -182,52 +173,48 @@ def _create_points(coordinates, smart_filling, nb_points):
         return _dumb_fill(coordinates, nb_points)
 
 
-def _extract_z_values(layers, rasters, coordinates):
-    z_values = {}
+def _extract_z_values(raster, coordinates):
     # keeping track of tiles that have been used for another coordinates (usually coordinates are close together)
     # this way we increase our chances to find the required tile without looking on the whole country tiles
     tiles = []
-    for i in xrange(0, len(layers)):
-        z_values[layers[i]] = []
-        for j in xrange(0, len(coordinates)):
-            x = coordinates[j][0]
-            y = coordinates[j][1]
-            z = None
-            # looking into already used tile if this point is not included
-            for already_used_tile in tiles:
-                if already_used_tile.contains(x, y):
-                    z = already_used_tile.get_height_for_coordinate(x, y)
-                    break
-            if z is None:
-                tile = rasters[i].get_tile(x, y)
-                tiles.append(tile)
-                z = tile.get_height_for_coordinate(x, y)
-            z_values[layers[i]].append(z)
+    z_values = []
+    for j in xrange(0, len(coordinates)):
+        x = coordinates[j][0]
+        y = coordinates[j][1]
+        z = None
+        # looking into already used tile if this point is not included
+        for already_used_tile in tiles:
+            if already_used_tile.contains(x, y):
+                z = already_used_tile.get_height_for_coordinate(x, y)
+                break
+        if z is None:
+            tile = raster.get_tile(x, y)
+            tiles.append(tile)
+            z = tile.get_height_for_coordinate(x, y)
+        z_values.append(z)
     # at the end we close all tile files
     for tile in tiles:
         tile.close_file()
     return z_values
 
 
-def _smooth(layers, offset, z_values):
-    z_values_with_smoothing = {}
-    for i in xrange(0, len(layers)):
-        z_values_with_smoothing[layers[i]] = []
-        for j in xrange(0, len(z_values[layers[i]])):
-            s = 0
-            d = 0
-            if z_values[layers[i]][j] is None:
-                z_values_with_smoothing[layers[i]].append(None)
+def _smooth(offset, z_values):
+    z_values_with_smoothing = []
+    for j in xrange(0, len(z_values)):
+        s = 0
+        d = 0
+        if z_values[j] is None:
+            z_values_with_smoothing.append(None)
+            continue
+        for k in xrange(-offset, offset + 1):
+            p = j + k
+            if p < 0 or p >= len(z_values):
                 continue
-            for k in xrange(-offset, offset + 1):
-                p = j + k
-                if p < 0 or p >= len(z_values[layers[i]]):
-                    continue
-                if z_values[layers[i]][p] is None:
-                    continue
-                s += z_values[layers[i]][p] * _factor(k)
-                d += _factor(k)
-            z_values_with_smoothing[layers[i]].append(s / d)
+            if z_values[p] is None:
+                continue
+            s += z_values[p] * _factor(k)
+            d += _factor(k)
+        z_values_with_smoothing.append(s / d)
     return z_values_with_smoothing
 
 
