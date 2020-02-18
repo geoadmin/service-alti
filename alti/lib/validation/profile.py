@@ -14,18 +14,15 @@ class ProfileValidation(SrsValidation):
 
     def __init__(self):
         self._linestring = None
-        self._layers = None
         self._nb_points = None
         self._offset = None
         self._spatial_reference = None
+        self.nb_points_default = None
+        self.nb_points_max = None
 
     @property
     def linestring(self):
         return self._linestring
-
-    @property
-    def layers(self):
-        return self._layers
 
     @property
     def spatial_reference(self):
@@ -57,18 +54,6 @@ class ProfileValidation(SrsValidation):
             raise HTTPBadRequest("Invalid Linestring syntax")
 
         self._linestring = geomToShape
-
-    @layers.setter
-    def layers(self, value):
-        if value is None:
-            self._layers = ['COMB']
-        else:
-            value = value.split(',')
-            for i in value:
-                if i not in ('DTM25', 'DTM2', 'COMB'):
-                    raise HTTPBadRequest("Please provide a valid name for the elevation model DTM25, DTM2 or COMB")
-            value.sort()
-            self._layers = value
 
     @spatial_reference.setter
     def spatial_reference(self, value):

@@ -100,66 +100,35 @@ class TestProfileView(TestsBase):
         self.assertEqual(resp.content_type, 'application/json')
         first_point = resp.json[0]
         self.assertEqual(first_point['dist'], 0)
-        self.assertEqual(first_point['alts']['COMB'], 567.3)
+        self.assertEqual(first_point['alts'], 567.3)
         self.assertEqual(first_point['easting'], 630000)
         self.assertEqual(first_point['northing'], 170000)
         second_point = resp.json[1]
         self.assertEqual(second_point['dist'], 40)
-        self.assertEqual(second_point['alts']['COMB'], 568.5)
+        self.assertEqual(second_point['alts'], 568.5)
         self.assertEqual(second_point['easting'], 630032.0)
         self.assertEqual(second_point['northing'], 170024.0)
         self.__verify_point_is_present(resp, POINT_1_LV03)
         self.__verify_point_is_present(resp, POINT_2_LV03)
         self.__verify_point_is_present(resp, POINT_3_LV03)
-
-    def test_profile_lv03_json_2_models(self):
-        resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV03,
-                                               'elevation_models': 'DTM25,DTM2',
-                                               'smart_filling': True},
-                                       expected_status=200)
-        self.assertEqual(resp.content_type, 'application/json')
-        second_point = resp.json[1]
-        self.assertEqual(second_point['dist'], 40)
-        self.assertEqual(second_point['alts']['DTM25'], 568.5)
-        self.assertEqual(second_point['alts']['DTM2'], 568.5)
-        self.assertEqual(second_point['easting'], 630032.0)
-        self.assertEqual(second_point['northing'], 170024.0)
-        self.__verify_point_is_present(resp, POINT_1_LV03)
-        self.__verify_point_is_present(resp, POINT_2_LV03)
-        self.__verify_point_is_present(resp, POINT_3_LV03)
-
-    def test_profile_lv03_layers(self):
-        resp = self.__get_json_profile(params={'geom': create_json(4, 21781),
-                                               'layers': 'DTM25,DTM2'},
-                                       expected_status=200)
-        self.assertEqual(resp.content_type, 'application/json')
 
     def test_profile_lv03_layers_post(self):
-        params = {'geom': create_json(4, 21781),
-                  'layers': 'DTM25,DTM2'}
+        params = {'geom': create_json(4, 21781)}
         content_type, body = self.testapp.encode_multipart(params.iteritems(), [])
         self.headers['Content-Type'] = str(content_type)
         resp = self.__post_with_body(body=body, expected_status=200)
         self.assertEqual(resp.content_type, 'application/json')
 
     def test_profile_lv03_layers_none(self):
-        resp = self.__get_json_profile(params={'geom': '{"type":"LineString","coordinates":[[0,0],[0,0],[0,0]]}',
-                                               'layers': 'DTM25,DTM2'},
+        resp = self.__get_json_profile(params={'geom': '{"type":"LineString","coordinates":[[0,0],[0,0],[0,0]]}'},
                                        expected_status=400)
         resp.mustcontain("No 'sr' given and cannot be guessed from 'geom'")
 
     def test_profile_lv03_layers_none2(self):
         resp = self.__get_json_profile(
-            params={'geom': '{"type":"LineString","coordinates":[[550050,-206550],[556950,204150],[561050,207950]]}',
-                    'layers': 'DTM25,DTM2'},
+            params={'geom': '{"type":"LineString","coordinates":[[550050,-206550],[556950,204150],[561050,207950]]}'},
             expected_status=400)
         resp.mustcontain("No 'sr' given and cannot be guessed from 'geom'")
-
-    def test_profile_lv03_json_2_models_notvalid(self):
-        resp = self.__get_json_profile(params={'geom': create_json(4, 21781),
-                                               'elevation_models': 'DTM25,DTM222'},
-                                       expected_status=400)
-        resp.mustcontain('Please provide a valid name for the elevation model DTM25, DTM2 or COMB')
 
     def test_profile_lv03_json_with_callback_valid(self):
         resp = self.__get_json_profile(params={'geom': create_json(4, 21781),
