@@ -61,7 +61,11 @@ def _create_profile(coordinates, z_values, output_to_json):
             rounded_dist = filter_distance(total_distance)
             if output_to_json:
                 profile.append({
-                    'alts': alt,
+                    'alts': {
+                        'COMB': alt,
+                        'DTM2': alt,
+                        'DTM25': alt
+                    },
                     'dist': rounded_dist,
                     'easting': filter_coordinate(coordinates[j][0]),
                     'northing': filter_coordinate(coordinates[j][1])
