@@ -1,16 +1,12 @@
 import unittest
-from mock import patch, Mock
+from mock import patch
 from alti.lib.height_helpers import get_height
-
-import logging
-log = logging.getLogger('alti')
 
 FAKE_VALUE = 1234.5
 
 
 def prepare_mock(mock_get_raster, return_value):
     mock_get_raster.return_value.get_height_for_coordinate.return_value = return_value
-    log.debug('done: {}'.format(mock_get_raster().get_height_for_coordinate()))
 
 
 class TestHeight(unittest.TestCase):
