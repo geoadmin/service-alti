@@ -91,7 +91,7 @@ user:
 	. ./$(USER_SOURCE) && make all
 
 .PHONY: all
-all: setup templates lint fixrights test
+all: setup templates lint fixrights testunit
 
 setup: .venv .venv/hooks
 
@@ -117,9 +117,16 @@ serve:
 shell:
 	PYTHONPATH=${PYTHONPATH} ${PSHELL_CMD} development.ini
 
+.PHONY: testunit
+testunit:
+	PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/functional
+
+.PHONY: testintegration
+testintegration:
+	PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/integration
+
 .PHONY: test
-test:
-	. ./rc_ci && PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/ -e .*e2e.*
+test: testunit testintegration
 
 .PHONY: lint
 lint:

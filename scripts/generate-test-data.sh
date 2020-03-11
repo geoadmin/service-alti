@@ -37,7 +37,7 @@ function transformMatrix {
 
 # copy "the" tile into data/ and regenerate index shapefile
 function transformTileAndIndex {
-  cp $data_folder/swissalti3d/"$1"/1208-4.bt "$project_folder"/data/swissalti3d/"$1"
+  cp $data_folder/swissalti3d/"$1"/heightservice_1208-4.bt "$project_folder"/data/swissalti3d/"$1"
   # regenerating shapefile
   rm -f "$project_folder"/data/swissalti3d/"$1"/index.*
   cd "$project_folder"/data/swissalti3d/"$1"/ || exit 1
@@ -49,10 +49,8 @@ if [[ -d /var/local/geodata/ ]]; then
   transformMatrix dhm25_25_matrix 21781
   transformMatrix dhm25_25_matrix_lv95 2056
 
-  transformTileAndIndex 2m
-  transformTileAndIndex 2m_lv95
-  transformTileAndIndex kombo_2m_dhm25
-  transformTileAndIndex kombo_2m_dhm25_lv95
+  transformTileAndIndex kombo_2m_regio
+  transformTileAndIndex kombo_2m_regio_lv95
 
 else
   echo "Can't create test data, folder /var/local/geodata/ not accessible on this system.";
