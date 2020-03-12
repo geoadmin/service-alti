@@ -26,9 +26,9 @@ def init_rasterfiles(datapath, supported_spatial_references):
     global _rasterfiles
     _rasterfiles = {
         # LV03
-        21781: datapath + 'swissalti3d/kombo_2m_dhm25/index.shp',
+        21781: datapath + 'swissalti3d/kombo_2m_regio/index.shp',
         # LV95
-        2056:  datapath + 'swissalti3d/kombo_2m_dhm25_lv95/index.shp'
+        2056:  datapath + 'swissalti3d/kombo_2m_regio_lv95/index.shp'
         # for other projections, results are reprojected from LV95 model
     }
     try:
