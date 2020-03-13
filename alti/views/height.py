@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from shapely.geometry import Point
-from alti.lib.helpers import filter_altitude
 from alti.lib.validation import srs_guesser
 from alti.lib.validation.height import HeightValidation
-from alti.lib.raster.georaster import get_raster
+from alti.lib.height_helpers import get_height
 
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPBadRequest
@@ -36,8 +35,7 @@ class Height(HeightValidation):
 
     @view_config(route_name='height', renderer='jsonp', http_cache=0)
     def height(self):
-        raster = get_raster(self.sr)
-        alt = filter_altitude(raster.get_height_for_coordinate(self.lon, self.lat))
+        alt = get_height(self.sr, self.lon, self.lat)
         if alt is None:
             raise HTTPBadRequest('Requested coordinate ({},{}) out of bounds in sr {}'.format(self.lon, self.lat, self.sr))
 

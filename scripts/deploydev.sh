@@ -54,7 +54,7 @@ fi
 
 # Build the project
 . ./rc_dev
-make all
+make all testintegration
 
 exit_code=$?
 

@@ -2,5 +2,5 @@
 export API_URL=//mf-chsdi3.ci.bgdi.ch
 export DEPLOY_TARGET=ci
 export KEEP_VERSION=false
-# Using EFS on Jenkins
-export DTM_BASE_PATH=${PWD}/data/
+# Using EFS on CI
+export DTM_BASE_PATH=/var/local/profile/
