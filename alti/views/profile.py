@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from pyramid.view import view_config
+import pyramid.httpexceptions as exc
 
-from alti.lib.profile_helpers import get_profile, PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
+from alti.lib.profile_helpers import get_profile, PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS, CoordinatesOutOfBoundException
 from alti.lib.validation.profile import ProfileValidation
 from alti.lib.validation import srs_guesser
 
@@ -82,16 +83,19 @@ class Profile(ProfileValidation):
         return self.__get_profile_from_helper(False)
 
     def __get_profile_from_helper(self, output_to_json=True):
-        profile = get_profile(geom=self.linestring,
-                              spatial_reference=self.spatial_reference,
-                              nb_points=self.nb_points,
-                              offset=self.offset,
-                              only_requested_points=self.only_requested_points,
-                              smart_filling=self.smart_filling,
-                              output_to_json=output_to_json)
-        # If profile calculation resulted in a lower number of point than requested (because there's no need to add
-        # points closer to each other than the min resolution of 2m), we return HTTP 203 to notify that nb_points
-        # couldn't be match.
-        if self.is_custom_nb_points and len(profile) < self.nb_points:
-            self.request.response.status = 203
-        return profile
+        try:
+            profile = get_profile(geom=self.linestring,
+                                  spatial_reference=self.spatial_reference,
+                                  nb_points=self.nb_points,
+                                  offset=self.offset,
+                                  only_requested_points=self.only_requested_points,
+                                  smart_filling=self.smart_filling,
+                                  output_to_json=output_to_json)
+            # If profile calculation resulted in a lower number of point than requested (because there's no need to add
+            # points closer to each other than the min resolution of 2m), we return HTTP 203 to notify that nb_points
+            # couldn't be match.
+            if self.is_custom_nb_points and len(profile) < self.nb_points:
+                self.request.response.status = 203
+            return profile
+        except CoordinatesOutOfBoundException:
+            raise exc.HTTPBadRequest(detail="Coordinates out of bound")
