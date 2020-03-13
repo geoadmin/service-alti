@@ -3,7 +3,10 @@ from mock import patch, Mock
 
 from shapely.geometry import LineString
 
-from alti.lib.profile_helpers import get_profile, PROFILE_DEFAULT_AMOUNT_POINTS
+from alti.lib.profile_helpers import get_profile, PROFILE_DEFAULT_AMOUNT_POINTS, CoordinatesOutOfBoundException
+
+import logging
+logger = logging.getLogger('alti')
 
 # a fake geom that covers 20m
 FAKE_GEOM = LineString([(2600000, 1199980), (2600000, 1200000)])
@@ -19,11 +22,8 @@ def prepare_mock(mock_get_raster):
     # creating a fake tile that responds with pre defined values
     tile_mock = Mock()
     tile_mock.get_height_for_coordinate = Mock(side_effect=fake_get_height_for_coordinate)
-    # create a fake Georaster object
-    georaster_mock = Mock()
-    georaster_mock.get_tile.return_value = tile_mock
     # link this to the get_raster function
-    mock_get_raster.return_value = georaster_mock
+    mock_get_raster.return_value.get_tile.return_value = tile_mock
 
 
 class TestProfileHelpers(unittest.TestCase):
@@ -95,3 +95,23 @@ class TestProfileHelpers(unittest.TestCase):
         extra_point = response[1]
         self.assertEqual(extra_point['easting'], extra_point_east)
         self.assertEqual(extra_point['northing'], extra_point_north)
+
+    @patch('alti.lib.profile_helpers.get_raster')
+    def test_coordinates_out_of_bound(self, mock_get_raster):
+        # when there's no tile for coordinates (because out of bounds) None is returned for the tile
+        mock_get_raster.return_value.get_tile.return_value = None
+        try:
+            get_profile(geom=FAKE_GEOM,
+                        spatial_reference=2056,
+                        offset=0,
+                        only_requested_points=False,
+                        smart_filling=True,
+                        output_to_json=True)
+            self.fail("Should't return anything if coordinates are out of bounds")
+        except CoordinatesOutOfBoundException:
+            # ok
+            self.assertTrue(True)
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            self.fail("Should be caught by the function and not return "
+                      "anything else than a CoordinatesOutOfBoundException")
