@@ -24,7 +24,7 @@ make cleanall
 make setup
 make rc_branch DEPLOY_TARGET=dev
 . ./rc_branch
-make all
+make all testintegration
 make deploy/deploy-branch.cfg
 make deploy/conf/00-branch.conf
 
