@@ -10,10 +10,6 @@ PROFILE_MAX_AMOUNT_POINTS = 5000
 PROFILE_DEFAULT_AMOUNT_POINTS = 200
 
 
-class CoordinatesOutOfBoundException(Exception):
-    pass
-
-
 def get_profile(geom=None,
                 spatial_reference=None,
                 nb_points=PROFILE_DEFAULT_AMOUNT_POINTS,
@@ -197,10 +193,9 @@ def _extract_z_values(raster, coordinates):
                 break
         if z is None:
             tile = raster.get_tile(x, y)
-            if tile is None:
-                raise CoordinatesOutOfBoundException
-            tiles.append(tile)
-            z = tile.get_height_for_coordinate(x, y)
+            if tile is not None:
+                tiles.append(tile)
+                z = tile.get_height_for_coordinate(x, y)
         z_values.append(z)
     # at the end we close all tile files
     for tile in tiles:
