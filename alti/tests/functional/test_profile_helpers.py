@@ -3,7 +3,7 @@ from mock import patch, Mock
 
 from shapely.geometry import LineString
 
-from alti.lib.profile_helpers import get_profile, PROFILE_DEFAULT_AMOUNT_POINTS, CoordinatesOutOfBoundException
+from alti.lib.profile_helpers import get_profile, PROFILE_DEFAULT_AMOUNT_POINTS
 
 import logging
 logger = logging.getLogger('alti')
@@ -99,19 +99,17 @@ class TestProfileHelpers(unittest.TestCase):
     @patch('alti.lib.profile_helpers.get_raster')
     def test_coordinates_out_of_bound(self, mock_get_raster):
         # when there's no tile for coordinates (because out of bounds) None is returned for the tile
+        # the service should return an empty profile
         mock_get_raster.return_value.get_tile.return_value = None
         try:
-            get_profile(geom=FAKE_GEOM,
-                        spatial_reference=2056,
-                        offset=0,
-                        only_requested_points=False,
-                        smart_filling=True,
-                        output_to_json=True)
-            self.fail("Should't return anything if coordinates are out of bounds")
-        except CoordinatesOutOfBoundException:
-            # ok
-            self.assertTrue(True)
+            response = get_profile(geom=FAKE_GEOM,
+                                   spatial_reference=2056,
+                                   offset=0,
+                                   only_requested_points=False,
+                                   smart_filling=True,
+                                   output_to_json=True)
+            self.assertIsNotNone(response)
+            self.assertEqual(len(response), 0)
         except Exception as e:
             logger.error(e, exc_info=True)
-            self.fail("Should be caught by the function and not return "
-                      "anything else than a CoordinatesOutOfBoundException")
+            self.fail("Should return an empty profile without failing with coordinates out of bounds")
