@@ -10,12 +10,12 @@ while getopts "ipa" opt; do
   i) nosetests_options="-e .*e2e.*"
      make clean
      . ./rc_int
-     make all
+     make all testintegration
      ;;
   p) nosetests_options="-e .*e2e.*"
      make clean
      . ./rc_prod
-     make all
+     make all testintegration
      ;;
   a) nosetests_options=" "
      ;;

@@ -100,12 +100,12 @@ class TestProfileView(TestsBase):
         self.assertEqual(resp.content_type, 'application/json')
         first_point = resp.json[0]
         self.assertEqual(first_point['dist'], 0)
-        self.assertEqual(first_point['alts'], 567.3)
+        self.assertEqual(first_point['alts']['COMB'], 567.3)
         self.assertEqual(first_point['easting'], 630000)
         self.assertEqual(first_point['northing'], 170000)
         second_point = resp.json[1]
         self.assertEqual(second_point['dist'], 40)
-        self.assertEqual(second_point['alts'], 568.5)
+        self.assertEqual(second_point['alts']['COMB'], 568.5)
         self.assertEqual(second_point['easting'], 630032.0)
         self.assertEqual(second_point['northing'], 170024.0)
         self.__verify_point_is_present(resp, POINT_1_LV03)
@@ -278,3 +278,18 @@ class TestProfileView(TestsBase):
         self.__verify_point_is_present(resp, point5, msg="point5 not present")
         self.__verify_point_is_present(resp, point6, msg="point6 not present")
         self.__verify_point_is_present(resp, point7, msg="point7 not present")
+
+    def test_profile_all_old_elevation_models_are_returned(self):
+        resp = self.__get_json_profile(params={'geom': LINESTRING_VALID_LV95},
+                                       expected_status=200)
+        self.assertTrue(resp.content_type == 'application/json')
+        altitudes = resp.json[0]['alts']
+        comb_value = altitudes['COMB']
+        self.assertIsNotNone(altitudes.get('DTM2'),
+                             msg="All old elevation_models must be returned in alt for compatibility issue")
+        self.assertEqual(altitudes['DTM2'], comb_value,
+                         msg="All values from all models should be taken from the new COMB layer")
+        self.assertIsNotNone(altitudes.get('DTM25'),
+                             msg="All old elevation_models must be returned in alt for compatibility issue")
+        self.assertEqual(altitudes['DTM25'], comb_value,
+                         msg="All values from all models should be taken from the new COMB layer")

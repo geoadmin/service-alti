@@ -82,7 +82,11 @@ def _create_profile(coordinates,
             rounded_dist = filter_distance(total_distance)
             if output_to_json:
                 profile.append({
-                    'alts': alt,
+                    'alts': {
+                        'COMB': alt,
+                        'DTM2': alt,
+                        'DTM25': alt
+                    },
                     'dist': rounded_dist,
                     'easting': filter_coordinate(coordinates[j][0], digits=rounding_digits_for_coordinates),
                     'northing': filter_coordinate(coordinates[j][1], digits=rounding_digits_for_coordinates)
@@ -210,8 +214,9 @@ def _extract_z_values(raster, coordinates):
                 break
         if z is None:
             tile = raster.get_tile(x, y)
-            tiles.append(tile)
-            z = tile.get_height_for_coordinate(x, y)
+            if tile is not None:
+                tiles.append(tile)
+                z = tile.get_height_for_coordinate(x, y)
         z_values.append(z)
     # at the end we close all tile files
     for tile in tiles:
