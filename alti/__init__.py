@@ -6,6 +6,9 @@ from pyramid.renderers import JSONP
 from alti.renderers import CSVRenderer
 from alti.lib.raster.georaster import init_rasterfiles
 
+SUPPORTED_SRS = (21781, 2056, 3857, 4326)
+NATIVE_SRS = 2056
+
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.

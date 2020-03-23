@@ -35,7 +35,7 @@ class TestHeightView(TestsBase):
                              expected_height=HEIGHT_DTM2)
 
     def test_height_no_sr_using_wrong_coordinates(self):
-        self.__test_get(params={'easting': '7.66', 'northing': '46.7'},
+        self.__test_get(params={'easting': '102', 'northing': '-46.7'},
                         expected_status=400)
 
     def test_height_using_unknown_sr(self):
@@ -111,3 +111,20 @@ class TestHeightView(TestsBase):
         resp = self.__test_get(params={'northing': '200000'},
                                expected_status=400)
         resp.mustcontain("Missing parameter 'easting'/'lon'")
+
+    def test_different_srs_return_same_height(self):
+        # Summit of Roteflue (must be in the tile available to the CI)
+        resp_lv03 = self.__test_get(params={'easting': '633694.1', 'northing': '173983.8'},
+                                    expected_status=200)
+        resp_lv95 = self.__test_get(params={'easting': '2633694.1', 'northing': '1173983.8'},
+                                    expected_status=200)
+        resp_wgs84 = self.__test_get(params={'easting': '7.87932', 'northing': '46.71621'},
+                                     expected_status=200)
+        resp_webmerc = self.__test_get(params={'easting': '877121.89', 'northing': '5895874.72'},
+                                       expected_status=200)
+
+        height = resp_lv95.json['height']
+
+        self.assertEqual(resp_lv03.json['height'], height)
+        self.assertEqual(resp_wgs84.json['height'], height)
+        self.assertEqual(resp_webmerc.json['height'], height)

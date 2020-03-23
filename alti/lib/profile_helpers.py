@@ -1,17 +1,18 @@
 import math
 
+from pyramid.httpexceptions import HTTPInternalServerError
 from shapely.geometry import LineString
 from scipy.spatial.distance import pdist, squareform
 
 from alti.lib.raster.georaster import get_raster
-from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
-
-PROFILE_MAX_AMOUNT_POINTS = 5000
-PROFILE_DEFAULT_AMOUNT_POINTS = 200
+from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude, transform_shape
+from alti.lib.validation.profile import PROFILE_DEFAULT_AMOUNT_POINTS
 
 
 def get_profile(geom=None,
-                spatial_reference=None,
+                spatial_reference_in=None,
+                spatial_reference_out=None,
+                native_srs=None,
                 nb_points=PROFILE_DEFAULT_AMOUNT_POINTS,
                 offset=0,
                 only_requested_points=False,
@@ -20,7 +21,7 @@ def get_profile(geom=None,
     """Compute the alt=fct(dist) array and store it in c.points"""
 
     # get raster data from georaster.py
-    raster = get_raster(spatial_reference)
+    raster = get_raster(spatial_reference_in)
 
     if only_requested_points:
         coordinates = geom.coords
@@ -38,10 +39,22 @@ def get_profile(geom=None,
     return _create_profile(coordinates=coordinates,
                            # if offset is defined, do the smoothing
                            z_values=_smooth(offset, z_values) if offset > 0 else z_values,
-                           output_to_json=output_to_json)
+                           spatial_reference_in=spatial_reference_in,
+                           spatial_reference_out=spatial_reference_out,
+                           native_srs=native_srs,
+                           output_to_json=output_to_json,
+                           # if Web Mercator, rounding at 6th decimal is about 0.11m at equator
+                           # for swiss sptial references, 3 digits are enough (0.001m)
+                           rounding_digits_for_coordinates=6 if spatial_reference_out == 4326 else 3)
 
 
-def _create_profile(coordinates, z_values, output_to_json):
+def _create_profile(coordinates,
+                    z_values,
+                    spatial_reference_in,
+                    spatial_reference_out,
+                    native_srs,
+                    output_to_json,
+                    rounding_digits_for_coordinates=3):
     total_distance = 0
     previous_coordinates = None
     if output_to_json:
@@ -51,6 +64,14 @@ def _create_profile(coordinates, z_values, output_to_json):
         profile = {'headers': ['Distance'], 'rows': []}
         profile['headers'].append('Easting')
         profile['headers'].append('Northing')
+
+    if spatial_reference_out is not None and spatial_reference_in != spatial_reference_out:
+        try:
+            geom = LineString(coordinates)
+            reprojected_geom = transform_shape(geom, native_srs, spatial_reference_out)
+            coordinates = list(reprojected_geom.coords)
+        except:
+            raise HTTPInternalServerError('Cannot reproject coordinates back to {}'.format(spatial_reference_out))
 
     for j in xrange(0, len(coordinates)):
         if previous_coordinates is not None:
@@ -67,16 +88,16 @@ def _create_profile(coordinates, z_values, output_to_json):
                         'DTM25': alt
                     },
                     'dist': rounded_dist,
-                    'easting': filter_coordinate(coordinates[j][0]),
-                    'northing': filter_coordinate(coordinates[j][1])
+                    'easting': filter_coordinate(coordinates[j][0], digits=rounding_digits_for_coordinates),
+                    'northing': filter_coordinate(coordinates[j][1], digits=rounding_digits_for_coordinates)
                 })
             # For csv file
             else:
                 temp = [rounded_dist]
                 if alt is not None:
                     temp.append(alt)
-                temp.append(filter_coordinate(coordinates[j][0]))
-                temp.append(filter_coordinate(coordinates[j][1]))
+                temp.append(filter_coordinate(coordinates[j][0], digits=rounding_digits_for_coordinates))
+                temp.append(filter_coordinate(coordinates[j][1], digits=rounding_digits_for_coordinates))
                 profile['rows'].append(temp)
         previous_coordinates = coordinates[j]
     return profile

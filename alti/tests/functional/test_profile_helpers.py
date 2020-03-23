@@ -3,7 +3,8 @@ from mock import patch, Mock
 
 from shapely.geometry import LineString
 
-from alti.lib.profile_helpers import get_profile, PROFILE_DEFAULT_AMOUNT_POINTS
+from alti.lib.profile_helpers import get_profile
+from alti.lib.validation.profile import PROFILE_DEFAULT_AMOUNT_POINTS
 
 import logging
 logger = logging.getLogger('alti')
@@ -28,10 +29,17 @@ def prepare_mock(mock_get_raster):
 
 class TestProfileHelpers(unittest.TestCase):
 
-    def __prepare_mock_and_test(self, mock, smart_filling, geom=FAKE_GEOM):
+    def __prepare_mock_and_test(self,
+                                mock,
+                                smart_filling,
+                                spatial_reference_in=2056,
+                                spatial_reference_out=None,
+                                geom=FAKE_GEOM):
         prepare_mock(mock)
         response = get_profile(geom=geom,
-                               spatial_reference=2056,
+                               spatial_reference_in=spatial_reference_in,
+                               spatial_reference_out=spatial_reference_out,
+                               native_srs=2056,
                                offset=0,
                                only_requested_points=False,
                                smart_filling=smart_filling,
@@ -95,6 +103,23 @@ class TestProfileHelpers(unittest.TestCase):
         extra_point = response[1]
         self.assertEqual(extra_point['easting'], extra_point_east)
         self.assertEqual(extra_point['northing'], extra_point_north)
+
+    @patch('alti.lib.profile_helpers.get_raster')
+    def test_different_in_out_spatial_references(self, mock_get_raster):
+        # output to Web Mercator (EPSG:4326)
+        response = self.__prepare_mock_and_test(mock_get_raster,
+                                                geom=geom_with_multiple_points,
+                                                spatial_reference_in=2056,
+                                                spatial_reference_out=4326)
+        # checking out that first and last points are in WebMercator format
+        first_point = response[0]
+        last_point = response[len(response) - 1]
+        # [2600000, 1199980] and [2600000, 1200000] to WebMercator translate roughly to
+        # ~> [46.9509028684, 7.43863242406] [46.9510827719, 7.43863242087]
+        self.assertAlmostEqual(first_point['northing'], 46.9509028684, places=6)
+        self.assertAlmostEqual(first_point['easting'], 7.43863242406, places=6)
+        self.assertAlmostEqual(last_point['northing'], 46.9510827719, places=6)
+        self.assertAlmostEqual(last_point['easting'], 7.43863242087, places=6)
 
     @patch('alti.lib.profile_helpers.get_raster')
     def test_coordinates_out_of_bound(self, mock_get_raster):
