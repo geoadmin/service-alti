@@ -227,12 +227,10 @@ def _create_points(coordinates, nb_points, smart_filling=False, keep_points=Fals
     nb_points_per_segment, distances_per_segment = _prepare_number_of_points_max_per_segment(coordinates, nb_points - 1)
     if len(nb_points_per_segment) == 0:
         return coordinates
-    prev = coordinates.pop(0)
     coords = []
-    while len(coordinates) > 0:
-        coords.append([prev, coordinates[0]])
-        prev = coordinates.pop(0)
-    for i in range(0, len(coords)):
+    for i in xrange(1, len(coordinates)):
+        coords.append([coordinates[i - 1], coordinates[i]])
+    for i in xrange(0, len(coords)):
         segments = segments + _fill_segment(coords[i], nb_points_per_segment[i], smart_filling,
                                             distances_per_segment[i])
     segments.append(coords[-1][1])
