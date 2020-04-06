@@ -104,7 +104,7 @@ def _prepare_number_of_points_max_per_segment(coordinates, nb_point_total):
     nb_points_segments = list()
     distances = []
     for i in xrange(1, len(coordinates)):
-        distances.append(_distance_between(coordinates[i-1], coordinates[i]))
+        distances.append(_distance_between(coordinates[i - 1], coordinates[i]))
     total_distance = sum(distances)
     # if the total distance is 0, we return the coordinates and that's it.
     if total_distance < 0.001:
@@ -119,7 +119,7 @@ def _fill(coordinates, nb_points, is_smart=False):
     # calculating distances between each points, and total distance
     distances = []
     for i in xrange(1, len(coordinates)):
-        distances.append(_distance_between(coordinates[i-1], coordinates[i]))
+        distances.append(_distance_between(coordinates[i - 1], coordinates[i]))
     total_distance = sum(distances)
     # total_distance will be used as a divisor later, we have to check it's not zero
     if total_distance == 0:
