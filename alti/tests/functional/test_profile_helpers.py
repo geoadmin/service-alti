@@ -86,7 +86,8 @@ class TestProfileHelpers(unittest.TestCase):
 
     @patch('alti.lib.profile_helpers.get_raster')
     def test_smart_filling_must_keep_points_from_geom(self, mock_get_raster):
-        response = self.__prepare_mock_and_test(mock_get_raster, smart_filling=True, geom=FAKE_GEOM_3_POINTS)
+        response = self.__prepare_mock_and_test(mock_get_raster, smart_filling=True, keep_points=True,
+                                                geom=FAKE_GEOM_3_POINTS)
         self.assertEqual(len(response),
                          12,
                          msg="There should be an extra points at (2600000, 1199981) included in the result (even though"
@@ -123,7 +124,8 @@ class TestProfileHelpers(unittest.TestCase):
                                                 geom=FAKE_GEOM_3_POINTS)
         self.assertEqual(len(response),
                          PROFILE_DEFAULT_AMOUNT_POINTS,
-                         msg="There should be an exactly {} points in the profile".format(PROFILE_DEFAULT_AMOUNT_POINTS))
+                         msg="There should be an exactly {} points in the profile, found {}".format(
+                             PROFILE_DEFAULT_AMOUNT_POINTS, len(response)))
         # there should be our middle point somewhere in the profile
         middle_point_found = False
         for point in response:
