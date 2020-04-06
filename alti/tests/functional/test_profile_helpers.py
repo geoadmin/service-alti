@@ -129,4 +129,4 @@ class TestProfileHelpers(unittest.TestCase):
         for point in response:
             middle_point_found |= point['easting'] == MIDDLE_POINT[0] and point['northing'] == MIDDLE_POINT[1]
         self.assertTrue(middle_point_found, msg="The middle point should be included in the resulting profile "
-                                                "as keep_points was set to true");
+                                                "as keep_points was set to true")
