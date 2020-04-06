@@ -1,7 +1,6 @@
 import math
 
 from shapely.geometry import LineString
-from scipy.spatial.distance import pdist, squareform
 
 from alti.lib.raster.georaster import get_raster, _resolution
 from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
@@ -104,10 +103,8 @@ def _prepare_number_of_points_max_per_segment(coordinates, nb_point_total):
 
     nb_points_segments = list()
     distances = []
-    distances_squareform = squareform(pdist(coordinates))
-    amount_distances = len(distances_squareform)
-    for i in range(0, amount_distances - 1):
-        distances.append(distances_squareform[i][i + 1])
+    for i in xrange(1, len(coordinates)):
+        distances.append(_distance_between(coordinates[i-1], coordinates[i]))
     total_distance = sum(distances)
     # if the total distance is 0, we return the coordinates and that's it.
     if total_distance < 0.001:
@@ -120,12 +117,9 @@ def _prepare_number_of_points_max_per_segment(coordinates, nb_point_total):
 
 def _fill(coordinates, nb_points, is_smart=False):
     # calculating distances between each points, and total distance
-    distances_squareform = squareform(pdist(coordinates))
-
-    amount_distances = len(distances_squareform)
-    distances = [0] * (amount_distances - 1)
-    for i in range(0, amount_distances - 1):
-        distances[i] = distances_squareform[i][i + 1]
+    distances = []
+    for i in xrange(1, len(coordinates)):
+        distances.append(_distance_between(coordinates[i-1], coordinates[i]))
     total_distance = sum(distances)
     # total_distance will be used as a divisor later, we have to check it's not zero
     if total_distance == 0:
@@ -135,7 +129,7 @@ def _fill(coordinates, nb_points, is_smart=False):
         result = [[coordinates[0][0], coordinates[0][1]]]
         previous_coordinate = coordinates[0]
         # for each segment, we will add points in between on a prorata basis (longer segments will have more points)
-        for i in range(1, len(coordinates)):
+        for i in xrange(1, len(coordinates)):
             if previous_coordinate is not None:
                 # preparing segment properties before placing points
                 segment_length = distances[i - 1]
