@@ -13,6 +13,7 @@ _rasterfiles = {}
 
 _resolution = None
 
+
 def get_raster(sr):
     global _rasters
     result = _rasters.get(sr, None)
