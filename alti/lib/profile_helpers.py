@@ -16,6 +16,7 @@ def get_profile(geom=None,
                 only_requested_points=False,
                 smart_filling=False,
                 keep_points=False,
+                metadata_output=False,
                 output_to_json=True):
     """Compute the alt=fct(dist) array and store it in c.points"""
 
@@ -39,12 +40,27 @@ def get_profile(geom=None,
     return _create_profile(coordinates=coordinates,
                            # if offset is defined, do the smoothing
                            z_values=_smooth(offset, z_values) if offset > 0 else z_values,
+                           metadata_output=metadata_output,
                            output_to_json=output_to_json)
 
 
-def _create_profile(coordinates, z_values, output_to_json):
+def _create_profile(coordinates, z_values, metadata_output, output_to_json):
     total_distance = 0
     previous_coordinates = None
+    # TODO: something should be done with metadata output in the future
+    """
+    metadata output means we return a json in the following format :
+        {
+            metadata: {
+                dist : '',
+                resolution : '',
+                others? : ''
+            }
+            profile: [] <-- same as usual, but no dist
+        }
+    """
+    if metadata_output:
+        pass
     if output_to_json:
         profile = []
     else:
