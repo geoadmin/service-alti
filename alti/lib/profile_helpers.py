@@ -9,6 +9,7 @@ from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
 PROFILE_MAX_AMOUNT_POINTS = 5000
 PROFILE_DEFAULT_AMOUNT_POINTS = 200
 
+
 def get_profile(geom=None,
                 spatial_reference=None,
                 nb_points=PROFILE_DEFAULT_AMOUNT_POINTS,
@@ -172,14 +173,14 @@ def _fill(coordinates, nb_points, is_smart=False):
 
         for i in range(1, len(coordinates)):
 
-            cur_nb_points = max(int((nb_points-1) * (distances[i-1] / total_distance) + 0.5), 1)
-            dx = (coordinates[i][0] - coordinates[i-1][0]) / float(cur_nb_points)
-            dy = (coordinates[i][1] - coordinates[i-1][1]) / float(cur_nb_points)
+            cur_nb_points = max(int((nb_points - 1) * (distances[i - 1] / total_distance) + 0.5), 1)
+            dx = (coordinates[i][0] - coordinates[i - 1][0]) / float(cur_nb_points)
+            dy = (coordinates[i][1] - coordinates[i - 1][1]) / float(cur_nb_points)
 
             for j in range(1, cur_nb_points + 1):
                 result.append(
-                    [coordinates[i-1][0] + dx * j,
-                     coordinates[i-1][1] + dy * j])
+                    [coordinates[i - 1][0] + dx * j,
+                     coordinates[i - 1][1] + dy * j])
         return result
 
 
@@ -208,7 +209,7 @@ def _fill_segment(coordinates, nb_points, is_smart, distance):
                         result.append([new_point.x, new_point.y])
                     result.pop()
     else:
-        nb_p = max(int(nb_points-0.5), 1)
+        nb_p = max(int(nb_points - 0.5), 1)
         dx = (coordinates[1][0] - coordinates[0][0]) / float(nb_p)
         dy = (coordinates[1][1] - coordinates[0][1]) / float(nb_p)
         for i in range(1, nb_p + 1):

@@ -22,6 +22,7 @@ def prepare_mock(mock_get_raster):
     # creating a fake tile that responds with pre defined values
     tile_mock = Mock()
     tile_mock.get_height_for_coordinate = Mock(side_effect=fake_get_height_for_coordinate)
+    tile_mock.resolution_x.return_value = 2.0
     # link this to the get_raster function
     mock_get_raster.return_value.get_tile.return_value = tile_mock
 
