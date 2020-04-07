@@ -170,16 +170,13 @@ def _fill(coordinates, nb_points, is_smart=False):
                 number of points.
             """
 
-        if total_distance == 0.0:
-            return coordinates
-
-        for i in range(1, len(coordinates)):
+        for i in xrange(1, len(coordinates)):
 
             cur_nb_points = max(int((nb_points - 1) * (distances[i - 1] / total_distance) + 0.5), 1)
             dx = (coordinates[i][0] - coordinates[i - 1][0]) / float(cur_nb_points)
             dy = (coordinates[i][1] - coordinates[i - 1][1]) / float(cur_nb_points)
-
-            for j in range(1, cur_nb_points + 1):
+            logging.debug(cur_nb_points)
+            for j in xrange(1, cur_nb_points + 1):
                 result.append(
                     [coordinates[i - 1][0] + dx * j,
                      coordinates[i - 1][1] + dy * j])
