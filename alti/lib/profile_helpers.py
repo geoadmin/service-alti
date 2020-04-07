@@ -40,7 +40,6 @@ def get_profile(geom=None,
         logging.debug("- - - - - - - - - - - - - - - - Length of those Coordinates - - - - - - - - - - - - - - - - -")
         logging.debug("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
         logging.debug(len(coordinates))
-        logging.debug(_resolution)
 
     # extract z values (altitude over distance) for coordinates
     z_values = _extract_z_values(raster=raster,
@@ -135,35 +134,30 @@ def _fill(coordinates, nb_points, is_smart=False):
         return coordinates
     result = [[coordinates[0][0], coordinates[0][1]]]
     if is_smart:
-        result = [[coordinates[0][0], coordinates[0][1]]]
-        previous_coordinate = coordinates[0]
         # for each segment, we will add points in between on a prorata basis (longer segments will have more points)
         for i in xrange(1, len(coordinates)):
-            if previous_coordinate is not None:
-                # preparing segment properties before placing points
-                segment_length = distances[i - 1]
-                # if segment length is smaller than tiles resolution (2m) we don't add extra points
-                if segment_length > _resolution:
-                    segment = LineString([previous_coordinate, coordinates[i]])
-                    # here is the prorata ratio : if a segment makes X% of the total length, X% of total points will
-                    # be added to this segment
-                    ratio_distance = segment_length / total_distance
-                    # rounding number of points down to the closest integer (casting to int will ignore anything after coma)
-                    nb_points_for_this_segment = int(nb_points * ratio_distance)
-                    # little protection against division by zero
-                    if nb_points_for_this_segment > 0:
-                        segment_resolution = max(segment_length / nb_points_for_this_segment, _resolution)
-                        # if segment resolution is smaller than 2m, we force the resolution as it's wasteful to go below
-                        segment_length_covered = 0
-                        nb_points_placed = 0
-                        while not nb_points_placed == nb_points_for_this_segment \
-                                and segment_length_covered < segment_length:
-                            nb_points_placed += 1
-                            segment_length_covered += segment_resolution
-                            new_point = segment.interpolate(nb_points_placed * segment_resolution)
-                            result.append([new_point.x, new_point.y])
-            previous_coordinate = coordinates[i]
-
+            # preparing segment properties before placing points
+            segment_length = distances[i - 1]
+            # if segment length is smaller than tiles resolution (2m) we don't add extra points
+            if segment_length > _resolution:
+                segment = LineString([coordinates[i - 1], coordinates[i]])
+                # here is the prorata ratio : if a segment makes X% of the total length, X% of total points will
+                # be added to this segment
+                ratio_distance = segment_length / total_distance
+                # rounding number of points down to the closest integer (casting to int will ignore anything after coma)
+                nb_points_for_this_segment = int(nb_points * ratio_distance)
+                # little protection against division by zero
+                if nb_points_for_this_segment > 0:
+                    segment_resolution = max(segment_length / nb_points_for_this_segment, _resolution)
+                    # if segment resolution is smaller than 2m, we force the resolution as it's wasteful to go below
+                    segment_length_covered = 0
+                    nb_points_placed = 0
+                    while not nb_points_placed == nb_points_for_this_segment \
+                            and segment_length_covered < segment_length:
+                        nb_points_placed += 1
+                        segment_length_covered += segment_resolution
+                        new_point = segment.interpolate(nb_points_placed * segment_resolution)
+                        result.append([new_point.x, new_point.y])
         return result
     else:
         """
@@ -228,13 +222,16 @@ def _create_points(coordinates, nb_points, smart_filling=False, keep_points=Fals
     if not keep_points:
         return _fill(coordinates, nb_points, smart_filling)
     segments = []
-    nb_points_per_segment, distances_per_segment = _prepare_number_of_points_max_per_segment(coordinates, nb_points - 1)
+    nb_points_per_segment, distances_per_segment = _prepare_number_of_points_max_per_segment(coordinates, nb_points -1 )
     if len(nb_points_per_segment) == 0:
         return coordinates
     coords = []
     for i in xrange(1, len(coordinates)):
         coords.append([coordinates[i - 1], coordinates[i]])
     for i in xrange(0, len(coords)):
+        logging.debug(nb_points_per_segment)
+        logging.debug(distances_per_segment)
+        logging.debug(coords)
         segments = segments + _fill_segment(coords[i], nb_points_per_segment[i], smart_filling,
                                             distances_per_segment[i])
     segments.append(coords[-1][1])
