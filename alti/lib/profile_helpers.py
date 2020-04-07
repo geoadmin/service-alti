@@ -109,7 +109,6 @@ def _create_profile(coordinates, z_values, metadata_output, output_to_json):
 
 def _prepare_number_of_points_max_per_segment(coordinates, nb_point_total):
 
-    nb_points_segments = list()
     distances = []
     for i in xrange(1, len(coordinates)):
         distances.append(_distance_between(coordinates[i - 1], coordinates[i]))
@@ -117,10 +116,33 @@ def _prepare_number_of_points_max_per_segment(coordinates, nb_point_total):
     # if the total distance is 0, we return the coordinates and that's it.
     if total_distance < 0.001:
         return [], []
-
-    for d in distances:
-        nb_points_segments.append(max(math.floor(nb_point_total * d / total_distance), 0))
+    nb_points_segments = _obtain_nb_points_per_segment_no_loss(distances, nb_point_total, total_distance)
     return nb_points_segments, distances
+
+
+def _obtain_nb_points_per_segment_no_loss(distances, nb_points_total, total_distance):
+    nb_points_segments = []
+    for d in distances:
+        nb_points_segments.append(math.modf(max(nb_points_total * d / total_distance, 0.0)))
+    sum_int = sum([int(nbp[0]) for nbp in nb_points_segments])
+    while sum_int < nb_points_total:
+        min_val, max_val, min_index, max_index = 1.0, 0.0, 0, 0
+        for i in range (0, len(nb_points_segments)):
+            if nb_points_segments[i][1] > 0.0:
+                if nb_points_segments[i][1] < min_val:
+                    min_index = i
+                if nb_points_segments[i][1] > max_val:
+                    max_index = i
+
+        nb_points_segments[min_index][1] -= 1.0
+        nb_points_segments[max_index][0] += 1
+        nb_points_segments[max_index][1] -= 1.0
+        sum_int = sum([int(nbp[0]) for nbp in nb_points_segments])
+
+        if min_val >= 1.0 and max_val <= 0.0:
+            break
+
+    return [int(nbp[0]) for nbp in nb_points_segments]
 
 
 def _fill(coordinates, nb_points, is_smart=False):
