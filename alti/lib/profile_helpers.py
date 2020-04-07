@@ -222,7 +222,7 @@ def _create_points(coordinates, nb_points, smart_filling=False, keep_points=Fals
     if not keep_points:
         return _fill(coordinates, nb_points, smart_filling)
     segments = []
-    nb_points_per_segment, distances_per_segment = _prepare_number_of_points_max_per_segment(coordinates, nb_points -1 )
+    nb_points_per_segment, distances_per_segment = _prepare_number_of_points_max_per_segment(coordinates, nb_points - 1)
     if len(nb_points_per_segment) == 0:
         return coordinates
     coords = []
