@@ -124,7 +124,10 @@ def _obtain_nb_points_per_segment_no_loss(distances, nb_points_total, total_dist
     nb_points_segments = []
     for d in distances:
         nb_points_segments.append(math.modf(max(nb_points_total * d / total_distance, 0.0)))
+    logging.debug("--------!--------")
+    logging.debug(nb_points_segments)
     sum_int = sum([int(nbp[0]) for nbp in nb_points_segments])
+    logging.debug(sum_int)
     while sum_int < nb_points_total:
         min_val, max_val, min_index, max_index = 1.0, 0.0, 0, 0
         for i in range(0, len(nb_points_segments)):
@@ -140,7 +143,8 @@ def _obtain_nb_points_per_segment_no_loss(distances, nb_points_total, total_dist
 
         if min_val >= 1.0 and max_val <= 0.0:
             break
-
+    logging.debug(sum_int)
+    logging.debug([int(nbp[0]) for nbp in nb_points_segments])
     return [int(nbp[0]) for nbp in nb_points_segments]
 
 
@@ -241,6 +245,7 @@ def _create_points(coordinates, nb_points, smart_filling=False, keep_points=Fals
             as close as possible as to not exceed the altitude model meshing (which is 2 meters). If not, they will be just
             thrown at equal distance without any regards to model resolution.
     """
+    logging.debug(keep_points)
     if not keep_points:
         return _fill(coordinates, nb_points, smart_filling)
     segments = []
