@@ -40,6 +40,8 @@ def get_profile(geom=None,
         logging.debug("- - - - - - - - - - - - - - - - Length of those Coordinates - - - - - - - - - - - - - - - - -")
         logging.debug("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
         logging.debug(len(coordinates))
+        logging.debug(_resolution)
+
 
     # extract z values (altitude over distance) for coordinates
     z_values = _extract_z_values(raster=raster,
@@ -169,13 +171,11 @@ def _fill(coordinates, nb_points, is_smart=False):
                 Add some points in order to reach roughly the asked
                 number of points.
             """
-
         for i in xrange(1, len(coordinates)):
 
             cur_nb_points = max(int((nb_points - 1) * (distances[i - 1] / total_distance) + 0.5), 1)
             dx = (coordinates[i][0] - coordinates[i - 1][0]) / float(cur_nb_points)
             dy = (coordinates[i][1] - coordinates[i - 1][1]) / float(cur_nb_points)
-            logging.debug(cur_nb_points)
             for j in xrange(1, cur_nb_points + 1):
                 result.append(
                     [coordinates[i - 1][0] + dx * j,
