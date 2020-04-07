@@ -10,8 +10,8 @@ log = logging.getLogger('alti')
 # cache of GeoRaster instances in function of the layer name
 _rasters = {}
 _rasterfiles = {}
-
-_resolution = None
+# TODO: find a way to specify this, but I'm trying to check if things work right now.
+_resolution = 2
 
 
 def get_raster(sr):
@@ -127,11 +127,6 @@ class GeoRaster:
                 message = ".bt file referenced in index file " + repr(index_file) + " not found, aborting"
                 log.error(message)
                 raise ValueError(message)
-        global _resolution
-        if _resolution is None:
-            dummy_height_tile = self.tiles[-1]
-            dummy_height_tile.get_height_for_coordinate(dummy_height_tile.max_x, dummy_height_tile.max_y)
-            _resolution = dummy_height_tile.resolution_x
 
     def get_height_for_coordinate(self, x, y):
         tile = self.get_tile(x, y)
