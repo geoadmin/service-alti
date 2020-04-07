@@ -85,8 +85,7 @@ class BinaryTerrainTile(object):
                     format_to_unpack = "<h"
                 else:
                     format_to_unpack = "<l"
-            value = unpack(format_to_unpack, file.read(self.data_size))[0]
-            return value
+            return unpack(format_to_unpack, file.read(self.data_size))[0]
 
 
 class GeoRaster:
