@@ -42,7 +42,6 @@ def get_profile(geom=None,
         logging.debug(len(coordinates))
         logging.debug(_resolution)
 
-
     # extract z values (altitude over distance) for coordinates
     z_values = _extract_z_values(raster=raster,
                                  coordinates=coordinates)
