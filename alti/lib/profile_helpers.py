@@ -134,9 +134,8 @@ def _obtain_nb_points_per_segment_no_loss(distances, nb_points_total, total_dist
                 if nb_points_segments[i][1] > max_val:
                     max_index = i
 
-        nb_points_segments[min_index][1] -= 1.0
-        nb_points_segments[max_index][0] += 1
-        nb_points_segments[max_index][1] -= 1.0
+        nb_points_segments[min_index] = (nb_points_segments[min_index][0], -0.5)
+        nb_points_segments[max_index] = (nb_points_segments[max_index][0] + 1.0, -0.5)
         sum_int = sum([int(nbp[0]) for nbp in nb_points_segments])
 
         if min_val >= 1.0 and max_val <= 0.0:
