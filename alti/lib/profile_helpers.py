@@ -1,5 +1,5 @@
 import math
-
+import logging
 from shapely.geometry import LineString
 
 from alti.lib.raster.georaster import get_raster, _resolution
@@ -32,6 +32,15 @@ def get_profile(geom=None,
                                      nb_points=nb_points,
                                      smart_filling=smart_filling,
                                      keep_points=keep_points)
+        logging.debug("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+        logging.debug("- - - - - - - - - - - - Coordinates after the  create points function - - - - - - - - - - - -")
+        logging.debug("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+        logging.debug(coordinates)
+        logging.debug("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+        logging.debug("- - - - - - - - - - - - - - - - Length of those Coordinates - - - - - - - - - - - - - - - - -")
+        logging.debug("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -")
+        logging.debug(len(coordinates))
+
 
     # extract z values (altitude over distance) for coordinates
     z_values = _extract_z_values(raster=raster,
