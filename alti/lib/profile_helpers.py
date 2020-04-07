@@ -197,9 +197,6 @@ def _extract_z_values(raster, coordinates):
                 tiles.append(tile)
                 z = tile.get_height_for_coordinate(x, y)
         z_values.append(z)
-    # at the end we close all tile files
-    for tile in tiles:
-        tile.close_file()
     return z_values
 
 
