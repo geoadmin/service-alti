@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import geojson
-from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import HTTPBadRequest, HTTPRequestEntityTooLarge
 
 from shapely.geometry import shape
 
@@ -48,7 +48,8 @@ class ProfileValidation(object):
             geomToShape.is_valid
         except Exception:
             raise HTTPBadRequest("Invalid Linestring syntax")
-
+        if len(geomToShape.coords) > self.nb_points_max:
+            raise HTTPRequestEntityTooLarge("Request Geometry contains too many points. Maximum number of points allowed: {}, found {}".format(self.nb_points_max, len(geomToShape.coords)))
         self._linestring = geomToShape
 
     @spatial_reference.setter
