@@ -34,8 +34,8 @@ class TestProfileValidation(unittest.TestCase):
             for srid in VALID_SPATIAL_REFERNECES:
                 profile = create_profile_validation(create_json(2, srid), srid, VALID_NB_POINTS, VALID_OFFSET)
                 self.assertEquals(srid, profile.spatial_reference)
-                self.assertEquals(100, profile.nb_points)
-                self.assertEquals(VALID_OFFSET, profile.offset)
+                self.assertEquals(int(VALID_NB_POINTS), profile.nb_points)
+                self.assertEquals(int(VALID_OFFSET), profile.offset)
         except Exception as e:
             logger.error(e, exc_info=True)
             self.fail("These profiles should be valid")
