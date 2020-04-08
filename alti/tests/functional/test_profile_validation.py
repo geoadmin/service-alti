@@ -11,7 +11,8 @@ logger = logging.getLogger('alti')
 INVALID_LINESTRING_NOT_GEOJSON = "hello world"
 VALID_SPATIAL_REFERNECES = [21781, 2056]
 INVALID_SPATIAL_REFERENCE = 66600
-VALID_OFFSET = 5
+VALID_OFFSET = "5"
+VALID_NB_POINTS = "100"
 INVALID_OFFSET = "hello world"
 
 
@@ -31,7 +32,7 @@ class TestProfileValidation(unittest.TestCase):
     def test_profile_validation_valid(self):
         try:
             for srid in VALID_SPATIAL_REFERNECES:
-                profile = create_profile_validation(create_json(2, srid), srid, 100, VALID_OFFSET)
+                profile = create_profile_validation(create_json(2, srid), srid, VALID_NB_POINTS, VALID_OFFSET)
                 self.assertEquals(srid, profile.spatial_reference)
                 self.assertEquals(100, profile.nb_points)
                 self.assertEquals(VALID_OFFSET, profile.offset)
@@ -49,7 +50,7 @@ class TestProfileValidation(unittest.TestCase):
 
     def test_profile_validation_valid_offset_none(self):
         try:
-            profile = create_profile_validation(create_json(2), VALID_SPATIAL_REFERNECES[0], 100, None)
+            profile = create_profile_validation(create_json(2), VALID_SPATIAL_REFERNECES[0], VALID_NB_POINTS, None)
             self.assertEquals(3, profile.offset)
         except Exception as e:
             logger.error(e, exc_info=True)
@@ -57,7 +58,7 @@ class TestProfileValidation(unittest.TestCase):
 
     def test_profile_validation_no_linestring(self):
         try:
-            create_profile_validation(None, VALID_SPATIAL_REFERNECES[0], 100, VALID_OFFSET)
+            create_profile_validation(None, VALID_SPATIAL_REFERNECES[0], VALID_NB_POINTS, VALID_OFFSET)
             self.fail("This should not validate")
         except HTTPBadRequest:
             pass
@@ -67,7 +68,7 @@ class TestProfileValidation(unittest.TestCase):
 
     def test_profile_validation_not_a_geojson_linestring(self):
         try:
-            create_profile_validation(INVALID_LINESTRING_NOT_GEOJSON, VALID_SPATIAL_REFERNECES[0], 100, VALID_OFFSET)
+            create_profile_validation(INVALID_LINESTRING_NOT_GEOJSON, VALID_SPATIAL_REFERNECES[0], VALID_NB_POINTS, VALID_OFFSET)
             self.fail("This should not validate")
         except HTTPBadRequest:
             pass
@@ -77,7 +78,7 @@ class TestProfileValidation(unittest.TestCase):
 
     def test_profile_validation_linestring_too_long(self):
         try:
-            create_profile_validation(create_json(PROFILE_MAX_AMOUNT_POINTS + 210), VALID_SPATIAL_REFERNECES[0], 100, VALID_OFFSET)
+            create_profile_validation(create_json(PROFILE_MAX_AMOUNT_POINTS + 210), VALID_SPATIAL_REFERNECES[0], VALID_NB_POINTS, VALID_OFFSET)
         except HTTPRequestEntityTooLarge:
             pass
         except Exception as e:
@@ -86,7 +87,7 @@ class TestProfileValidation(unittest.TestCase):
 
     def test_profile_validation_wrong_srid(self):
         try:
-            create_profile_validation(create_json(2), INVALID_SPATIAL_REFERENCE, 100, VALID_OFFSET)
+            create_profile_validation(create_json(2), INVALID_SPATIAL_REFERENCE, VALID_NB_POINTS, VALID_OFFSET)
             self.fail("This should not validate")
         except HTTPBadRequest:
             pass
@@ -96,7 +97,7 @@ class TestProfileValidation(unittest.TestCase):
 
     def test_profile_validation_nb_points_less_than_two(self):
         try:
-            create_profile_validation(create_json(2), VALID_SPATIAL_REFERNECES[0], 1, VALID_OFFSET)
+            create_profile_validation(create_json(2), VALID_SPATIAL_REFERNECES[0], "1", VALID_OFFSET)
             self.fail("Should not validate")
         except HTTPBadRequest:
             pass
@@ -106,7 +107,7 @@ class TestProfileValidation(unittest.TestCase):
 
     def test_profile_validation_nb_points_too_big(self):
         try:
-            create_profile_validation(create_json(2), VALID_SPATIAL_REFERNECES[0], PROFILE_MAX_AMOUNT_POINTS + 710, VALID_OFFSET)
+            create_profile_validation(create_json(2), VALID_SPATIAL_REFERNECES[0], str(PROFILE_MAX_AMOUNT_POINTS + 710), VALID_OFFSET)
             self.fail("Should not validate")
         except HTTPBadRequest:
             pass
@@ -126,7 +127,7 @@ class TestProfileValidation(unittest.TestCase):
 
     def test_profile_validation_offset_not_int(self):
         try:
-            create_profile_validation(create_json(2), VALID_SPATIAL_REFERNECES[0], 100, INVALID_OFFSET)
+            create_profile_validation(create_json(2), VALID_SPATIAL_REFERNECES[0], VALID_NB_POINTS, INVALID_OFFSET)
             self.fail("Should not validate")
         except HTTPBadRequest:
             pass
