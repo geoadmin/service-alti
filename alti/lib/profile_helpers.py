@@ -1,7 +1,7 @@
 import math
 from shapely.geometry import LineString
 
-from alti.lib.raster.georaster import get_raster, _resolution
+from alti.lib.raster.georaster import get_raster, RESOLUTION
 from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
 
 PROFILE_MAX_AMOUNT_POINTS = 5000
@@ -15,7 +15,6 @@ def get_profile(geom=None,
                 only_requested_points=False,
                 smart_filling=False,
                 keep_points=False,
-                metadata_output=False,
                 output_to_json=True):
     """Compute the alt=fct(dist) array and store it in c.points"""
 
@@ -39,27 +38,12 @@ def get_profile(geom=None,
     return _create_profile(coordinates=coordinates,
                            # if offset is defined, do the smoothing
                            z_values=_smooth(offset, z_values) if offset > 0 else z_values,
-                           metadata_output=metadata_output,
                            output_to_json=output_to_json)
 
 
-def _create_profile(coordinates, z_values, metadata_output, output_to_json):
+def _create_profile(coordinates, z_values, output_to_json):
     total_distance = 0
     previous_coordinates = None
-    # TODO: something should be done with metadata output in the future
-    """
-    metadata output means we return a json in the following format :
-        {
-            metadata: {
-                dist : '',
-                resolution : '',
-                others? : ''
-            }
-            profile: [] <-- same as usual, but no dist
-        }
-    """
-    if metadata_output:
-        pass
     if output_to_json:
         profile = []
     else:
@@ -150,7 +134,7 @@ def _fill(coordinates, nb_points, is_smart=False):
             # preparing segment properties before placing points
             segment_length = distances[i - 1]
             # if segment length is smaller than tiles resolution (2m) we don't add extra points
-            if segment_length > _resolution:
+            if segment_length > RESOLUTION:
                 segment = LineString([coordinates[i - 1], coordinates[i]])
                 # here is the prorata ratio : if a segment makes X% of the total length, X% of total points will
                 # be added to this segment
@@ -159,7 +143,7 @@ def _fill(coordinates, nb_points, is_smart=False):
                 nb_points_for_this_segment = int(nb_points * ratio_distance)
                 # little protection against division by zero
                 if nb_points_for_this_segment > 0:
-                    segment_resolution = max(segment_length / nb_points_for_this_segment, _resolution)
+                    segment_resolution = max(segment_length / nb_points_for_this_segment, RESOLUTION)
                     # if segment resolution is smaller than 2m, we force the resolution as it's wasteful to go below
                     segment_length_covered = 0
                     nb_points_placed = 0
@@ -193,14 +177,14 @@ def _fill_segment(coordinates, nb_points, is_smart, distance):
         # for each segment, we will add points in between on a prorata basis (longer segments will have more points)
         # preparing segment properties before placing points
         # if segment length is smaller than tiles resolution (2m) we don't add extra points
-        if distance > _resolution:
+        if distance > RESOLUTION:
             segment = LineString([coordinates[0], coordinates[1]])
             # here is the prorata ratio : if a segment makes X% of the total length, X% of total points will
             # be added to this segment
             # rounding number of points down to the closest integer (casting to int will ignore anything after coma)
             # little protection against division by zero
             if nb_points > 0:
-                    segment_resolution = max(distance / nb_points, _resolution)
+                    segment_resolution = max(distance / nb_points, RESOLUTION)
                     # if segment resolution is smaller than 2m, we force the resolution as it's wasteful to go below
                     segment_length_covered = 0
                     nb_points_placed = 0
