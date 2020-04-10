@@ -184,8 +184,8 @@ def _fill_segment(coordinates, nb_points, is_smart, distance):
     else:
         prev_ccord = result[0]
         nb_p = max(int(nb_points), 1)
-        dx = (prev_ccord[0] - coordinates[0][0]) / float(nb_p)
-        dy = (prev_ccord[1] - coordinates[0][1]) / float(nb_p)
+        dx = (coordinates[1][0] - prev_ccord[0]) / float(nb_p)
+        dy = (coordinates[1][1] - prev_ccord[1]) / float(nb_p)
         for i in range(1, nb_p + 1):
             result.append(
                 [prev_ccord[0] + dx * i,
