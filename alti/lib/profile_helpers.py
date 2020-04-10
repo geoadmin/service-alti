@@ -121,8 +121,10 @@ def _obtain_nb_points_per_segment_no_loss(distances, nb_points_total, total_dist
 def _fill(coordinates, nb_points, is_smart=False):
     # calculating distances between each points, and total distance
     distances = []
-    for i in xrange(1, len(coordinates)):
-        distances.append(_distance_between(coordinates[i - 1], coordinates[i]))
+    prev_coord = [coordinates[0][0], coordinates[0][1]]
+    for coord in coordinates[1:]:
+        distances.append(_distance_between(prev_coord, coord))
+        prev_coord = coord
     total_distance = sum(distances)
     # total_distance will be used as a divisor later, we have to check it's not zero
     if total_distance == 0:
@@ -154,6 +156,22 @@ def _fill(coordinates, nb_points, is_smart=False):
                         segment_length_covered += segment_resolution
                         new_point = segment.interpolate(nb_points_placed * segment_resolution)
                         result.append([new_point.x, new_point.y])
+        return result
+    else:
+        """
+                Add some points in order to reach roughly the asked
+                number of points.
+            """
+        for i in xrange(1, len(coordinates)):
+            coord = coordinates[i]
+            cur_nb_points = max(int((nb_points - 1) * (distances[i - 1] / total_distance) + 0.5), 1)
+            dx = (coord[0] - prev_coord[0]) / float(cur_nb_points)
+            dy = (coord[1] - prev_coord[1]) / float(cur_nb_points)
+            for j in xrange(1, cur_nb_points + 1):
+                result.append(
+                    [prev_coord[0] + dx * j,
+                     prev_coord[1] + dy * j])
+            prev_coord = coord
         return result
 
 
