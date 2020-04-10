@@ -85,8 +85,10 @@ def _create_profile(coordinates, z_values, output_to_json):
 def _prepare_number_of_points_max_per_segment(coordinates, nb_point_total):
 
     distances = []
-    for i in xrange(1, len(coordinates)):
-        distances.append(_distance_between(coordinates[i - 1], coordinates[i]))
+    prev_coord = coordinates[0]
+    for coord in coordinates[1:]:
+        distances.append(_distance_between(prev_coord, coord))
+        prev_coord = coord
     total_distance = sum(distances)
     # if the total distance is 0, we return the coordinates and that's it.
     if total_distance < 0.001:
@@ -281,7 +283,7 @@ def _smooth(offset, z_values):
 
 def _distance_between(coord1, coord2):
     """Compute the distance between 2 points"""
-    return filter_distance(math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) + math.pow(coord1[1] - coord2[1], 2.0)))
+    return math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) + math.pow(coord1[1] - coord2[1], 2.0))
 
 
 def _factor(x):
