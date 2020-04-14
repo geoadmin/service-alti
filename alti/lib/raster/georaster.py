@@ -10,6 +10,7 @@ log = logging.getLogger('alti')
 # cache of GeoRaster instances in function of the layer name
 _rasters = {}
 _rasterfiles = {}
+RESOLUTION = 2
 
 
 def get_raster(sr):

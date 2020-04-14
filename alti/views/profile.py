@@ -70,6 +70,11 @@ class Profile(ProfileValidation):
         else:
             self.smart_filling = False
 
+        if 'distinct_points' in request.params:
+            self.keep_points = bool(request.params.get('distinct_points'))
+        else:
+            self.keep_points = False
+
         # keeping the request for later use
         self.request = request
 
@@ -88,6 +93,7 @@ class Profile(ProfileValidation):
                               offset=self.offset,
                               only_requested_points=self.only_requested_points,
                               smart_filling=self.smart_filling,
+                              keep_points=self.keep_points,
                               output_to_json=output_to_json)
         # If profile calculation resulted in a lower number of point than requested (because there's no need to add
         # points closer to each other than the min resolution of 2m), we return HTTP 203 to notify that nb_points

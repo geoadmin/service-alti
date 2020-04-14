@@ -9,8 +9,13 @@ import logging
 logger = logging.getLogger('alti')
 
 # a fake geom that covers 20m
-FAKE_GEOM = LineString([(2600000, 1199980), (2600000, 1200000)])
+FIRST_POINT = (2600000, 1199980)
+MIDDLE_POINT = (2600000, 1199981)
+LAST_POINT = (2600000, 1200000)
+FAKE_GEOM_2_POINTS = LineString([FIRST_POINT, LAST_POINT])
+FAKE_GEOM_3_POINTS = LineString([FIRST_POINT, MIDDLE_POINT, LAST_POINT])
 # fake values that will be fed to the mock raster (start + 20m/2m -> 11 values)
+FAKE_RESOLUTION = 2.0
 VALUES_FOR_EACH_2M_STEP = [100.0, 102.0, 104.0, 106.0, 104.0, 100.0, 98.0, 102.0, 104.0, 123.456, 100.0]
 
 
@@ -22,19 +27,21 @@ def prepare_mock(mock_get_raster):
     # creating a fake tile that responds with pre defined values
     tile_mock = Mock()
     tile_mock.get_height_for_coordinate = Mock(side_effect=fake_get_height_for_coordinate)
+    tile_mock.resolution_x.return_value = FAKE_RESOLUTION
     # link this to the get_raster function
     mock_get_raster.return_value.get_tile.return_value = tile_mock
 
 
 class TestProfileHelpers(unittest.TestCase):
 
-    def __prepare_mock_and_test(self, mock, smart_filling, geom=FAKE_GEOM):
+    def __prepare_mock_and_test(self, mock, smart_filling, keep_points=True, geom=FAKE_GEOM_2_POINTS):
         prepare_mock(mock)
         response = get_profile(geom=geom,
                                spatial_reference=2056,
                                offset=0,
                                only_requested_points=False,
                                smart_filling=smart_filling,
+                               keep_points=keep_points,
                                output_to_json=True)
         self.assertIsNotNone(response)
         return response
@@ -79,22 +86,16 @@ class TestProfileHelpers(unittest.TestCase):
 
     @patch('alti.lib.profile_helpers.get_raster')
     def test_smart_filling_must_keep_points_from_geom(self, mock_get_raster):
-        # preparing fake data to be feed to mocks (has to cover overall the same ground as FAKE_GEOM otherwise
-        # we would have to prepare another mock tile)
-        extra_point_north = 1199981
-        extra_point_east = 2600000
-        geom_with_multiple_points = LineString([(2600000, 1199980),
-                                                (extra_point_east, extra_point_north),
-                                                (2600000, 1200000)])
-        response = self.__prepare_mock_and_test(mock_get_raster, smart_filling=True, geom=geom_with_multiple_points)
+        response = self.__prepare_mock_and_test(mock_get_raster, smart_filling=True, keep_points=True,
+                                                geom=FAKE_GEOM_3_POINTS)
         self.assertEqual(len(response),
                          12,
                          msg="There should be an extra points at (2600000, 1199981) included in the result (even though"
                              "it is closer to other points than the resolution, as it was in geom it must be included")
-        # there should be our extra point at index 1, just after the first point
+        # there should be our middle point at index 1, just after the first point
         extra_point = response[1]
-        self.assertEqual(extra_point['easting'], extra_point_east)
-        self.assertEqual(extra_point['northing'], extra_point_north)
+        self.assertEqual(extra_point['easting'], MIDDLE_POINT[0])
+        self.assertEqual(extra_point['northing'], MIDDLE_POINT[1])
 
     @patch('alti.lib.profile_helpers.get_raster')
     def test_coordinates_out_of_bound(self, mock_get_raster):
@@ -102,14 +103,32 @@ class TestProfileHelpers(unittest.TestCase):
         # the service should return an empty profile
         mock_get_raster.return_value.get_tile.return_value = None
         try:
-            response = get_profile(geom=FAKE_GEOM,
+            response = get_profile(geom=FAKE_GEOM_2_POINTS,
                                    spatial_reference=2056,
                                    offset=0,
                                    only_requested_points=False,
                                    smart_filling=True,
+                                   keep_points=True,
                                    output_to_json=True)
             self.assertIsNotNone(response)
             self.assertEqual(len(response), 0)
         except Exception as e:
             logger.error(e, exc_info=True)
             self.fail("Should return an empty profile without failing with coordinates out of bounds")
+
+    @patch('alti.lib.profile_helpers.get_raster')
+    def test_keep_point_without_smart_fill(self, mock_get_raster):
+        response = self.__prepare_mock_and_test(mock_get_raster,
+                                                smart_filling=False,
+                                                keep_points=True,
+                                                geom=FAKE_GEOM_3_POINTS)
+        self.assertEqual(len(response),
+                         PROFILE_DEFAULT_AMOUNT_POINTS,
+                         msg="There should be an exactly {} points in the profile, found {}".format(
+                             PROFILE_DEFAULT_AMOUNT_POINTS, len(response)))
+        # there should be our middle point somewhere in the profile
+        middle_point_found = False
+        for point in response:
+            middle_point_found |= point['easting'] == MIDDLE_POINT[0] and point['northing'] == MIDDLE_POINT[1]
+        self.assertTrue(middle_point_found, msg="The middle point should be included in the resulting profile "
+                                                "as keep_points was set to true")

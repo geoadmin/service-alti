@@ -1,9 +1,7 @@
 import math
-
 from shapely.geometry import LineString
-from scipy.spatial.distance import pdist, squareform
 
-from alti.lib.raster.georaster import get_raster
+from alti.lib.raster.georaster import get_raster, RESOLUTION
 from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
 
 PROFILE_MAX_AMOUNT_POINTS = 5000
@@ -16,6 +14,7 @@ def get_profile(geom=None,
                 offset=0,
                 only_requested_points=False,
                 smart_filling=False,
+                keep_points=False,
                 output_to_json=True):
     """Compute the alt=fct(dist) array and store it in c.points"""
 
@@ -28,8 +27,9 @@ def get_profile(geom=None,
         # filling lines defined by coordinates (linestring) with as much point as possible (elevation model is
         # a 2m mesh, so no need to go beyond that)
         coordinates = _create_points(coordinates=geom.coords,
+                                     nb_points=nb_points,
                                      smart_filling=smart_filling,
-                                     nb_points=nb_points)
+                                     keep_points=keep_points)
 
     # extract z values (altitude over distance) for coordinates
     z_values = _extract_z_values(raster=raster,
@@ -82,29 +82,65 @@ def _create_profile(coordinates, z_values, output_to_json):
     return profile
 
 
-def _smart_fill(coordinates, nb_points):
+def _prepare_number_of_points_max_per_segment(coordinates, nb_point_total):
+
+    distances = []
+    prev_coord = coordinates[0]
+    for coord in coordinates[1:]:
+        distances.append(_distance_between(prev_coord, coord))
+        prev_coord = coord
+    total_distance = sum(distances)
+    # if the total distance is 0, we return the coordinates and that's it.
+    if total_distance < 0.001:
+        return [], []
+    nb_points_segments = _obtain_nb_points_per_segment_no_loss(distances, nb_point_total, total_distance)
+    return nb_points_segments, distances
+
+
+def _obtain_nb_points_per_segment_no_loss(distances, nb_points_total, total_distance):
+    nb_points_segments = []
+    for d in distances:
+        nb_points_segments.append(math.modf(max(nb_points_total * d / total_distance, 0.0)))
+    sum_int = sum([int(nbp[1]) for nbp in nb_points_segments])
+    while sum_int < nb_points_total:
+        min_val, max_val, min_index, max_index = 1.0, 0.0, 0, 0
+        for i in range(0, len(nb_points_segments)):
+            if nb_points_segments[i][0] > 0.0:
+                if nb_points_segments[i][0] < min_val:
+                    min_index = i
+                if nb_points_segments[i][0] > max_val:
+                    max_index = i
+
+        nb_points_segments[min_index] = (-0.5, nb_points_segments[min_index][1])
+        nb_points_segments[max_index] = (-0.5, nb_points_segments[max_index][1] + 1.0)
+        sum_int = sum([int(nbp[0]) for nbp in nb_points_segments])
+
+        if min_val >= 1.0 and max_val <= 0.0:
+            break
+    return [int(nbp[1]) for nbp in nb_points_segments]
+
+
+def _fill(coordinates, nb_points, is_smart=False):
     # calculating distances between each points, and total distance
-    distances_squareform = squareform(pdist(coordinates))
-    amount_distances = len(distances_squareform)
-    distances = [0] * (amount_distances - 1)
-    for i in range(0, amount_distances - 1):
-        distances[i] = distances_squareform[i][i + 1]
+    distances = []
+    prev_coord = [coordinates[0][0], coordinates[0][1]]
+    for coord in coordinates[1:]:
+        distances.append(_distance_between(prev_coord, coord))
+        prev_coord = coord
     total_distance = sum(distances)
     # total_distance will be used as a divisor later, we have to check it's not zero
     if total_distance == 0:
         return coordinates
-
-    result = []
-    previous_coordinate = None
-    # for each segment, we will add points in between on a prorata basis (longer segments will have more points)
-    for i in range(0, len(coordinates)):
-        if previous_coordinate is not None:
-            result.append(previous_coordinate)
+    prev_coord = [coordinates[0][0], coordinates[0][1]]
+    result = [prev_coord]
+    if is_smart:
+        # for each segment, we will add points in between on a prorata basis (longer segments will have more points)
+        for i in xrange(1, len(coordinates)):
             # preparing segment properties before placing points
             segment_length = distances[i - 1]
             # if segment length is smaller than tiles resolution (2m) we don't add extra points
-            if segment_length > 2:
-                segment = LineString([previous_coordinate, coordinates[i]])
+            if segment_length > RESOLUTION:
+                segment = LineString([coordinates[i - 1], coordinates[i]])
                 # here is the prorata ratio : if a segment makes X% of the total length, X% of total points will
                 # be added to this segment
                 ratio_distance = segment_length / total_distance
@@ -112,10 +148,8 @@ def _smart_fill(coordinates, nb_points):
                 nb_points_for_this_segment = int(nb_points * ratio_distance)
                 # little protection against division by zero
                 if nb_points_for_this_segment > 0:
-                    segment_resolution = segment_length / nb_points_for_this_segment
+                    segment_resolution = max(segment_length / nb_points_for_this_segment, RESOLUTION)
                     # if segment resolution is smaller than 2m, we force the resolution as it's wasteful to go below
-                    if segment_resolution < 2:
-                        segment_resolution = 2
                     segment_length_covered = 0
                     nb_points_placed = 0
                     while not nb_points_placed == nb_points_for_this_segment \
@@ -124,57 +158,84 @@ def _smart_fill(coordinates, nb_points):
                         segment_length_covered += segment_resolution
                         new_point = segment.interpolate(nb_points_placed * segment_resolution)
                         result.append([new_point.x, new_point.y])
-        previous_coordinate = coordinates[i]
-
-    return result
-
-
-def _dumb_fill(coordinates, nb_points):
-    """
-        Add some points in order to reach roughly the asked
-        number of points.
-    """
-    total_length = 0
-    prev_coord = None
-    for coord in coordinates:
-        if prev_coord is not None:
-            total_length += _distance_between(prev_coord, coord)
-        prev_coord = coord
-
-    if total_length == 0.0:
-        return coordinates
-
-    result = []
-    prev_coord = None
-    for coord in coordinates:
-        if prev_coord is not None:
-            cur_length = _distance_between(prev_coord, coord)
-            cur_nb_points = int((nb_points - 1) * cur_length / total_length + 0.5)
-            if cur_nb_points < 1:
-                cur_nb_points = 1
+        return result
+    else:
+        """
+                Add some points in order to reach roughly the asked
+                number of points.
+            """
+        for i in xrange(1, len(coordinates)):
+            coord = coordinates[i]
+            cur_nb_points = max(int((nb_points - 1) * (distances[i - 1] / total_distance) + 0.5), 1)
             dx = (coord[0] - prev_coord[0]) / float(cur_nb_points)
             dy = (coord[1] - prev_coord[1]) / float(cur_nb_points)
-            for i in xrange(1, cur_nb_points + 1):
+            for j in xrange(1, cur_nb_points + 1):
                 result.append(
-                    [prev_coord[0] + dx * i,
-                     prev_coord[1] + dy * i])
-        else:
-            result.append([coord[0], coord[1]])
-        prev_coord = coord
+                    [prev_coord[0] + dx * j,
+                     prev_coord[1] + dy * j])
+            prev_coord = coord
+        return result
 
+
+def _fill_segment(coordinates, nb_points, is_smart, distance):
+    result = [[coordinates[0][0], coordinates[0][1]]]
+    if is_smart:
+        # for each segment, we will add points in between on a prorata basis (longer segments will have more points)
+        # preparing segment properties before placing points
+        # if segment length is smaller than tiles resolution (2m) we don't add extra points
+        if distance > RESOLUTION:
+            segment = LineString([coordinates[0], coordinates[1]])
+            # here is the prorata ratio : if a segment makes X% of the total length, X% of total points will
+            # be added to this segment
+            # rounding number of points down to the closest integer (casting to int will ignore anything after coma)
+            # little protection against division by zero
+            if nb_points > 0:
+                    segment_resolution = max(distance / nb_points, RESOLUTION)
+                    # if segment resolution is smaller than 2m, we force the resolution as it's wasteful to go below
+                    segment_length_covered = 0
+                    nb_points_placed = 0
+                    while not nb_points_placed == nb_points \
+                            and segment_length_covered < distance:
+                        nb_points_placed += 1
+                        segment_length_covered += segment_resolution
+                        new_point = segment.interpolate(nb_points_placed * segment_resolution)
+                        result.append([new_point.x, new_point.y])
+                    result.pop()
+    else:
+        prev_ccord = result[0]
+        nb_p = max(int(nb_points), 1)
+        dx = (coordinates[1][0] - prev_ccord[0]) / float(nb_p)
+        dy = (coordinates[1][1] - prev_ccord[1]) / float(nb_p)
+        for i in range(1, nb_p + 1):
+            result.append(
+                [prev_ccord[0] + dx * i,
+                 prev_ccord[1] + dy * i])
+        result.pop()
     return result
 
 
-def _create_points(coordinates, smart_filling, nb_points):
+def _create_points(coordinates, nb_points, smart_filling=False, keep_points=False):
+    # is_smart = True means we are using the smart fill, which gives one point max per tile depending of the resolution
+    # is distinct = True means the coordinates must be present within the returned points.
     """
-        Add some points in order to reach the requested number of points. If smart_filling is true, points will be added
-        as close as possible as to not exceed the altitude model meshing (which is 2 meters). If not, they will be just
-        thrown at equal distance without any regards to model resolution.
+            Add some points in order to reach the requested number of points. If smart_filling is true, points will be added
+            as close as possible as to not exceed the altitude model meshing (which is 2 meters). If not, they will be just
+            thrown at equal distance without any regards to model resolution.
     """
-    if smart_filling:
-        return _smart_fill(coordinates, nb_points)
-    else:
-        return _dumb_fill(coordinates, nb_points)
+    if not keep_points:
+        return _fill(coordinates, nb_points, smart_filling)
+    segments = []
+    nb_points_per_segment, distances_per_segment = _prepare_number_of_points_max_per_segment(coordinates, nb_points - 1)
+    if len(nb_points_per_segment) == 0:
+        return coordinates
+    coords = []
+    for i in xrange(1, len(coordinates)):
+        coords.append([coordinates[i - 1], coordinates[i]])
+    for i in xrange(0, len(coords)):
+        segments = segments + _fill_segment(coords[i], nb_points_per_segment[i], smart_filling,
+                                            distances_per_segment[i])
+    segments.append(coords[-1][1])
+    return segments
 
 
 def _extract_z_values(raster, coordinates):
@@ -222,7 +283,7 @@ def _smooth(offset, z_values):
 
 def _distance_between(coord1, coord2):
     """Compute the distance between 2 points"""
-    return filter_distance(math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) + math.pow(coord1[1] - coord2[1], 2.0)))
+    return math.sqrt(math.pow(coord1[0] - coord2[0], 2.0) + math.pow(coord1[1] - coord2[1], 2.0))
 
 
 def _factor(x):
