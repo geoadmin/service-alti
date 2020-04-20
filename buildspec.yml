@@ -2,7 +2,11 @@ version: 0.2
 
 env:
   variables:
-    AWS_DEFAULT_REGION: eu-west-1
+     AWS_DEFAULT_REGION: eu-central-1
+  parameter-store:
+      CI_DOCKERHUB_USER: "/dockerhub/user"
+      CI_DOCKERHUB_PASSWORD: "/dockerhub/password"
+
 
 phases:
   install:
