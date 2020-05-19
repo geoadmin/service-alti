@@ -57,4 +57,6 @@ phases:
 
   post_build:
     commands:
+      - make testunit
+      - make testintegration
       - echo Build completed on $(date)
