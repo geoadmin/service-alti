@@ -17,7 +17,7 @@ def filter_altitude(altitude):
     if altitude is not None and altitude > 0.0:
         logging.debug(altitude)
         # 10cm accuracy is enough for altitudes
-        return round(altitude, 1)
+        return round(float(altitude), 1)
     else:
         return None
 
