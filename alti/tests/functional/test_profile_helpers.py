@@ -20,7 +20,7 @@ VALUES_FOR_EACH_2M_STEP = [100.0, 102.0, 104.0, 106.0, 104.0, 100.0, 98.0, 102.0
 
 
 def fake_get_height_for_coordinate(x, y):
-    return VALUES_FOR_EACH_2M_STEP[int(int(y - 1199980) / 2) % 11]
+    return VALUES_FOR_EACH_2M_STEP[int((y - 1199980) / 2) % 11]
 
 
 def prepare_mock(mock_get_raster):
