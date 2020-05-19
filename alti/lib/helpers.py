@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import math
-
+import logging
 
 # float('NaN') does not raise an Exception. This function does.
 def float_raise_nan(val):
@@ -14,6 +14,7 @@ def float_raise_nan(val):
 def filter_altitude(altitude):
     """Returns the altitude given in parameter, rounded one decimal place"""
     if altitude is not None and altitude > 0.0:
+        logging.debug(altitude)
         # 10cm accuracy is enough for altitudes
         return round(altitude, 1)
     else:

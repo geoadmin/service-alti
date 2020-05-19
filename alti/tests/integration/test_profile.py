@@ -147,7 +147,7 @@ class TestProfileView(TestsBase):
         self.assertEqual(first_point['northing'], 170000)
         second_point = resp.json[1]
         self.assertEqual(second_point['dist'], 40)
-        self.assertEqual(second_point['alts']['COMB'], 568.5)
+        self.assertEqual(second_point['alts']['COMB'], 123.5)
         self.assertEqual(second_point['easting'], 630032.0)
         self.assertEqual(second_point['northing'], 170024.0)
         self.__verify_point_is_present(resp, POINT_1_LV03)
