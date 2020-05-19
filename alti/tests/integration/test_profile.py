@@ -86,9 +86,9 @@ class TestProfileView(TestsBase):
         self.assertIsNotNone(response)
         return response
 
-    def __prepare_mock_and_test_csv_profile(self, mock, params, status):
+    def __prepare_mock_and_test_csv_profile(self, mock, params, expected_status):
         prepare_mock(mock)
-        response = self.__get_csv_with_params(params, status)
+        response = self.__get_csv_with_params(params, expected_status)
         self.assertIsNotNone(response)
         return response
 

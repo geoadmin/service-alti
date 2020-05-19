@@ -21,7 +21,7 @@ class TestHeightView(TestsBase):
 
     def __prepare_mock_and_test_get(self, mock,
                                     params,
-                                    expected_status = 200,
+                                    expected_status=200,
                                     return_value=HEIGHT_DTM2):
         prepare_mock(mock, return_value=return_value)
         response = self.__test_get(params, expected_status)
