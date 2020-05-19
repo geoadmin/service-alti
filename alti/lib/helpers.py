@@ -3,6 +3,7 @@
 import math
 import logging
 
+
 # float('NaN') does not raise an Exception. This function does.
 def float_raise_nan(val):
     ret = float(val)
