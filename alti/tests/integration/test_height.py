@@ -12,8 +12,10 @@ EAST_LV95, NORTH_LV95 = '2632510.0', '1170755.0'
 # Expected results
 HEIGHT_DTM2, HEIGHT_DTM25 = '568.2', '567.6'
 
+
 def prepare_mock(mock_get_raster, return_value):
     mock_get_raster.return_value.get_height_for_coordinate.return_value = return_value
+
 
 class TestHeightView(TestsBase):
 
