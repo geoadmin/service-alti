@@ -91,7 +91,7 @@ user:
 	. ./$(USER_SOURCE) && make all
 
 .PHONY: all
-all: setup templates lint fixrights testunit
+all: setup templates lint fixrights test
 
 setup: .venv .venv/hooks
 
