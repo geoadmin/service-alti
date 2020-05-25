@@ -15,7 +15,7 @@ def filter_altitude(altitude):
     """Returns the altitude given in parameter, rounded one decimal place"""
     if altitude is not None and altitude > 0.0:
         # 10cm accuracy is enough for altitudes
-        return round(altitude, 1)
+        return round(float(altitude), 1)
     else:
         return None
 

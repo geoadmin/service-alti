@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from shapely.geometry import Point
-from alti.lib.validation import srs_guesser
+from alti.lib.validation import srs_guesser, bboxes
 from alti.lib.validation.height import HeightValidation
 from alti.lib.height_helpers import get_height
 
@@ -30,7 +30,9 @@ class Height(HeightValidation):
                 raise HTTPBadRequest("No 'sr' given and cannot be guessed from 'geom'")
             else:
                 self.sr = sr
-
+        if self.lon < bboxes[self.sr][0] or self.lon > bboxes[self.sr][2] or \
+                self.lat < bboxes[self.sr][1] or self.lat > bboxes[self.sr][3]:
+            raise HTTPBadRequest("Query is out of bounds")
         self.request = request
 
     @view_config(route_name='height', renderer='jsonp', http_cache=0)
