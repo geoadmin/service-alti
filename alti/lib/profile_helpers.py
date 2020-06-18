@@ -1,4 +1,6 @@
 import math
+import six
+
 from shapely.geometry import LineString
 
 from alti.lib.raster.georaster import get_raster, RESOLUTION

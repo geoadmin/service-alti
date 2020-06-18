@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import six
 import json
 import random
 from shapely.geometry import Point, LineString, mapping
