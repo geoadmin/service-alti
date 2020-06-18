@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+import six
+import csv
+
+if six.PY2:
+    from StringIO import StringIO
+else:
+    from io import StringIO
 
 
 class CSVRenderer(object):
@@ -7,9 +14,7 @@ class CSVRenderer(object):
         pass
 
     def __call__(self, value, system):
-        import csv
-        import StringIO
-        fout = StringIO.StringIO()
+        fout = StringIO()
         writer = csv.writer(fout, delimiter=';', quoting=csv.QUOTE_ALL)
 
         writer.writerow(value['headers'])

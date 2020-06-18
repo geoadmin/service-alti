@@ -6,6 +6,10 @@ import struct
 import datetime
 import decimal
 import itertools
+import six
+# TODO: remove dual version support. Here: change xrange to range within the code
+if six.PY3:
+    xrange = range
 
 
 def dbfreader(f):

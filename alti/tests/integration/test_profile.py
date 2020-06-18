@@ -6,6 +6,9 @@ from shapely.geometry import Point, LineString, mapping
 from mock import Mock, patch
 from alti.tests.integration import TestsBase
 from alti.lib.profile_helpers import PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
+# TODO: remove dual version support. Here: change xrange to range within the code
+if six.PY3:
+    xrange = range
 
 
 def generate_random_coord(srid):

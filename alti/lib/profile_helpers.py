@@ -3,7 +3,9 @@ from shapely.geometry import LineString
 
 from alti.lib.raster.georaster import get_raster, RESOLUTION
 from alti.lib.helpers import filter_coordinate, filter_distance, filter_altitude
-
+# TODO: remove dual version support. Here: change xrange to range within the code
+if six.PY3:
+    xrange = range
 PROFILE_MAX_AMOUNT_POINTS = 5000
 PROFILE_DEFAULT_AMOUNT_POINTS = 200
 
