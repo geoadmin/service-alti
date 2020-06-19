@@ -52,8 +52,36 @@ RED := $(shell tput setaf 1)
 GREEN := $(shell tput setaf 2)
 
 # Versions
-PYTHON_VERSION := $(shell python --version 2>&1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
+ifndef USE_PYTHON3
+		override USE_PYTHON3 = 0
+endif
+
+ifeq ($(USE_PYTHON3), 1)
+		PYTHON_VERSION := 3.8.3
+build/python: local/bin/python3.8
+		mkdir -p build && touch build/python;
+else
+		PYTHON_VERSION := $(shell python2 --version 2>&1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
+build/python:
+		mkdir -p build && touch build/python;
+endif
 PYTHONPATH ?= .venv/lib/python${PYTHON_VERSION}/site-packages:/usr/lib64/python${PYTHON_VERSION}/site-packages
+
+
+PYTHON_BINDIR := $(shell dirname $(PYTHON_CMD))
+PYTHONHOME :=$(shell eval "cd $(PYTHON_BINDIR); pwd; cd > /dev/null")
+SYSTEM_PYTHON_CMD := $(CURRENT_DIR)/local/bin/python3
+
+.PHONY: python
+python: build/python
+		@echo "Python installed"
+
+local/bin/python3.8:
+		mkdir -p $(CURRENT_DIRECTORY)/local;
+		curl -z $(CURRENT_DIRECTORY)/local/Python-$(PYTHON_VERSION).tar.xz \
+				https://www.python.org/ftp/python/$(PYTHON_VERSION)/Python-$(PYTHON_VERSION).tar.xz \
+				-o $(CURRENT_DIRECTORY)/local/Python-$(PYTHON_VERSION).tar.xz;
+		cd $(CURRENT_DIRECTORY)/local && tar -xf Python-$(PYTHON_VERSION).tar.xz && Python-$(PYTHON_VERSION)/configure
 
 .PHONY: help
 help:
@@ -61,7 +89,7 @@ help:
 	@echo
 	@echo "Possible targets:"
 	@echo "- user               Build the user specific version of the app"
-	@echo "- all                Build the app"
+	@echo "- all                Build the app. Set USE_PYTHON3 to 1 to build with Python 3"
 	@echo "- serve              Serve the application with pserve"
 	@echo "- shell              Enter interactive shell with app loaded in the background"
 	@echo "- test               Launch the tests (no e2e tests)"
@@ -83,6 +111,7 @@ help:
 	@echo "BRANCH_STAGING:      ${BRANCH_STAGING}"
 	@echo "GIT_BRANCH:          ${GIT_BRANCH}"
 	@echo "SERVER_PORT:         ${SERVER_PORT}"
+	@echo "USE_PYTHON3:         ${USE_PYTHON3}"
 	@echo
 
 
