@@ -89,7 +89,7 @@ help:
 	@echo
 	@echo "Possible targets:"
 	@echo "- user               Build the user specific version of the app"
-	@echo "- all                Build the app"
+	@echo "- all                Build the app. Set USE_PYTHON3 to 1 to build with Python 3"
 	@echo "- serve              Serve the application with pserve"
 	@echo "- shell              Enter interactive shell with app loaded in the background"
 	@echo "- test               Launch the tests (no e2e tests)"
@@ -111,6 +111,7 @@ help:
 	@echo "BRANCH_STAGING:      ${BRANCH_STAGING}"
 	@echo "GIT_BRANCH:          ${GIT_BRANCH}"
 	@echo "SERVER_PORT:         ${SERVER_PORT}"
+	@echo "USE_PYTHON3:         ${USE_PYTHON3}"
 	@echo
 
 
