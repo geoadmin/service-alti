@@ -1,22 +1,53 @@
-*.pyc
-*.ini
-*.mo
-*.iml
-*.swp
-*~
-.coverage
-.idea
+notification-configuration.json
+packaged.yaml
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+_env
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
 .installed.cfg
-.venv/
-rc_branch
-rc_user_*
-apache/wsgi.conf
-apache/application.wsgi
-alti.egg-info
-deploy/hooks/pre-create-code
-MANIFEST
-buildout_branch.cfg
-deploy/deploy-branch.cfg
-deploy/conf/00-branch.conf
-payload.json
-result_payload.json
+*.egg
+local/
+
+# virtualenv
+.venv
+
+# mypy
+.mypy_cache/
+
+# PyCharm generated files
+*.idea
+*/bin/
+*/lib64
+*/pip-selfcheck.json
+*/pyvenv.cfg
+
+#vim
+*.swp
+
+# git generate files
+*.orig
+
+# visual studio code config
+.vscode
