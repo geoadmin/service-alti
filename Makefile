@@ -31,7 +31,7 @@ build/python:
 	@echo "Using system" $(shell $(SYSTEM_PYTHON_CMD) --version 2>&1)
 	@echo $(shell $(SYSTEM_PYTHON_CMD) -c "print('OK')")
 	mkdir -p build
-	ln $(SYSTEM_PYTHON_CMD) build/python
+	ln -s $(SYSTEM_PYTHON_CMD) build/python
 else
 build/python: $(PYTHON_LOCAL_DIR)/bin/python3.7
 	@echo "Using local" $(shell $(SYSTEM_PYTHON_CMD) --version 2>&1)
