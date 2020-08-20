@@ -5,10 +5,10 @@ from mock import patch, Mock
 
 from app.helpers.profile_helpers import get_profile, PROFILE_DEFAULT_AMOUNT_POINTS
 
-from tests.functional import VALUES_FOR_EACH_2M_STEP, FAKE_RESOLUTION, FAKE_GEOM_2_POINTS, \
+from tests.unit_tests import VALUES_FOR_EACH_2M_STEP, FAKE_RESOLUTION, FAKE_GEOM_2_POINTS, \
     FAKE_GEOM_3_POINTS, MIDDLE_POINT
 
-logger = logging.getLogger('app')
+logger = logging.getLogger(__name__)
 
 
 def fake_get_height_for_coordinate(_, y):

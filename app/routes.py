@@ -142,11 +142,5 @@ if app.debug:
 
     @app.route('/stats_data')
     def stats_data():
-        # pylint: disable=broad-except
-        try:
-            metadata = load_json("metadata.json")
-            return app.response_class(prepare_data(metadata), content_type='application/json')
-        except Exception as e:
-            message = 'Error while loading statistic data (Exception: %s)' % e
-            print(message)
-            return app.response_class(message, status=400)
+        metadata = load_json("metadata.json")
+        return app.response_class(prepare_data(metadata), content_type='application/json')

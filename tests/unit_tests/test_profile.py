@@ -10,13 +10,11 @@ with patch('os.path.exists') as mock_exists:
     import app as service_alti
 
 from tests import create_json
-from tests.functional import ENDPOINT_FOR_JSON_PROFILE, ENDPOINT_FOR_CSV_PROFILE,\
+from tests.unit_tests import ENDPOINT_FOR_JSON_PROFILE, ENDPOINT_FOR_CSV_PROFILE,\
     LINESTRING_VALID_LV03, POINT_1_LV03, POINT_2_LV03, POINT_3_LV03, LINESTRING_WRONG_SHAPE,\
     LINESTRING_SMALL_LINE_LV03, LINESTRING_MISSPELLED_SHAPE, LINESTRING_VALID_LV95,\
-    LINESTRING_SMALL_LINE_LV95, prepare_mock
+    LINESTRING_SMALL_LINE_LV95, DEFAULT_HEADERS, prepare_mock
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
-
-DEFAULT_HEADERS = {'X-SearchServer-Authorized': 'true'}
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +33,9 @@ class TestProfile(unittest.TestCase):
             response.status_code, expected_status, msg="%s" % response.get_data(as_text=True)
         )
 
-    def prepare_mock_and_test_post(self, mock_georaster_utils, body, headers, expected_status):
+    def prepare_mock_and_test_post(self, mock_georaster_utils, body, expected_status):
         prepare_mock(mock_georaster_utils)
-        response = self.post_with_body(body, headers)
+        response = self.post_with_body(body)
         self.__check_response(response, expected_status)
         return response
 
@@ -47,13 +45,11 @@ class TestProfile(unittest.TestCase):
         self.__check_response(response, expected_status)
         return response
 
-    def get_json_profile(self, params, headers=None, expected_status=200):
+    def get_json_profile(self, params, expected_status=200):
         # pylint: disable=broad-except
-        if headers is None:
-            headers = self.headers
         try:
             response = self.test_instance.get(
-                ENDPOINT_FOR_JSON_PROFILE, query_string=params, headers=headers
+                ENDPOINT_FOR_JSON_PROFILE, query_string=params, headers=self.headers
             )
             self.__check_response(response, expected_status)
             return response
@@ -61,13 +57,13 @@ class TestProfile(unittest.TestCase):
             logger.exception(e)
             self.fail('Call to test_instance failed')
 
-    def get_csv_with_params(self, params, headers=None):
+    def get_csv_with_params(self, params):
         return self.test_instance.get(
-            ENDPOINT_FOR_CSV_PROFILE, query_string=params, headers=headers
+            ENDPOINT_FOR_CSV_PROFILE, query_string=params, headers=self.headers
         )
 
-    def post_with_body(self, body, headers):
-        return self.test_instance.post(ENDPOINT_FOR_JSON_PROFILE, data=body, headers=headers)
+    def post_with_body(self, body):
+        return self.test_instance.post(ENDPOINT_FOR_JSON_PROFILE, data=body, headers=self.headers)
 
     def prepare_mock_and_test_json_profile(self, mock_georaster_utils, params, expected_status):
         prepare_mock(mock_georaster_utils)
@@ -88,6 +84,17 @@ class TestProfile(unittest.TestCase):
         self.assertTrue(
             content in response.get_data(as_text=True),
             msg="Response doesn't contain '%s' : '%s'" % (content, response.get_data(as_text=True))
+        )
+
+    @patch('app.routes.georaster_utils')
+    def test_do_not_fail_when_no_origin(self, mock_georaster_utils):
+        self.headers = {}
+        self.prepare_mock_and_test_json_profile(
+            mock_georaster_utils=mock_georaster_utils,
+            params={
+                'sr': 2056, 'geom': create_json(4, 2056)
+            },
+            expected_status=200
         )
 
     @patch('app.routes.georaster_utils')
@@ -144,10 +151,7 @@ class TestProfile(unittest.TestCase):
         params = create_json(4, 21781)
         self.headers['Content-Type'] = 'application/json'
         resp = self.prepare_mock_and_test_post(
-            mock_georaster_utils=mock_georaster_utils,
-            body=json.dumps(params),
-            headers=self.headers,
-            expected_status=200
+            mock_georaster_utils=mock_georaster_utils, body=json.dumps(params), expected_status=200
         )
         self.assertEqual(resp.content_type, 'application/json')
 
@@ -366,10 +370,7 @@ class TestProfile(unittest.TestCase):
         params = create_json(7000)
         self.headers['Content-Type'] = 'application/json'
         resp = self.prepare_mock_and_test_post(
-            mock_georaster_utils=mock_georaster_utils,
-            body=json.dumps(params),
-            headers=self.headers,
-            expected_status=413
+            mock_georaster_utils=mock_georaster_utils, body=json.dumps(params), expected_status=413
         )
         self.assert_response_contains(resp, 'Geometry contains too many points')
 
@@ -403,15 +404,8 @@ class TestProfile(unittest.TestCase):
                                                                  [2632633.5, 1171204.0], \
                                                                  [2632622.1, 1171025.3], \
                                                                  [2632820.8, 1170741.8]
-        multipoint_geom = '{\"type\":\"LineString\",\"coordinates\":[' \
-                          + str(point1) + ',' \
-                          + str(point2) + ',' \
-                          + str(point3) + ',' \
-                          + str(point4) + ',' \
-                          + str(point5) + ',' \
-                          + str(point6) + ',' \
-                          + str(point7) \
-                          + ']}'
+        multipoint_geom = f'{{"type":"LineString","coordinates":[{point1},{point2},{point3},' \
+                          f'{point4},{point5},{point6},{point7}]}}'
         resp = self.prepare_mock_and_test_json_profile(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': multipoint_geom},

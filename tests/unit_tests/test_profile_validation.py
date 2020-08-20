@@ -10,9 +10,9 @@ with patch('os.path.exists') as mock_exists:
 
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS, PROFILE_MAX_AMOUNT_POINTS
 from tests import create_json
-from tests.functional import prepare_mock
+from tests.unit_tests import prepare_mock, DEFAULT_HEADERS
 
-logger = logging.getLogger('app')
+logger = logging.getLogger(__name__)
 
 INVALID_LINESTRING_NOT_GEOJSON = "hello world"
 VALID_SPATIAL_REFERENCES = [21781, 2056]
@@ -27,6 +27,7 @@ class TestProfileValidation(unittest.TestCase):
     def setUp(self) -> None:
         service_alti.app.config['TESTING'] = True
         self.test_instance = service_alti.app.test_client()
+        self.headers = DEFAULT_HEADERS
 
     def assert_response(self, response, expected_status=200):
         self.assertIsNotNone(response)
@@ -43,7 +44,8 @@ class TestProfileValidation(unittest.TestCase):
                 'sr': spatial_reference,
                 'nb_points': nb_points,
                 'offset': offset
-            }
+            },
+            headers=self.headers
         )
 
     @patch('app.routes.georaster_utils')

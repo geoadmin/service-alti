@@ -6,6 +6,8 @@ CURRENT_DIR := $(shell pwd)
 INSTALL_DIR := $(CURRENT_DIR)/.venv
 PYTHON_LOCAL_DIR := $(CURRENT_DIR)/build/local
 PYTHON_FILES := $(shell find ./* -type f -name "*.py" -print)
+TEST_REPORT_DIR := $(CURRENT_DIR)/tests/report
+TEST_REPORT_FILE := nose2-junit.xml
 
 #FIXME: put this variable in config file
 PYTHON_VERSION := 3.7.4
@@ -49,7 +51,9 @@ help:
 	@echo -e " \033[1mBUILD TARGETS\033[0m "
 	@echo "- setup              Create the python virtual environment"
 	@echo -e " \033[1mLINTING TOOLS TARGETS\033[0m "
-	@echo "- lint               Lint and format the python source code"
+	@echo "- lint               Lint the python source code"
+	@echo "- format             Format the python source code"
+	@echo "- lint-format        Format and then lint the python source code"
 	@echo "- test               Run the tests"
 	@echo -e " \033[1mLOCAL SERVER TARGETS\033[0m "
 	@echo "- serve              Run the project using the flask debug server. Port can be set by Env variable HTTP_PORT (default: 5000)"
@@ -85,14 +89,21 @@ $(PYTHON_LOCAL_DIR)/bin/python3.7:
 
 # linting target, calls upon yapf to make sure your code is easier to read and respects some conventions.
 
+.PHONY: format
+format: .venv/build.timestamp
+	$(YAPF_CMD) -p -i --style .style.yapf $(PYTHON_FILES)
+
 .PHONY: lint
 lint: .venv/build.timestamp
-	$(YAPF_CMD) -p -i --style .style.yapf $(PYTHON_FILES)
 	$(PYLINT_CMD) -rn $(PYTHON_FILES)
+
+.PHONY: lint-format
+lint-format: lint format
 
 .PHONY: test
 test: .venv/build.timestamp
-	$(NOSE_CMD) -s tests/functional/
+	mkdir -p $(TEST_REPORT_DIR)
+	$(NOSE_CMD) -c tests/unittest.cfg --plugin nose2.plugins.junitxml --junit-xml --junit-xml-path $(TEST_REPORT_DIR)/$(TEST_REPORT_FILE) -s tests/
 
 # Serve targets. Using these will run the application on your local machine. You can either serve with a wsgi front (like it would be within the container), or without.
 .PHONY: serve

@@ -16,14 +16,13 @@ VALUES_FOR_EACH_2M_STEP = [
 
 ENDPOINT_FOR_JSON_PROFILE = '/rest/services/profile.json'
 ENDPOINT_FOR_CSV_PROFILE = '/rest/services/profile.csv'
+DEFAULT_HEADERS = {'Origin': 'https://map.geo.admin.ch'}
 
 POINT_1_LV03 = [630000, 170000]
 POINT_2_LV03 = [634000, 173000]
 POINT_3_LV03 = [631000, 173000]
-LINESTRING_VALID_LV03 = '{\"type\":\"LineString\",\"coordinates\":[' \
-                        + str(POINT_1_LV03) + ',' \
-                        + str(POINT_2_LV03) + ',' \
-                        + str(POINT_3_LV03) + ']}'
+LINESTRING_VALID_LV03 = f'{{"type":"LineString","coordinates":[{POINT_1_LV03},{POINT_2_LV03},' \
+                        f'{POINT_3_LV03}]}}'
 
 LINESTRING_VALID_LV95 = '{"type":"LineString","coordinates":[[2629499.8,1170351.9],' \
                         '[2635488.4,1173402.0]]}'

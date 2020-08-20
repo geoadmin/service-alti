@@ -6,25 +6,25 @@ from app.helpers.helpers import float_raise_nan
 
 def validate_lon_lat(lon, lat):
     if lon is None:
-        raise abort(400, "Missing parameter 'easting'/'lon'")
+        abort(400, "Missing parameter 'easting'/'lon'")
     try:
         lon = float_raise_nan(lon)
     except ValueError:
-        raise abort(400, "Please provide numerical values for the parameter 'easting'/'lon'")
+        abort(400, "Please provide numerical values for the parameter 'easting'/'lon'")
 
     if lat is None:
-        raise abort(400, "Missing parameter 'northing'/'lat'")
+        abort(400, "Missing parameter 'northing'/'lat'")
     try:
         lat = float_raise_nan(lat)
     except ValueError:
-        raise abort(400, "Please provide numerical values for the parameter 'northing'/'lat'")
+        abort(400, "Please provide numerical values for the parameter 'northing'/'lat'")
 
     return lon, lat
 
 
 def validate_sr(sr):
     if sr not in (21781, 2056):
-        raise abort(
+        abort(
             400,
             "Please provide a valid number for the spatial reference system model 21781 or 2056"
         )

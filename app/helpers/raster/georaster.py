@@ -11,8 +11,6 @@ RESOLUTION = 2
 
 
 class GeoRasterUtils(object):
-    # pylint: disable=logging-format-interpolation
-    # pylint: disable=broad-except
 
     def __init__(self):
         self.shp_utils = SHPUtils()
@@ -42,6 +40,7 @@ class GeoRasterUtils(object):
                 self.get_raster(sr)
                 log.info('Preloading raster for spatial reference: %s', sr)
 
+        # pylint: disable=broad-except
         except Exception as e:
             log.error(
                 'Could not initialize raster files. Make sure they exist in the following '

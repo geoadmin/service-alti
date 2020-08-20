@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 def read_linestring(request_object):
     # param geom, list of coordinates defining the line on which we want a profile
     linestring = None
+    geom = None
+    geom_to_shape = None
     if 'geom' in request_object.args:
         linestring = request_object.args.get('geom')
     elif request_object.is_json and len(request_object.get_data(as_text=True)) > 0:
@@ -23,25 +25,27 @@ def read_linestring(request_object):
         abort(400, "No 'geom' given, cannot create a profile without coordinates")
     try:
         geom = geojson.loads(linestring, object_hook=geojson.GeoJSON.to_instance)
-    except ValueError:
-        raise abort(400, "Error loading geometry in JSON string")
+    except ValueError as e:
+        logger.exception(e)
+        abort(400, "Error loading geometry in JSON string")
     try:
         geom_to_shape = shape(geom)
+    # pylint: disable=broad-except
     except Exception as e:
         logger.exception(e)
-        raise abort(400, "Error converting JSON to Shape")
+        abort(400, "Error converting JSON to Shape")
     try:
         geom_to_shape.is_valid
+    # pylint: disable=broad-except
     except Exception:
-        raise abort(400, "Invalid Linestring syntax")
+        abort(400, "Invalid Linestring syntax")
     if len(geom_to_shape.coords) > PROFILE_MAX_AMOUNT_POINTS:
-        raise abort(
+        abort(
             413,
             "Request Geometry contains too many points. Maximum number of points allowed: {}, "
             "found {}".format(PROFILE_MAX_AMOUNT_POINTS, len(geom_to_shape.coords))
         )
-    linestring = geom_to_shape
-    return linestring
+    return geom_to_shape
 
 
 def read_number_points(request_object):
@@ -54,7 +58,7 @@ def read_number_points(request_object):
         nb_points = PROFILE_DEFAULT_AMOUNT_POINTS
 
     if (isinstance(nb_points, int) or nb_points.isdigit()) and int(nb_points) <= 1:
-        raise abort(
+        abort(
             400,
             "Please provide a numerical value for the parameter 'NbPoints'/'nb_points' greater "
             "or equal to 2"
@@ -63,7 +67,7 @@ def read_number_points(request_object):
         nb_points.isdigit()) and int(nb_points) <= PROFILE_MAX_AMOUNT_POINTS:
         nb_points = int(nb_points)
     else:
-        raise abort(
+        abort(
             400,
             "Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
             " smaller than {}".format(PROFILE_MAX_AMOUNT_POINTS)
@@ -92,7 +96,7 @@ def read_spatial_reference(request_object, linestring):
         spatial_reference = sr
 
     if spatial_reference not in (21781, 2056):
-        raise abort(
+        abort(
             400,
             "Please provide a valid number for the spatial reference system model 21781 or 2056"
         )
@@ -108,5 +112,5 @@ def read_offset(request_object):
         if offset.isdigit():
             offset = int(offset)
         else:
-            raise abort(400, "Please provide a numerical value for the parameter 'offset'")
+            abort(400, "Please provide a numerical value for the parameter 'offset'")
     return offset

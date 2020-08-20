@@ -6,41 +6,37 @@ with patch('os.path.exists') as mock_exists:
     mock_exists.return_value = True
     import app as service_alti
 
+from tests.unit_tests import DEFAULT_HEADERS
+
 EAST_LV03, NORTH_LV03 = 632510.0, 170755.0
 # LV95
 EAST_LV95, NORTH_LV95 = 2632510.0, 1170755.0
 # Expected results
 HEIGHT_DTM2, HEIGHT_DTM25 = 568.2, 567.6
 
-DEFAULT_HEADERS = {'X-SearchServer-Authorized': 'true'}
-
 
 class TestHeight(unittest.TestCase):
+    # pylint: disable=too-many-public-methods
 
     def setUp(self) -> None:
         service_alti.app.config['TESTING'] = True
         self.test_instance = service_alti.app.test_client()
         self.headers = DEFAULT_HEADERS
 
-    def __test_get(self, params, headers):
-        return self.test_instance.get('/rest/services/height', query_string=params, headers=headers)
+    def __test_get(self, params):
+        return self.test_instance.get(
+            '/rest/services/height', query_string=params, headers=self.headers
+        )
 
     def __prepare_mock_and_test_get(
-        self,
-        params,
-        mock_georaster_utils=None,
-        headers=None,
-        expected_status=200,
-        return_value=HEIGHT_DTM2
+        self, params, mock_georaster_utils=None, expected_status=200, return_value=HEIGHT_DTM2
     ):
-        if not headers:
-            headers = DEFAULT_HEADERS
         if not mock_georaster_utils:
             mock_georaster_utils = Mock()
         raster_mock = Mock()
         raster_mock.get_height_for_coordinate.return_value = return_value
         mock_georaster_utils.get_raster.return_value = raster_mock
-        response = self.__test_get(params, headers)
+        response = self.__test_get(params)
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, expected_status, msg=response.data)
         return response
@@ -48,6 +44,19 @@ class TestHeight(unittest.TestCase):
     def __assert_height(self, response, expected_height):
         self.assertEqual(response.content_type, 'application/json')
         self.assertEqual(response.json['height'], str(expected_height))
+
+    @patch('app.routes.georaster_utils')
+    def test_do_not_fail_when_no_origin(self, mock_georaster_utils):
+        self.headers = {}
+        self.__assert_height(
+            response=self.__prepare_mock_and_test_get(
+                mock_georaster_utils=mock_georaster_utils,
+                params={
+                    'easting': EAST_LV95, 'northing': NORTH_LV95
+                }
+            ),
+            expected_height=HEIGHT_DTM2
+        )
 
     @patch('app.routes.georaster_utils')
     def test_height_no_sr_assuming_lv03(self, mock_georaster_utils):
