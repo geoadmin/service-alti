@@ -98,7 +98,7 @@ lint: .venv/build.timestamp
 	$(PYLINT_CMD) -rn $(PYTHON_FILES)
 
 .PHONY: lint-format
-lint-format: lint format
+lint-format: format lint
 
 .PHONY: test
 test: .venv/build.timestamp
