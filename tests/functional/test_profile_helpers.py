@@ -47,7 +47,7 @@ class TestProfileHelpers(unittest.TestCase):
         self.assertIsNotNone(response)
         return response
 
-    @patch('app.helpers.raster.georaster.GeoRasterUtils')
+    @patch('app.routes.georaster_utils')
     def test_no_smart_filling(self, mock_georaster_utils):
         response = self.__prepare_mock_and_test(mock_georaster_utils, smart_filling=False)
         self.assertEqual(
@@ -73,7 +73,7 @@ class TestProfileHelpers(unittest.TestCase):
                 )
             )
 
-    @patch('app.helpers.raster.georaster.GeoRasterUtils')
+    @patch('app.routes.georaster_utils')
     def test_with_smart_filling(self, mock_georaster_utils):
         response = self.__prepare_mock_and_test(mock_georaster_utils, smart_filling=True)
         self.assertEqual(
@@ -97,7 +97,7 @@ class TestProfileHelpers(unittest.TestCase):
                 )
             )
 
-    @patch('app.helpers.raster.georaster.GeoRasterUtils')
+    @patch('app.routes.georaster_utils')
     def test_smart_filling_must_keep_points_from_geom(self, mock_georaster_utils):
         response = self.__prepare_mock_and_test(
             mock_georaster_utils, smart_filling=True, keep_points=True, geom=FAKE_GEOM_3_POINTS
@@ -114,7 +114,7 @@ class TestProfileHelpers(unittest.TestCase):
         self.assertEqual(extra_point['easting'], MIDDLE_POINT[0])
         self.assertEqual(extra_point['northing'], MIDDLE_POINT[1])
 
-    @patch('app.helpers.raster.georaster.GeoRasterUtils')
+    @patch('app.routes.georaster_utils')
     def test_coordinates_out_of_bound(self, mock_georaster_utils):
         # pylint: disable=broad-except
         # when there's no tile for coordinates (because out of bounds) None is returned for the tile
@@ -139,7 +139,7 @@ class TestProfileHelpers(unittest.TestCase):
                 "Should return an empty profile without failing with coordinates out of bounds"
             )
 
-    @patch('app.helpers.raster.georaster.GeoRasterUtils')
+    @patch('app.routes.georaster_utils')
     def test_keep_point_without_smart_fill(self, mock_georaster_utils):
         response = self.__prepare_mock_and_test(
             mock_georaster_utils, smart_filling=False, keep_points=True, geom=FAKE_GEOM_3_POINTS

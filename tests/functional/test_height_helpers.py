@@ -32,12 +32,12 @@ class TestHeightHelpers(unittest.TestCase):
         self.assertIsNotNone(response)
         return response
 
-    @patch('app.helpers.raster.georaster.GeoRasterUtils')
+    @patch('app.routes.georaster_utils')
     def test_simple_request(self, mock_get_raster):
         response = self.__prepare_mock_and_test(mock_get_raster)
         self.assertEqual(response, FAKE_VALUE)
 
-    @patch('app.helpers.raster.georaster.GeoRasterUtils')
+    @patch('app.routes.georaster_utils')
     def test_rounding(self, mock_get_raster):
         response = self.__prepare_mock_and_test(mock_get_raster, return_value=1.23456789)
         self.assertEqual(response, 1.2)

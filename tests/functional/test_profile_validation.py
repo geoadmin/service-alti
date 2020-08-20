@@ -4,7 +4,10 @@ import unittest
 
 from mock import patch
 
-import app as service_alti
+with patch('os.path.exists') as mock_exists:
+    mock_exists.return_value = True
+    import app as service_alti
+
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS, PROFILE_MAX_AMOUNT_POINTS
 from tests import create_json
 from tests.functional import prepare_mock

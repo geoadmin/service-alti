@@ -2,8 +2,6 @@ import re
 import os
 import logging
 
-from werkzeug.exceptions import HTTPException
-
 from flask import Flask, abort, request
 
 from app.helpers import make_error_msg
@@ -13,17 +11,20 @@ from app.middleware import ReverseProxy
 
 DEFAULT_DTM_BASE_PATH = '/var/local/profile/'
 
+logging.basicConfig()
 logger = logging.getLogger(__name__)
 
 # Standard Flask application initialisation
 app = Flask(__name__)
 app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
-# app.logger.addHandler(logger)
 
 # init raster files for height/profile and preload COMB file
 dtm_base_path = os.environ.get('DTM_BASE_PATH', DEFAULT_DTM_BASE_PATH)
 if not os.path.exists(dtm_base_path):
-    raise FileNotFoundError("DTM base path points to a none existing folder (%s)" % dtm_base_path)
+    error_message = "DTM base path points to a none existing folder (%s)" % dtm_base_path
+    logger.error(error_message)
+    raise FileNotFoundError(error_message)
+
 georaster_utils = GeoRasterUtils()
 
 

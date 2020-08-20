@@ -2,7 +2,9 @@
 import unittest
 from mock import patch, Mock
 
-import app as service_alti
+with patch('os.path.exists') as mock_exists:
+    mock_exists.return_value = True
+    import app as service_alti
 
 EAST_LV03, NORTH_LV03 = 632510.0, 170755.0
 # LV95

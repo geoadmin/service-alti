@@ -5,7 +5,9 @@ import logging
 
 from mock import patch
 
-import app as service_alti
+with patch('os.path.exists') as mock_exists:
+    mock_exists.return_value = True
+    import app as service_alti
 
 from tests import create_json
 from tests.functional import ENDPOINT_FOR_JSON_PROFILE, ENDPOINT_FOR_CSV_PROFILE,\
