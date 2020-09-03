@@ -30,6 +30,10 @@ wheels/
 *.egg
 local/
 
+# makefile
+.local
+.timestamps
+
 # virtualenv
 .venv
 
