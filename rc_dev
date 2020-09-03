@@ -1,9 +1,0 @@
-export APACHE_BASE_PATH=main
-export API_URL=//mf-chsdi3.dev.bgdi.ch
-export DEPLOY_TARGET=dev
-export KEEP_VERSION=false
-export MODWSGI_CONFIG=production.ini
-export SERVER_PORT=6543
-export WSGI_THREADS=15
-export WSGI_PROCESSES=1
-export DTM_BASE_PATH=/var/local/profile/

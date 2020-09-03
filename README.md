@@ -1,126 +1,86 @@
-service-alti
-============
+# service-alti
 
+| Branch | Status |
+|--------|-----------|
+| develop | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUzFGKzRsYzJaVzdQVTd5VHR0Sng3VEo5dk9uMDYwNUZWcmtMV0pQaGdEcCtJZStxN0YyU3E2ZERxVThLK0lXczNEVG51c0RGSm9pU0NiNHA2L0lGZDdVPSIsIml2UGFyYW1ldGVyU3BlYyI6IjJ6cnVFeVo3V3RPMnJXZlMiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop) |
+| master | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUzFGKzRsYzJaVzdQVTd5VHR0Sng3VEo5dk9uMDYwNUZWcmtMV0pQaGdEcCtJZStxN0YyU3E2ZERxVThLK0lXczNEVG51c0RGSm9pU0NiNHA2L0lGZDdVPSIsIml2UGFyYW1ldGVyU3BlYyI6IjJ6cnVFeVo3V3RPMnJXZlMiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
 
-Height and profile services for [http://api3.geo.admin.ch](http://api3.geo.admin.ch)
+## Summary of the project
 
-# Getting started
+Height and profile services for http://api3.geo.admin.ch
 
-Checkout the source code:
+## How to run locally
 
-    git clone https://github.com/geoadmin/service-alti.git
+### Dependencies
 
-or when you're using ssh key (see https://help.github.com/articles/generating-ssh-keys):
+The **Make** targets assume you have **bash**, **curl**, **tar**, **docker** and **docker-compose** installed.
+
+### Setting up to work
+
+First, you'll need to clone the repo
 
     git clone git@github.com:geoadmin/service-alti.git
 
+Then, you can run the setup target to ensure you have everything needed to develop, test and serve locally
 
-## Deploying to dev, int, prod and demo
+    make setup
 
+That's it, you're ready to work.
 
-Do the following commands **inside your working directory**. Here's how a standard
-deploy process is done.
+### Linting and formatting your work
 
-`make deploydev SNAPSHOT=true`
+In order to have a consistent code style the code should be formatted using `yapf`. Also to avoid syntax errors and non
+pythonic idioms code, the project uses the `pylint` linter. Both formatting and linter can be manually run using the
+following command:
 
-This updates the source in /var/www... to the latest master branch from github,
-creates a snapshot and runs nosetests against the test db. The snapshot directory
-will be shown when the script is done. *Note*: you can omit the `-s` parameter if
-you don't want to create a snapshot e.g. for intermediate releases on dev main.
+    make lint-format
 
-Once a snapshot has been created, you are able to deploy this snapshot to a
-desired target. For integration, do
+**Formatting and linting should be at best integrated inside the IDE, for this look at
+[Integrate yapf and pylint into IDE](https://github.com/geoadmin/doc-guidelines/blob/master/PYTHON.md#yapf-and-pylint-ide-integration)**
 
-`make deployint SNAPSHOT=201512011411`
+### Test your work
 
-This will run the full nose tests **from inside the 201512011411 snapshot directory** against the **integration db cluster**. Only if these tests are successfull, the snapshot is deployed to the integration cluster.
+Testing if what you developed work is made simple. You have four targets at your disposal. **test, serve, gunicornserve, dockerrun**
 
-`make deployprod SNAPSHOT=201512011411`
+    make test
 
-This will do the corresponding thing for prod (tests will be run **against prod backends**)
-The same is valid for demo too:
+This command run the integration and unit tests.
 
-`make deploydemo SNAPSHOT=201512011411`
+    make serve
 
-You can disable the running of the nosetests against the target backends by adding
-`notests` parameter to the snapshot command. This is handy in an emergency (when
-deploying an old known-to-work snapshot) or when you have to re-deploy
-a snapshot that you know has passed the tests for the given backend.
-To disable the tests, use the following command:
+This will serve the application through Flask without any wsgi in front.
 
-`make deployint SNAPSHOT=201512011411 NO_TESTS=notests`
+    make gunicornserve
 
-Use `notests` parameter with care, as it removes a level of tests.
+This will serve the application with the Gunicorn layer in front of the application
 
-Per default the deploy command uses the deploy configuration of the snapshot directory.
-If you want to use the deploy configuration of directory from which you are executing this command, you can use:
+    make dockerrun
 
-`make deployint SNAPSHOT=201512011411 DEPLOYCONFIG=from_current_directory`
+This will serve the application with the wsgi server, inside a container.
+To stop serving through containers,
 
-## Deploying a branch
+    make shutdown
 
-Call the `make deploybranch` command **in your working directory** to deploy your current
-branch to test (Use `make deploybranchint` to also deploy it to integration).
-The code for deployment, however, does not come from your working directory,
-but does get cloned (first time) or pulled (if done once) **directly from github**.
-So you'll likely use this command **after** you push your branch to github.
+Is the command you're looking for.
 
-The first time you use the command will take some time to execute.
+## Endpoints
 
-The code of the deployed branch is in a specific directory
-`/var/www/vhosts/service-alti/private/branch` on both test and integration.
-The command adds a branch specific configuration to
-`/var/www/vhosts/service-alti/conf`. This way, the deployed branch
-behaves exactly the same as any user specific deploy.
-A deploy to a "demo" instance is possible too (simply use ./deploybranch.sh demo).
+### /checker GET
 
-Sample path:
-http://service-alti.int.bgdi.ch/gjn_deploybranch/ (Don't forget the slash at the end)
+this is a simple route meant to test if the server is up.
 
-## Deleting a branch
+### `/rest/services/height` GET
 
-To list all the deployed branch:
-`make deletebranch`
+http://api3.geo.admin.ch/services/sdiservices.html#height
 
-To delete a given branch:
-`make deletebranch BRANCH_TO_DELETE=my_deployed_branch`
+### `/rest/services/profile.json` and `/rest/services/profile.csv` GET/POST
 
-## Run nosetests manual on different environments
-We are able to run our integration tests against different staging environments
+http://api3.geo.admin.ch/services/sdiservices.html#profile
 
-To run against prod environment:
-`scripts/nose_run.sh -p`
+## Deploying the project and continuous integration
 
-To run against int environment:
-`scripts/nose_run.sh -i`
+When creating a PR, it should run a codebuild job to test, build and push automatically your PR as a tagged container.
 
-To run against dev/test environment:
-`scripts/nose_run.sh`
+This service is to be deployed to the Kubernetes cluster once it is merged.
 
-To run against your private environment:
-`make test`
-
-
-## Python Code Styling
-
-We are currently using the FLAKES 8 convention for Python code.
-You can find more information about our code styling here:
-
-    http://www.python.org/dev/peps/pep-0008/
-    http://pep8.readthedocs.org/en/latest/index.html
-
-You can find additional information about autopep8 here:
-
-    https://pypi.python.org/pypi/autopep8/
-
-To check the code styling:
-
-  ```bash
-make lint
-  ```
-
-To autocorrect most linting mistakes
-
-  ```bash
-make autolint
-  ```
+TO DO: give instructions to deploy to kubernetes.
