@@ -118,7 +118,7 @@ gunicornserve: .venv/build.timestamp
 
 .PHONY: dockerrun
 dockerrun:
-	docker-compose up -d;
+	DTM_BASE_PATH=${DTM_BASE_PATH} HTTP_PORT=${HTTP_PORT} docker-compose up -d;
 	sleep 10
 
 .PHONY: shutdown
