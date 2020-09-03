@@ -123,7 +123,7 @@ dockerrun:
 
 .PHONY: shutdown
 shutdown:
-	docker-compose down
+	HTTP_PORT=${HTTP_PORT} docker-compose down
 
 # Cleaning functions. clean_venv will only remove the virtual environment, while clean will also remove the local python installation.
 

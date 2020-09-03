@@ -40,10 +40,10 @@ phases:
     commands:
       - echo Build started on $(date)
       - export DOCKER_IMG_TAG_BASE=${IMAGE_BASE_NAME}:${GITHUB_BRANCH}
-      - export DOCKER_IMG_TAG_BRANCH=${DOCKER_IMG_TAG_BASE}.${COMMIT_HASH}
+      - export DOCKER_IMG_TAG_HASH_COMMIT=${DOCKER_IMG_TAG_BASE}.${COMMIT_HASH}
       - export DOCKER_IMG_TAG_LATEST=${DOCKER_IMG_TAG_BASE}.latest
-      - echo "Building docker image with tags ${DOCKER_IMG_TAG_BRANCH} and ${DOCKER_IMG_TAG_LATEST}"
-      - docker build -t ${DOCKER_IMG_TAG_BRANCH} -t ${DOCKER_IMG_TAG_LATEST} .
+      - echo "Building docker image with tags ${DOCKER_IMG_TAG_HASH_COMMIT} and ${DOCKER_IMG_TAG_LATEST}"
+      - docker build -t ${DOCKER_IMG_TAG_HASH_COMMIT} -t ${DOCKER_IMG_TAG_LATEST} .
 
   post_build:
     commands:
@@ -58,7 +58,8 @@ phases:
       # if we push swisstopo/service-alti:develop the two tags will be pushed together)
       - |
         if [ "${GITHUB_BRANCH}" = "master" -o "${GITHUB_BRANCH}" = "develop" ]; then
-          docker push ${DOCKER_IMG_TAG_BASE}
+          docker push ${DOCKER_IMG_TAG_HASH_COMMIT}
+          docker push ${DOCKER_IMG_TAG_LATEST}
         fi
       - echo Build completed on $(date)
 
