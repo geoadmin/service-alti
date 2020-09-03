@@ -33,16 +33,17 @@ phases:
           export GITHUB_BRANCH=${GITHUB_BRANCH#remotes/origin/};
         fi
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - export IMAGE_TAG="${GITHUB_BRANCH}.${COMMIT_HASH}"
-      - echo "GITHUB_BRANCH=${GITHUB_BRANCH} COMMIT_HASH=${COMMIT_HASH} IMAGE_TAG=${IMAGE_TAG}"
+      - echo "GITHUB_BRANCH=${GITHUB_BRANCH} COMMIT_HASH=${COMMIT_HASH}"
       - make clean setup
 
   build:
     commands:
       - echo Build started on $(date)
-      - export DOCKER_IMG_TAG=${IMAGE_BASE_NAME}:${IMAGE_TAG}
-      - echo "Building docker image with tag ${DOCKER_IMG_TAG}"
-      - docker build -t ${DOCKER_IMG_TAG} .
+      - export DOCKER_IMG_TAG_BASE=${IMAGE_BASE_NAME}:${GITHUB_BRANCH}
+      - export DOCKER_IMG_TAG_BRANCH=${DOCKER_IMG_TAG_BASE}.${COMMIT_HASH}
+      - export DOCKER_IMG_TAG_LATEST=${DOCKER_IMG_TAG_BASE}.latest
+      - echo "Building docker image with tags ${DOCKER_IMG_TAG_BRANCH} and ${DOCKER_IMG_TAG_LATEST}"
+      - docker build -t ${DOCKER_IMG_TAG_BRANCH} -t ${DOCKER_IMG_TAG_LATEST} .
 
   post_build:
     commands:
@@ -51,10 +52,13 @@ phases:
       - export TEST_REPORT_DIR=${TEST_REPORT_DIR}
       - export TEST_REPORT_FILE=${TEST_REPORT_FILE}
       - make test
-      # Only push image to dockerhub for merge to develop and master
+      # Only push image to dockerhub for merges on develop and master
+      # by not specifying one of the two tagging above but the common part the two tags will be
+      # pushed together (e.g. swisstopo/service-alti:develop.1234567 and swisstopo/service-alti:develop.latest
+      # if we push swisstopo/service-alti:develop the two tags will be pushed together)
       - |
         if [ "${GITHUB_BRANCH}" = "master" -o "${GITHUB_BRANCH}" = "develop" ]; then
-          docker push ${DOCKER_IMG_TAG}
+          docker push ${DOCKER_IMG_TAG_BASE}
         fi
       - echo Build completed on $(date)
 
