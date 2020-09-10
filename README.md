@@ -33,7 +33,7 @@ In order to have a consistent code style the code should be formatted using `yap
 pythonic idioms code, the project uses the `pylint` linter. Both formatting and linter can be manually run using the
 following command:
 
-    make lint-format
+    make format-lint
 
 **Formatting and linting should be at best integrated inside the IDE, for this look at
 [Integrate yapf and pylint into IDE](https://github.com/geoadmin/doc-guidelines/blob/master/PYTHON.md#yapf-and-pylint-ide-integration)**
@@ -84,3 +84,11 @@ When creating a PR, it should run a codebuild job to test, build and push automa
 This service is to be deployed to the Kubernetes cluster once it is merged.
 
 TO DO: give instructions to deploy to kubernetes.
+
+### Deployment configuration
+
+The service is configured by Environment Variable:
+
+| Env         | Default               | Description                            |
+|-------------|-----------------------|----------------------------------------|
+| LOGGING_CFG | logging-cfg-local.yml | Logging configuration file             |
