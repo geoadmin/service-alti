@@ -1,6 +1,9 @@
 import os
+
 from gunicorn.app.base import BaseApplication
+
 from app import app as application
+from app.helpers import init_logging
 
 
 class StandaloneApplication(BaseApplication):  # pylint: disable=abstract-method
@@ -19,6 +22,9 @@ class StandaloneApplication(BaseApplication):  # pylint: disable=abstract-method
             self.cfg.set(key.lower(), value)
 
     def load(self):
+        # we need here to do the init logging here in order to apply the configuration for flask
+        # gunicorn
+        init_logging()
         return self.application
 
 
@@ -30,8 +36,6 @@ if __name__ == '__main__':
         'bind': '%s:%s' % ('0.0.0.0', HTTP_PORT),
         'worker_class': 'gevent',
         'workers': 2,  # scaling horizontaly is left to Kubernetes
-        'timeout': 60,
-        'accesslog': '-',  # stdout
-        'errorlog': '-'  # stderr
+        'timeout': 60
     }
     StandaloneApplication(application, options).run()
