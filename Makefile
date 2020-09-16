@@ -38,7 +38,7 @@ SYSTEM_PYTHON := $(shell ./getPythonCmd.sh ${PYTHON_VERSION} ${PYTHON_LOCAL_DIR}
 
 # default configuration
 HTTP_PORT ?= 5000
-DTM_BASE_PATH ?= /var/local/profile/
+DTM_BASE_PATH ?= $(CURRENT_DIR)
 
 # Commands
 PYTHON := $(VENV)/bin/python3
@@ -109,7 +109,7 @@ format-lint: format lint
 .PHONY: test
 test: $(DEV_REQUIREMENTS_TIMESTAMP)
 	mkdir -p $(TEST_REPORT_DIR)
-	$(NOSE) -c tests/unittest.cfg --plugin nose2.plugins.junitxml --junit-xml --junit-xml-path $(TEST_REPORT_DIR)/$(TEST_REPORT_FILE) -s tests/
+	DTM_BASE_PATH=$(DTM_BASE_PATH) $(NOSE) -c tests/unittest.cfg --verbose --junit-xml-path $(TEST_REPORT_DIR)/$(TEST_REPORT_FILE) -s tests/
 
 
 # Serve targets. Using these will run the application on your local machine. You can either serve with a wsgi front (like it would be within the container), or without.
@@ -121,7 +121,7 @@ serve: $(REQUIREMENTS_TIMESTAMP)
 
 .PHONY: gunicornserve
 gunicornserve: $(REQUIREMENTS_TIMESTAMP)
-	$(PYTHON) wsgi.py
+	DTM_BASE_PATH=$(DTM_BASE_PATH) $(PYTHON) wsgi.py
 
 
 # Docker related functions.
@@ -137,7 +137,7 @@ dockerpush: $(DOCKER_BUILD_TIMESTAMP)
 
 .PHONY: dockerrun
 dockerrun: $(DOCKER_BUILD_TIMESTAMP)
-	DTM_BASE_PATH=$(DTM_BASE_PATH) HTTP_PORT=$(HTTP_PORT) docker-compose up
+	DTM_BASE_PATH=. HTTP_PORT=$(HTTP_PORT) docker-compose up
 
 
 .PHONY: shutdown
@@ -181,7 +181,7 @@ $(DEV_REQUIREMENTS_TIMESTAMP): $(REQUIREMENTS_TIMESTAMP) $(DEV_REQUIREMENTS)
 	@touch $(DEV_REQUIREMENTS_TIMESTAMP)
 
 
-$(DOCKER_BUILD_TIMESTAMP): $(TIMESTAMPS) $(PYTHON_FILES) $(CURRENT_DIR)/Dockerfile
+$(DOCKER_BUILD_TIMESTAMP): $(TIMESTAMPS) $(PYTHON_FILES) $(CURRENT_DIR)/Dockerfile logging-cfg-*.yml
 	docker build -t $(DOCKER_IMG_LOCAL_TAG) .
 	touch $(DOCKER_BUILD_TIMESTAMP)
 
