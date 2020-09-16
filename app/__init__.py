@@ -11,7 +11,7 @@ from app.middleware import ReverseProxy
 
 DEFAULT_DTM_BASE_PATH = '/var/local/profile/'
 
-logging.basicConfig()
+
 logger = logging.getLogger(__name__)
 
 # Standard Flask application initialisation
