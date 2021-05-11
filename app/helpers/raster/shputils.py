@@ -95,23 +95,22 @@ class SHPUtils(object):
         records = []
         # open dbf file and get records as a list
         dbf_file = file_name[0:-4] + '.dbf'
-        dbf = open(dbf_file, 'rb')
-        self.db = list(dbfutils.dbfreader(dbf))
-        dbf.close()
-        fp = open(file_name, 'rb')
+        with open(dbf_file, 'rb') as dbf:
+            self.db = list(dbfutils.dbfreader(dbf))
 
-        # get basic shapefile configuration
-        fp.seek(32)
-        read_and_unpack('i', fp.read(4))
-        read_bounding_box(fp)
+        with open(file_name, 'rb') as fp:
+            # get basic shapefile configuration
+            fp.seek(32)
+            read_and_unpack('i', fp.read(4))
+            read_bounding_box(fp)
 
-        # fetch Records
-        fp.seek(100)
-        while True:
-            shp_record = self.create_record(fp)
-            if shp_record is False:
-                break
-            records.append(shp_record)
+            # fetch Records
+            fp.seek(100)
+            while True:
+                shp_record = self.create_record(fp)
+                if shp_record is False:
+                    break
+                records.append(shp_record)
 
         return records
 
