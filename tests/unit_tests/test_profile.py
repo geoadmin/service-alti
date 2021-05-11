@@ -45,6 +45,7 @@ class TestProfile(unittest.TestCase):
         self.__check_response(response, expected_status)
         return response
 
+    # pylint: disable=inconsistent-return-statements
     def get_json_profile(self, params, expected_status=200):
         # pylint: disable=broad-except
         try:
@@ -55,7 +56,7 @@ class TestProfile(unittest.TestCase):
             return response
         except Exception as e:
             logger.exception(e)
-            self.fail('Call to test_instance failed')
+            self.fail('Call to test_instance failed: %s' % (e))
 
     def get_csv_with_params(self, params):
         return self.test_instance.get(

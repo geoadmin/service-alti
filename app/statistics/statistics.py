@@ -4,10 +4,10 @@ DATA_FOLDER = "/var/local/geodata/bund/swisstopo/swissalti3d/hikingtime_analysis
 
 
 def load_json(filename):
-    json_file = open(DATA_FOLDER + filename, "r")
-    if json_file is None:
-        raise IOError("No metadata file found")
-    json_data = json.load(json_file)
+    with open(DATA_FOLDER + filename, "r") as json_file:
+        if json_file is None:
+            raise IOError("No metadata file found")
+        json_data = json.load(json_file)
     if json_data is None:
         return IOError("Failed to load JSON")
     return json_data
