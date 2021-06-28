@@ -22,7 +22,7 @@ def read_linestring(request_object):
     if 'geom' in request_object.args:
         linestring = request_object.args.get('geom')
     elif request_object.is_json and len(request_object.get_data(as_text=True)) > 0:
-        linestring = request_object.get_json()
+        linestring = request_object.get_data()  # read as text
     if not linestring:
         abort(400, "No 'geom' given, cannot create a profile without coordinates")
     try:
