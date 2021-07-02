@@ -22,7 +22,8 @@ def read_linestring(request_object):
     geom_to_shape = None
     if 'geom' in request_object.args:
         linestring = request_object.args.get('geom')
-    elif request_object.is_json and 0 < request_object.content_length < max_content_length:
+    elif request_object.is_json and request_object.content_length is not None and \
+            0 < request_object.content_length < max_content_length:
         linestring = request_object.get_data(as_text=True)  # read as text
     if not linestring:
         abort(400, "No 'geom' given, cannot create a profile without coordinates")
