@@ -12,6 +12,7 @@ from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from app.helpers.validation import srs_guesser
 
 logger = logging.getLogger(__name__)
+max_content_length = 32 * 1024 * 1024  # 32MB
 
 
 def read_linestring(request_object):
@@ -21,7 +22,7 @@ def read_linestring(request_object):
     geom_to_shape = None
     if 'geom' in request_object.args:
         linestring = request_object.args.get('geom')
-    elif request_object.is_json and len(request_object.get_data(as_text=True)) > 0:
+    elif request_object.is_json and 0 < request_object.content_length < max_content_length:
         linestring = request_object.get_data(as_text=True)  # read as text
     if not linestring:
         abort(400, "No 'geom' given, cannot create a profile without coordinates")
