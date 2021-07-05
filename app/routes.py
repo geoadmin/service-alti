@@ -23,6 +23,7 @@ from app.helpers.validation.height import validate_sr
 # add route prefix
 from app.statistics.statistics import load_json
 from app.statistics.statistics import prepare_data
+from app.version import APP_VERSION
 
 app.route = prefix_route(app.route, '/rest/services/')
 
@@ -40,7 +41,7 @@ def handle_exception(e):
 
 @app.route('/checker', methods=['GET'])
 def check():
-    return make_response(jsonify({'success': True, 'message': 'OK'}))
+    return make_response(jsonify({'success': True, 'message': 'OK', 'version': APP_VERSION}))
 
 
 @app.route('/height')

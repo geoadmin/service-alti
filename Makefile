@@ -25,6 +25,13 @@ VENV := $(shell pipenv --venv)
 HTTP_PORT ?= 5000
 DTM_BASE_PATH ?= $(CURRENT_DIR)
 
+# Docker metadata
+GIT_HASH := `git rev-parse HEAD`
+GIT_BRANCH := `git symbolic-ref HEAD --short 2>/dev/null`
+GIT_DIRTY := `git status --porcelain`
+GIT_TAG := `git describe --tags || echo "no version info"`
+AUTHOR := $(USER)
+
 # Commands
 PYTHON := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
@@ -134,7 +141,13 @@ gunicornserve:
 
 .PHONY: dockerbuild
 dockerbuild:
-	docker build -t $(DOCKER_IMG_LOCAL_TAG) .
+	docker build \
+		--build-arg GIT_HASH="$(GIT_HASH)" \
+		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
+		--build-arg GIT_DIRTY="$(GIT_DIRTY)" \
+		--build-arg VERSION="$(GIT_TAG)" \
+		--build-arg AUTHOR="$(AUTHOR)" \
+		-t $(DOCKER_IMG_LOCAL_TAG) .
 
 
 .PHONY: dockerpush

@@ -5,6 +5,20 @@
 | develop | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUzFGKzRsYzJaVzdQVTd5VHR0Sng3VEo5dk9uMDYwNUZWcmtMV0pQaGdEcCtJZStxN0YyU3E2ZERxVThLK0lXczNEVG51c0RGSm9pU0NiNHA2L0lGZDdVPSIsIml2UGFyYW1ldGVyU3BlYyI6IjJ6cnVFeVo3V3RPMnJXZlMiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop) |
 | master | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUzFGKzRsYzJaVzdQVTd5VHR0Sng3VEo5dk9uMDYwNUZWcmtMV0pQaGdEcCtJZStxN0YyU3E2ZERxVThLK0lXczNEVG51c0RGSm9pU0NiNHA2L0lGZDdVPSIsIml2UGFyYW1ldGVyU3BlYyI6IjJ6cnVFeVo3V3RPMnJXZlMiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
 
+- [Summary of the project](#summary-of-the-project)
+- [How to run locally](#how-to-run-locally)
+  - [Dependencies](#dependencies)
+  - [Setting up to work](#setting-up-to-work)
+  - [Linting and formatting your work](#linting-and-formatting-your-work)
+  - [Test your work](#test-your-work)
+- [Versioning](#versioning)
+- [Endpoints](#endpoints)
+  - [/checker GET](#checker-get)
+  - [`/rest/services/height` GET](#restservicesheight-get)
+  - [`/rest/services/profile.json` and `/rest/services/profile.csv` GET/POST](#restservicesprofilejson-and-restservicesprofilecsv-getpost)
+- [Deploying the project and continuous integration](#deploying-the-project-and-continuous-integration)
+  - [Deployment configuration](#deployment-configuration)
+
 ## Summary of the project
 
 Height and profile services for http://api3.geo.admin.ch
@@ -62,6 +76,12 @@ To stop serving through containers,
     make shutdown
 
 Is the command you're looking for.
+
+## Versioning
+
+This service uses [SemVer](https://semver.org/) as versioning scheme. The versioning is automatically handled by `.github/workflows/main.yml` file.
+
+See also [Git Flow - Versioning](https://github.com/geoadmin/doc-guidelines/blob/master/GIT_FLOW.md#versioning) for more information on the versioning guidelines.
 
 ## Endpoints
 
