@@ -23,12 +23,12 @@ def dbfreader(f):
     # See DBF format spec at:
     #     http://www.pgts.com.au/download/public/xbase.htm#DBF_STRUCT
 
-    numrec, lenheader = struct.unpack('<xxxxLH22x', f.read(32))  # pylint: disable=no-member
+    numrec, lenheader = struct.unpack('<xxxxLH22x', f.read(32))
     numfields = (lenheader - 33) // 32
 
     fields = []
     for fieldno in range(numfields):
-        name, typ, size, deci = struct.unpack('<11sc4xBB14x', f.read(32))  # pylint: disable=no-member
+        name, typ, size, deci = struct.unpack('<11sc4xBB14x', f.read(32))
         name = name.replace('\0', '')  # eliminate NULs from string
         fields.append((name, typ, size, deci))
     yield [field[0] for field in fields]
@@ -39,9 +39,9 @@ def dbfreader(f):
 
     fields.insert(0, ('DeletionFlag', 'C', 1, 0))
     fmt = ''.join(['%ds' % fieldinfo[2] for fieldinfo in fields])
-    fmtsiz = struct.calcsize(fmt)  # pylint: disable=no-member
+    fmtsiz = struct.calcsize(fmt)
     for i in range(numrec):
-        record = struct.unpack(fmt, f.read(fmtsiz))  # pylint: disable=no-member
+        record = struct.unpack(fmt, f.read(fmtsiz))
         if record[0] != ' ':
             continue  # deleted record
         result = []

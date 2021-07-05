@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from os.path import dirname
-from struct import unpack  # pylint: disable=no-name-in-module
+from struct import unpack
 
 from .shputils import SHPUtils
 

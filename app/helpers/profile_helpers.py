@@ -179,7 +179,7 @@ def _fill(coordinates, nb_points, is_smart=False):
                         nb_points_placed += 1
                         segment_length_covered += segment_resolution
                         new_point = segment.interpolate(nb_points_placed * segment_resolution)
-                        result.append([new_point.x, new_point.y])  # pylint: disable=no-member
+                        result.append([new_point.x, new_point.y])
         return result
 
     for i in range(1, len(coordinates)):
@@ -216,7 +216,7 @@ def _fill_segment(coordinates, nb_points, is_smart, distance):
                     nb_points_placed += 1
                     segment_length_covered += segment_resolution
                     new_point = segment.interpolate(nb_points_placed * segment_resolution)
-                    result.append([new_point.x, new_point.y])  # pylint: disable=no-member
+                    result.append([new_point.x, new_point.y])
                 result.pop()
     else:
         prev_coord = result[0]

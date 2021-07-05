@@ -2,7 +2,8 @@
 
 # file taken from http://indiemaps.com/blog/2008/03/easy-shapefile-loading-in-python/
 
-from struct import unpack  # pylint: disable=no-name-in-module
+from struct import unpack
+
 from . import dbfutils
 
 XY_POINT_RECORD_LENGTH = 16
