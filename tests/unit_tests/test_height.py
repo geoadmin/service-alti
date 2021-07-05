@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import unittest
-from mock import patch, Mock
+
+from mock import Mock
+from mock import patch
 
 with patch('os.path.exists') as mock_exists:
     mock_exists.return_value = True

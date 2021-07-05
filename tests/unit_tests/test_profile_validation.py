@@ -8,9 +8,11 @@ with patch('os.path.exists') as mock_exists:
     mock_exists.return_value = True
     import app as service_alti
 
-from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS, PROFILE_MAX_AMOUNT_POINTS
+from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
+from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from tests import create_json
-from tests.unit_tests import prepare_mock, DEFAULT_HEADERS
+from tests.unit_tests import DEFAULT_HEADERS
+from tests.unit_tests import prepare_mock
 
 logger = logging.getLogger(__name__)
 

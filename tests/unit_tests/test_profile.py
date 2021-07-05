@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import unittest
 import json
 import logging
+import unittest
 
 from mock import patch
 
@@ -9,12 +9,22 @@ with patch('os.path.exists') as mock_exists:
     mock_exists.return_value = True
     import app as service_alti
 
+from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
+from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from tests import create_json
-from tests.unit_tests import ENDPOINT_FOR_JSON_PROFILE, ENDPOINT_FOR_CSV_PROFILE,\
-    LINESTRING_VALID_LV03, POINT_1_LV03, POINT_2_LV03, POINT_3_LV03, LINESTRING_WRONG_SHAPE,\
-    LINESTRING_SMALL_LINE_LV03, LINESTRING_MISSPELLED_SHAPE, LINESTRING_VALID_LV95,\
-    LINESTRING_SMALL_LINE_LV95, DEFAULT_HEADERS, prepare_mock
-from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS, PROFILE_DEFAULT_AMOUNT_POINTS
+from tests.unit_tests import DEFAULT_HEADERS
+from tests.unit_tests import ENDPOINT_FOR_CSV_PROFILE
+from tests.unit_tests import ENDPOINT_FOR_JSON_PROFILE
+from tests.unit_tests import LINESTRING_MISSPELLED_SHAPE
+from tests.unit_tests import LINESTRING_SMALL_LINE_LV03
+from tests.unit_tests import LINESTRING_SMALL_LINE_LV95
+from tests.unit_tests import LINESTRING_VALID_LV03
+from tests.unit_tests import LINESTRING_VALID_LV95
+from tests.unit_tests import LINESTRING_WRONG_SHAPE
+from tests.unit_tests import POINT_1_LV03
+from tests.unit_tests import POINT_2_LV03
+from tests.unit_tests import POINT_3_LV03
+from tests.unit_tests import prepare_mock
 
 logger = logging.getLogger(__name__)
 

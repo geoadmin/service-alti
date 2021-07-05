@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from os.path import dirname
 import logging
+from os.path import dirname
 from struct import unpack
 
 from .shputils import SHPUtils

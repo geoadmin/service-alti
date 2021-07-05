@@ -1,6 +1,8 @@
 import unittest
 
-from mock import patch, Mock
+from mock import Mock
+from mock import patch
+
 from app.helpers.height_helpers import get_height
 
 FAKE_VALUE = 1234.5

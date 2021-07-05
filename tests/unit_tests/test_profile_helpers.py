@@ -1,12 +1,16 @@
-import unittest
 import logging
+import unittest
 
-from mock import patch, Mock
+from mock import Mock
+from mock import patch
 
-from app.helpers.profile_helpers import get_profile, PROFILE_DEFAULT_AMOUNT_POINTS
-
-from tests.unit_tests import VALUES_FOR_EACH_2M_STEP, FAKE_RESOLUTION, FAKE_GEOM_2_POINTS, \
-    FAKE_GEOM_3_POINTS, MIDDLE_POINT
+from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
+from app.helpers.profile_helpers import get_profile
+from tests.unit_tests import FAKE_GEOM_2_POINTS
+from tests.unit_tests import FAKE_GEOM_3_POINTS
+from tests.unit_tests import FAKE_RESOLUTION
+from tests.unit_tests import MIDDLE_POINT
+from tests.unit_tests import VALUES_FOR_EACH_2M_STEP
 
 logger = logging.getLogger(__name__)
 

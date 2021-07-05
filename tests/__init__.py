@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 import json
 import random
-from shapely.geometry import Point, LineString, mapping
+
+from shapely.geometry import LineString
+from shapely.geometry import Point
+from shapely.geometry import mapping
 
 
 def generate_random_coord(srid):
