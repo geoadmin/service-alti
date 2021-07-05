@@ -2,10 +2,10 @@
 
 # file taken from http://indiemaps.com/blog/2008/03/easy-shapefile-loading-in-python/
 
-import struct
 import datetime
 import decimal
 import itertools
+import struct
 
 
 def dbfreader(f):

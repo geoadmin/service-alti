@@ -1,8 +1,10 @@
-import re
-import os
 import logging
+import os
+import re
 
-from flask import Flask, abort, request
+from flask import Flask
+from flask import abort
+from flask import request
 
 from app.helpers import make_error_msg
 from app.helpers.raster.georaster import GeoRasterUtils
@@ -10,7 +12,6 @@ from app.helpers.url import ALLOWED_DOMAINS_PATTERN
 from app.middleware import ReverseProxy
 
 DEFAULT_DTM_BASE_PATH = '/var/local/profile/'
-
 
 logger = logging.getLogger(__name__)
 

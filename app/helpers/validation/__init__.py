@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from shapely.geometry import Polygon
+
 from app.helpers.helpers import float_raise_nan
 
 bboxes = {

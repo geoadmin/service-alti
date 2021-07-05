@@ -2,8 +2,10 @@ import math
 
 from shapely.geometry import LineString
 
+from app.helpers.helpers import filter_altitude
+from app.helpers.helpers import filter_coordinate
+from app.helpers.helpers import filter_distance
 from app.helpers.raster.georaster import RESOLUTION
-from app.helpers.helpers import filter_coordinate, filter_distance, filter_altitude
 
 PROFILE_MAX_AMOUNT_POINTS = 5000
 PROFILE_DEFAULT_AMOUNT_POINTS = 200

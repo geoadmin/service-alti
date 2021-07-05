@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from app.helpers.helpers import float_raise_nan, filter_altitude
+
+from app.helpers.helpers import filter_altitude
+from app.helpers.helpers import float_raise_nan
 
 
 class TestHelpers(unittest.TestCase):

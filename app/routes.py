@@ -1,23 +1,28 @@
 import logging
 
-from flask import abort, render_template, jsonify, make_response, request
-
+from shapely.geometry import Point
 from werkzeug.exceptions import HTTPException
 
-from shapely.geometry import Point
+from flask import abort
+from flask import jsonify
+from flask import make_response
+from flask import render_template
+from flask import request
 
-from app import app, georaster_utils
+import app.helpers.validation.profile as profile_arg_validation
+from app import app
+from app import georaster_utils
 from app.helpers import make_error_msg
-from app.helpers.route import prefix_route
 from app.helpers.height_helpers import get_height
 from app.helpers.profile_helpers import get_profile
-
-from app.helpers.validation import srs_guesser, bboxes
-from app.helpers.validation.height import validate_lon_lat, validate_sr
-import app.helpers.validation.profile as profile_arg_validation
-
+from app.helpers.route import prefix_route
+from app.helpers.validation import bboxes
+from app.helpers.validation import srs_guesser
+from app.helpers.validation.height import validate_lon_lat
+from app.helpers.validation.height import validate_sr
 # add route prefix
-from app.statistics.statistics import load_json, prepare_data
+from app.statistics.statistics import load_json
+from app.statistics.statistics import prepare_data
 
 app.route = prefix_route(app.route, '/rest/services/')
 
