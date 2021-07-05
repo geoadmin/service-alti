@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
 import logging
 import unittest
 
@@ -162,7 +161,7 @@ class TestProfile(unittest.TestCase):
         params = create_json(4, 21781)
         self.headers['Content-Type'] = 'application/json'
         resp = self.prepare_mock_and_test_post(
-            mock_georaster_utils=mock_georaster_utils, body=json.dumps(params), expected_status=200
+            mock_georaster_utils=mock_georaster_utils, body=params, expected_status=200
         )
         self.assertEqual(resp.content_type, 'application/json')
 
@@ -381,7 +380,7 @@ class TestProfile(unittest.TestCase):
         params = create_json(7000)
         self.headers['Content-Type'] = 'application/json'
         resp = self.prepare_mock_and_test_post(
-            mock_georaster_utils=mock_georaster_utils, body=json.dumps(params), expected_status=413
+            mock_georaster_utils=mock_georaster_utils, body=params, expected_status=413
         )
         self.assert_response_contains(resp, 'Geometry contains too many points')
 
