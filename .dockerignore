@@ -2,20 +2,33 @@
 .git
 .gitignore
 .gitmodules
-**/*.md
+.github
+.gitattributes
+*.orig
+
+# linting and formating
+.style.yapf
+.isort.cfg
+.pylintrc
 
 # Docker
-docker-compose.yml
+Dockerfile
+docker-compose.yaml
 docker-compose.yml.in
 .docker
+.dockerignore
 
 # Python
 *.pyc
 __pycache__
 
 # Files not used within docker
-./tests/*
+tests
 Makefile
 .venv
-lib-makefiles/*
+lib-makefiles
+.vscode
+.timestamps
 buildspec.yml
+logs
+service_alti.py

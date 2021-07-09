@@ -33,6 +33,7 @@ local/
 # makefile
 .local
 .timestamps
+logs
 
 # virtualenv
 .venv
