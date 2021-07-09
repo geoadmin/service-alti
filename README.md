@@ -109,6 +109,9 @@ TO DO: give instructions to deploy to kubernetes.
 
 The service is configured by Environment Variable:
 
-| Env         | Default               | Description                            |
-|-------------|-----------------------|----------------------------------------|
-| LOGGING_CFG | logging-cfg-local.yml | Logging configuration file             |
+| Env           | Default                   | Description                            |
+|---------------|---------------------------|----------------------------------------|
+| HTTP_PORT     | `'5000'`                  | HTTP port of the service               |
+| LOGGING_CFG   | `'logging-cfg-local.yml'` | Logging configuration file             |
+| LOGS_DIR      | `'./logs'`                | Directory for logging output files     |
+| DTM_BASE_PATH | `'/var/local/profile/'`   | Raster and COMB files location         |

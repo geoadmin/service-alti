@@ -24,6 +24,7 @@ VENV := $(shell pipenv --venv)
 # default configuration
 HTTP_PORT ?= 5000
 DTM_BASE_PATH ?= $(CURRENT_DIR)
+LOGS_DIR ?= $(CURRENT_DIR)/logs
 
 # Docker metadata
 GIT_HASH := `git rev-parse HEAD`
@@ -76,12 +77,13 @@ help:
 
 .PHONY: setup
 setup:
+	mkdir -p $(LOGS_DIR)
 	pipenv install --dev
 	pipenv shell
 
 
 .PHONY: ci
-ci: $(REQUIREMENTS)
+ci:
 	# Create virtual env with all packages for development using the Pipfile.lock
 	pipenv sync --dev
 
@@ -127,14 +129,14 @@ test:
 
 .PHONY: serve
 serve:
-	DTM_BASE_PATH=$(DTM_BASE_PATH) FLASK_APP=$(subst -,_,$(SERVICE_NAME)) FLASK_DEBUG=1 $(FLASK) run \
+	LOGS_DIR=$(LOGS_DIR) DTM_BASE_PATH=$(DTM_BASE_PATH) FLASK_APP=$(subst -,_,$(SERVICE_NAME)) FLASK_DEBUG=1 $(FLASK) run \
 	--host=0.0.0.0 \
 	--port=$(HTTP_PORT)
 
 
 .PHONY: gunicornserve
 gunicornserve:
-	DTM_BASE_PATH=$(DTM_BASE_PATH) $(PYTHON) wsgi.py
+	LOGS_DIR=$(LOGS_DIR) DTM_BASE_PATH=$(DTM_BASE_PATH) $(PYTHON) wsgi.py
 
 
 # Docker related functions.
@@ -157,7 +159,7 @@ dockerpush:
 
 .PHONY: dockerrun
 dockerrun:
-	DTM_BASE_PATH=. HTTP_PORT=$(HTTP_PORT) docker-compose up
+	LOGS_DIR=$(LOGS_DIR) DTM_BASE_PATH=. HTTP_PORT=$(HTTP_PORT) docker-compose up --build
 
 
 .PHONY: shutdown
@@ -177,3 +179,4 @@ clean: clean_venv
 	@# clean python cache files
 	find . -name __pycache__ -type d -print0 | xargs -I {} -0 rm -rf "{}"
 	rm -rf $(TEST_REPORT_DIR)
+	rm -rf $(LOGS_DIR)

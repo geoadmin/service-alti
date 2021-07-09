@@ -8,6 +8,7 @@ env:
     TEST_REPORT_DIR: "./tests/report"
     TEST_REPORT_FILE: "nose2-junit.xml"
     PIPENV_NOSPIN: 1
+    LOGGING_CFG: "logging-cfg-ci.yml"
   parameter-store:
     CI_DOCKERHUB_USER: "/dockerhub/user"
     CI_DOCKERHUB_PASSWORD: "/dockerhub/password"
@@ -15,7 +16,7 @@ env:
 phases:
   install:
     runtime-versions:
-      docker: 18
+      python: 3.7
     commands:
       - echo "Installing necessary softwares"
       - docker login -u ${CI_DOCKERHUB_USER} -p ${CI_DOCKERHUB_PASSWORD}
