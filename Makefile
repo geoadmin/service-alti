@@ -6,12 +6,24 @@ SERVICE_NAME := service-alti
 
 CURRENT_DIR := $(shell pwd)
 
+# Docker metadata
+GIT_HASH = `git rev-parse HEAD`
+GIT_HASH_SHORT = `git rev-parse --short HEAD`
+GIT_BRANCH = `git symbolic-ref HEAD --short 2>/dev/null`
+GIT_DIRTY = `git status --porcelain`
+GIT_TAG = `git describe --tags || echo "no version info"`
+AUTHOR = $(USER)
+
 # Test report configuration
 TEST_REPORT_DIR ?= $(CURRENT_DIR)/tests/report
 TEST_REPORT_FILE ?= nose2-junit.xml
 
 # Docker variables
-DOCKER_IMG_LOCAL_TAG = swisstopo/$(SERVICE_NAME):local
+DOCKER_REGISTRY = 974517877189.dkr.ecr.eu-central-1.amazonaws.com
+DOCKER_IMG_LOCAL_TAG := $(DOCKER_REGISTRY)/$(SERVICE_NAME):local-$(USER)-$(GIT_HASH_SHORT)
+
+# AWS variables
+AWS_DEFAULT_REGION = eu-central-1
 
 # Find all python files that are not inside a hidden directory (directory starting with .)
 PYTHON_FILES := $(shell find ./* -type f -name "*.py" -print)
@@ -25,13 +37,6 @@ VENV := $(shell pipenv --venv)
 HTTP_PORT ?= 5000
 DTM_BASE_PATH ?= $(CURRENT_DIR)
 LOGS_DIR ?= $(CURRENT_DIR)/logs
-
-# Docker metadata
-GIT_HASH := `git rev-parse HEAD`
-GIT_BRANCH := `git symbolic-ref HEAD --short 2>/dev/null`
-GIT_DIRTY := `git status --porcelain`
-GIT_TAG := `git describe --tags || echo "no version info"`
-AUTHOR := $(USER)
 
 # Commands
 PYTHON := $(VENV)/bin/python
@@ -64,6 +69,7 @@ help:
 	@echo "- serve              Run the project using the flask debug server. Port can be set by Env variable HTTP_PORT (default: 5000)"
 	@echo "- gunicornserve      Run the project using the gunicorn WSGI server. Port can be set by Env variable DEBUG_HTTP_PORT (default: 5000)"
 	@echo -e " \033[1mDocker TARGETS\033[0m "
+	@echo "- dockerlogin        Login to the AWS ECR registery for pulling/pushing docker images"
 	@echo "- dockerbuild        Build the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG)) using the gunicorn WSGI server inside a container"
 	@echo "- dockerpush         Build and push the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG))"
 	@echo "- dockerrun          Run the project using the gunicorn WSGI server inside a container (exposed port: 5000)"
@@ -140,6 +146,11 @@ gunicornserve:
 
 
 # Docker related functions.
+
+.PHONY: dockerlogin
+dockerlogin:
+	aws --profile swisstopo-bgdi-builder ecr get-login-password --region $(AWS_DEFAULT_REGION) | docker login --username AWS --password-stdin $(DOCKER_REGISTRY)
+
 
 .PHONY: dockerbuild
 dockerbuild:
