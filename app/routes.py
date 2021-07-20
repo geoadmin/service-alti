@@ -35,7 +35,7 @@ def handle_exception(e):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
         return e
-    logger.error(str(e))
+    logger.exception('Unexpected exception: %s', e)
     return make_error_msg(500, "Internal server error, please consult logs")
 
 
