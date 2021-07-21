@@ -12,7 +12,6 @@ from app.helpers import make_error_msg
 from app.helpers.raster.georaster import GeoRasterUtils
 from app.helpers.url import ALLOWED_DOMAINS_PATTERN
 from app.middleware import ReverseProxy
-from app.settings import DTM_BASE_PATH
 
 logger = logging.getLogger(__name__)
 route_logger = logging.getLogger('app.routes')
@@ -22,11 +21,6 @@ app = Flask(__name__)
 app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
 
 # init raster files for height/profile and preload COMB file
-if not os.path.exists(DTM_BASE_PATH):
-    error_message = f"DTM base path points to a none existing folder {DTM_BASE_PATH}"
-    logger.error(error_message)
-    raise FileNotFoundError(error_message)
-
 georaster_utils = GeoRasterUtils()
 
 
@@ -91,16 +85,3 @@ def log_response(response):
 
 
 from app import routes  # pylint: disable=wrong-import-position
-
-
-def main():
-    georaster_utils.init_raster_files(DTM_BASE_PATH, [2056, 21781])
-    app.run()
-
-
-if __name__ == '__main__':
-    """
-    Entrypoint for the application. At the moment, we do nothing specific, but there might be
-    preparatory steps in the future
-    """
-    main()
