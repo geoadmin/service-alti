@@ -6,7 +6,7 @@ from shapely.geometry import shape
 
 from flask import abort
 
-from app import make_error_msg
+from app.helpers import make_error_msg
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from app.helpers.validation import srs_guesser

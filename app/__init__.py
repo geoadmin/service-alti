@@ -3,12 +3,10 @@ import re
 import time
 
 from flask import Flask
-from flask import abort
 from flask import g
 from flask import request
 
 from app.helpers import init_logging
-from app.helpers import make_error_msg
 from app.helpers.raster.georaster import GeoRasterUtils
 from app.helpers.url import ALLOWED_DOMAINS_PATTERN
 from app.middleware import ReverseProxy
@@ -53,17 +51,6 @@ def add_cors_header(response):
         response.headers['Access-Control-Allow-Origin'] = request.headers['Origin']
         response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return response
-
-
-# Reject request from non allowed origins
-@app.before_request
-def validate_origin():
-    if (
-        'Origin' in request.headers and
-        not re.match(ALLOWED_DOMAINS_PATTERN, request.headers['Origin'])
-    ):
-        logger.error('Origin=%s is not allowed', request.headers['Origin'])
-        abort(make_error_msg(403, 'Not allowed'))
 
 
 # NOTE it is better to have this method registered last (after add_cors_header) otherwise
