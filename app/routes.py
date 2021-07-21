@@ -34,7 +34,8 @@ logger = logging.getLogger(__name__)
 def handle_exception(e):
     # pass through HTTP errors
     if isinstance(e, HTTPException):
-        return e
+        logger.error(e)
+        return make_error_msg(e.code, e.description)
     logger.exception('Unexpected exception: %s', e)
     return make_error_msg(500, "Internal server error, please consult logs")
 
@@ -62,18 +63,14 @@ def height_route():
         point = Point(lon, lat)
         sr = srs_guesser(point)
         if sr is None:
-            abort(make_error_msg(400, "No 'sr' given and cannot be guessed from 'geom'"))
+            abort(400, "No 'sr' given and cannot be guessed from 'geom'")
     sr = validate_sr(sr)
 
     if lon < bboxes[sr][0] or lon > bboxes[sr][2] or lat < bboxes[sr][1] or lat > bboxes[sr][3]:
-        abort(make_error_msg(400, "Query is out of bounds"))
+        abort(400, "Query is out of bounds")
     alt = get_height(sr, lon, lat, georaster_utils)
     if alt is None:
-        abort(
-            make_error_msg(
-                400, 'Requested coordinate ({},{}) out of bounds in sr {}'.format(lon, lat, sr)
-            )
-        )
+        abort(400, 'Requested coordinate ({},{}) out of bounds in sr {}'.format(lon, lat, sr))
     return {'height': str(alt)}
 
 

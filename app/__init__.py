@@ -6,6 +6,7 @@ from flask import Flask
 from flask import g
 from flask import request
 
+from app import settings
 from app.helpers import init_logging
 from app.helpers.raster.georaster import GeoRasterUtils
 from app.helpers.url import ALLOWED_DOMAINS_PATTERN
@@ -19,6 +20,7 @@ route_logger = logging.getLogger('app.routes')
 
 # Standard Flask application initialisation
 app = Flask(__name__)
+app.config.from_object(settings)
 app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
 
 # init raster files for height/profile and preload COMB file

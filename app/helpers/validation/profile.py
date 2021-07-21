@@ -6,7 +6,6 @@ from shapely.geometry import shape
 
 from flask import abort
 
-from app.helpers import make_error_msg
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from app.helpers.validation import srs_guesser
@@ -96,7 +95,7 @@ def read_spatial_reference(request_object, linestring):
     else:
         sr = srs_guesser(linestring)
         if sr is None:
-            abort(make_error_msg(400, "No 'sr' given and cannot be guessed from 'geom'"))
+            abort(400, "No 'sr' given and cannot be guessed from 'geom'")
         spatial_reference = sr
 
     if spatial_reference not in (21781, 2056):
