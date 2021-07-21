@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 import time
 
@@ -8,10 +7,14 @@ from flask import abort
 from flask import g
 from flask import request
 
+from app.helpers import init_logging
 from app.helpers import make_error_msg
 from app.helpers.raster.georaster import GeoRasterUtils
 from app.helpers.url import ALLOWED_DOMAINS_PATTERN
 from app.middleware import ReverseProxy
+
+# Initialize Logging using JSON format for all loggers and using the Stream Handler.
+init_logging()
 
 logger = logging.getLogger(__name__)
 route_logger = logging.getLogger('app.routes')
