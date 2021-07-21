@@ -1,7 +1,7 @@
 # Buster slim python 3.7 base image.
 FROM python:3.7-slim-buster
 ENV HTTP_PORT 8080
-RUN groupadd -r geoadmin && useradd -r -s /bin/false -g geoadmin geoadmin
+RUN groupadd -g 1000 geoadmin && useradd -u 1000 -s /bin/false -g geoadmin geoadmin
 
 
 # HERE : install relevant packages

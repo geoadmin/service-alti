@@ -109,9 +109,11 @@ TO DO: give instructions to deploy to kubernetes.
 
 The service is configured by Environment Variable:
 
-| Env           | Default                   | Description                            |
-|---------------|---------------------------|----------------------------------------|
-| HTTP_PORT     | `'5000'`                  | HTTP port of the service               |
-| LOGGING_CFG   | `'logging-cfg-local.yml'` | Logging configuration file             |
-| LOGS_DIR      | `'./logs'`                | Directory for logging output files     |
-| DTM_BASE_PATH | `'/var/local/profile/'`   | Raster and COMB files location         |
+| Env                  | Default                   | Description                            |
+|----------------------|---------------------------|----------------------------------------|
+| HTTP_PORT            | `'5000'`                  | HTTP port of the service               |
+| LOGGING_CFG          | `'logging-cfg-local.yml'` | Logging configuration file             |
+| LOGS_DIR             | `'./logs'`                | Directory for logging output files     |
+| DTM_BASE_PATH        | `'/var/local/profile/'`   | Raster and COMB files location         |
+| PRELOAD_RASTER_FILES | `False`                   | Preload raster files at startup. If not set they will be loaded during first request |
+| ALTI_WORKERS         | `0`                       | Number of workers. `0` or negative value means that the number of worker are computed from the number of cpu |

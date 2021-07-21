@@ -1,32 +1,29 @@
 import logging
-import os
 import re
 import time
 
 from flask import Flask
-from flask import abort
 from flask import g
 from flask import request
 
-from app.helpers import make_error_msg
+from app import settings
+from app.helpers import init_logging
 from app.helpers.raster.georaster import GeoRasterUtils
 from app.helpers.url import ALLOWED_DOMAINS_PATTERN
 from app.middleware import ReverseProxy
-from app.settings import DTM_BASE_PATH
+
+# Initialize Logging using JSON format for all loggers and using the Stream Handler.
+init_logging()
 
 logger = logging.getLogger(__name__)
 route_logger = logging.getLogger('app.routes')
 
 # Standard Flask application initialisation
 app = Flask(__name__)
+app.config.from_object(settings)
 app.wsgi_app = ReverseProxy(app.wsgi_app, script_name='/')
 
 # init raster files for height/profile and preload COMB file
-if not os.path.exists(DTM_BASE_PATH):
-    error_message = f"DTM base path points to a none existing folder {DTM_BASE_PATH}"
-    logger.error(error_message)
-    raise FileNotFoundError(error_message)
-
 georaster_utils = GeoRasterUtils()
 
 
@@ -58,17 +55,6 @@ def add_cors_header(response):
     return response
 
 
-# Reject request from non allowed origins
-@app.before_request
-def validate_origin():
-    if (
-        'Origin' in request.headers and
-        not re.match(ALLOWED_DOMAINS_PATTERN, request.headers['Origin'])
-    ):
-        logger.error('Origin=%s is not allowed', request.headers['Origin'])
-        abort(make_error_msg(403, 'Not allowed'))
-
-
 # NOTE it is better to have this method registered last (after add_cors_header) otherwise
 # the response might not be correct (e.g. headers added in another after_request hook).
 @app.after_request
@@ -90,17 +76,4 @@ def log_response(response):
     return response
 
 
-from app import routes  # pylint: disable=wrong-import-position
-
-
-def main():
-    georaster_utils.init_raster_files(DTM_BASE_PATH, [2056, 21781])
-    app.run()
-
-
-if __name__ == '__main__':
-    """
-    Entrypoint for the application. At the moment, we do nothing specific, but there might be
-    preparatory steps in the future
-    """
-    main()
+from app import routes  # isort:skip pylint: disable=wrong-import-position

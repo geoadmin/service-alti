@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 # file taken from http://indiemaps.com/blog/2008/03/easy-shapefile-loading-in-python/
-
+import logging
 from struct import unpack
 
 from . import dbfutils
+
+logger = logging.getLogger(__name__)
 
 XY_POINT_RECORD_LENGTH = 16
 
@@ -82,7 +84,7 @@ def read_bounding_box(fp):
 
 
 def read_and_unpack(data_type, data):
-    if data == '':
+    if data == b'':
         return data
     return unpack(data_type, data)[0]
 
@@ -96,9 +98,12 @@ class SHPUtils(object):
         records = []
         # open dbf file and get records as a list
         dbf_file = file_name[0:-4] + '.dbf'
+        logger.debug('Read DBF file %s', dbf_file)
         with open(dbf_file, 'rb') as dbf:
             self.db = list(dbfutils.dbfreader(dbf))
+        logger.debug('DBF file parsed: %d db entries', len(self.db))
 
+        logger.debug('Read file %s', file_name)
         with open(file_name, 'rb') as fp:
             # get basic shapefile configuration
             fp.seek(32)
@@ -109,7 +114,7 @@ class SHPUtils(object):
             fp.seek(100)
             while True:
                 shp_record = self.create_record(fp)
-                if shp_record is False:
+                if shp_record is None:
                     break
                 records.append(shp_record)
 
@@ -118,8 +123,8 @@ class SHPUtils(object):
     def create_record(self, fp):
         # read header
         record_number = read_and_unpack('>L', fp.read(4))
-        if record_number == '':
-            return False
+        if record_number == b'':
+            return None
         # content_length = readAndUnpack('>L', fp.read(4))
         read_and_unpack('>L', fp.read(4))
         record_shape_type = read_and_unpack('<L', fp.read(4))
@@ -127,6 +132,6 @@ class SHPUtils(object):
         shp_data = read_record_any(fp, record_shape_type)
         dbf_data = {}
         for i in range(0, len(self.db[record_number + 1])):
-            dbf_data[self.db[0][i]] = self.db[record_number + 1][i]
+            dbf_data[self.db[0][i].decode()] = self.db[record_number + 1][i]
 
         return {'shp_data': shp_data, 'dbf_data': dbf_data}
