@@ -118,7 +118,7 @@ class GeoRaster:
         if directory_name == "":
             directory_name = "."
         for shape in shape_files:
-            filename = shape['dbf_data']['location'].rstrip()
+            filename = shape['dbf_data']['location'].rstrip().decode()
             if not filename.startswith("/"):
                 filename = directory_name + '/' + filename
             if filename.endswith(".bt"):
@@ -133,8 +133,7 @@ class GeoRaster:
                     )
                 )
             else:
-                message = ".bt file referenced in index file " + repr(index_file) \
-                          + " not found, aborting"
+                message = f"{filename} file referenced in index file {repr(index_file)} not found"
                 logger.error(message)
                 raise ValueError(message)
 
