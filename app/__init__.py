@@ -87,4 +87,4 @@ def log_response(response):
     return response
 
 
-from app import routes  # pylint: disable=wrong-import-position
+from app import routes  # isort:skip pylint: disable=wrong-import-position
