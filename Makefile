@@ -1,329 +1,193 @@
 SHELL = /bin/bash
-# Variables
-APACHE_ENTRY_PATH := $(shell if [ '$(APACHE_BASE_PATH)' = 'main' ]; then echo ''; else echo /$(APACHE_BASE_PATH); fi)
-KEEP_VERSION ?= 'false'
-LAST_VERSION := $(shell if [ -f '.venv/last-version' ]; then cat .venv/last-version 2> /dev/null; else echo '-none-'; fi)
-VERSION := $(shell if [ '$(KEEP_VERSION)' = 'true' ] && [ '$(LAST_VERSION)' != '-none-' ]; then echo $(LAST_VERSION); else date '+%Y%m%d%H%M'; fi)
-BRANCH_STAGING := $(shell if [ '$(DEPLOY_TARGET)' = 'dev' ]; then echo 'test'; else echo 'integration'; fi)
-BRANCH_TO_DELETE :=
-CURRENT_DIRECTORY := $(shell pwd)
-DEPLOYCONFIG ?=
-DEPLOY_TARGET ?=
-GIT_BRANCH := $(shell if [ -f '.venv/deployed-git-branch' ]; then cat .venv/deployed-git-branch 2> /dev/null; else git rev-parse --symbolic-full-name --abbrev-ref HEAD; fi)
-HTTP_PROXY := http://ec2-52-28-118-239.eu-central-1.compute.amazonaws.com:80
-INSTALL_DIRECTORY := .venv
-MODWSGI_USER := www-data
-NO_TESTS ?= withtests
-PYTHON_FILES := $(shell find alti/* -path alti/static -prune -o -type f -name "*.py" -print)
-SHORTENER_ALLOWED_DOMAINS := admin.ch, swisstopo.ch, bgdi.ch
-SHORTENER_ALLOWED_HOSTS :=
-TEMPLATE_FILES := $(shell find -type f -name "*.in" -print)
-USER_SOURCE ?= rc_user
-WSGI_APP := $(CURRENT_DIRECTORY)/apache/application.wsgi
-PYPI_URL ?= https://pypi.org/simple/
+
+.DEFAULT_GOAL := help
+
+SERVICE_NAME := service-alti
+
+CURRENT_DIR := $(shell pwd)
+
+# Docker metadata
+GIT_HASH = `git rev-parse HEAD`
+GIT_HASH_SHORT = `git rev-parse --short HEAD`
+GIT_BRANCH = `git symbolic-ref HEAD --short 2>/dev/null`
+GIT_DIRTY = `git status --porcelain`
+GIT_TAG = `git describe --tags || echo "no version info"`
+AUTHOR = $(USER)
+
+# Test report configuration
+TEST_REPORT_DIR ?= $(CURRENT_DIR)/tests/report
+TEST_REPORT_FILE ?= nose2-junit.xml
+
+# Docker variables
+DOCKER_REGISTRY = 974517877189.dkr.ecr.eu-central-1.amazonaws.com
+DOCKER_IMG_LOCAL_TAG := $(DOCKER_REGISTRY)/$(SERVICE_NAME):local-$(USER)-$(GIT_HASH_SHORT)
+
+# AWS variables
+AWS_DEFAULT_REGION = eu-central-1
+
+# Find all python files that are not inside a hidden directory (directory starting with .)
+PYTHON_FILES := $(shell find ./* -type f -name "*.py" -print)
+
+# PIPENV files
+PIP_FILE = $(CURRENT_DIR)/Pipfile
+PIP_FILE_LOCK = $(CURRENT_DIR)/Pipfile.lock
+VENV := $(shell pipenv --venv)
+
+# default configuration
+HTTP_PORT ?= 5000
+DTM_BASE_PATH ?= $(CURRENT_DIR)
+LOGS_DIR ?= $(CURRENT_DIR)/logs
 
 # Commands
-AUTOPEP8_CMD := $(INSTALL_DIRECTORY)/bin/autopep8
-FLAKE8_CMD := $(INSTALL_DIRECTORY)/bin/flake8
-MAKO_CMD := $(INSTALL_DIRECTORY)/bin/mako-render
-NOSE_CMD := $(INSTALL_DIRECTORY)/bin/nosetests
-PIP_CMD := $(INSTALL_DIRECTORY)/bin/pip
-PSERVE_CMD := $(INSTALL_DIRECTORY)/bin/pserve
-PSHELL_CMD := $(INSTALL_DIRECTORY)/bin/pshell
-PYTHON_CMD := $(INSTALL_DIRECTORY)/bin/python
-
-# Linting rules
-PEP8_IGNORE := "E128,E221,E241,E251,E272,E501,E711,E731,W504"
-
-# E128: continuation line under-indented for visual indent
-# E221: multiple spaces before operator
-# E241: multiple spaces after ':'
-# E251: multiple spaces around keyword/parameter equals
-# E272: multiple spaces before keyword
-# E501: line length 79 per default
-# E711: comparison to None should be 'if cond is None:' (SQLAlchemy's filter syntax requires this ignore!)
-# E731: do not assign a lambda expression, use a def
-# W504: W504 line break after binary operator
+PYTHON := $(VENV)/bin/python
+PIP := $(VENV)/bin/pip
+FLASK := $(VENV)/bin/flask
+YAPF := $(VENV)/bin/yapf
+ISORT := $(VENV)/bin/isort
+NOSE := $(VENV)/bin/nose2
+PYLINT := $(VENV)/bin/pylint
 
 
-# Colors
-RESET := $(shell tput sgr0)
-RED := $(shell tput setaf 1)
-GREEN := $(shell tput setaf 2)
+all: help
 
-# Versions
-ifndef USE_PYTHON3
-		override USE_PYTHON3 = 0
-endif
-
-ifeq ($(USE_PYTHON3), 1)
-		PYTHON_VERSION := 3.8.3
-build/python: local/bin/python3.8
-		mkdir -p build && touch build/python;
-else
-		PYTHON_VERSION := $(shell python2 --version 2>&1 | cut -d ' ' -f 2 | cut -d '.' -f 1,2)
-build/python:
-		mkdir -p build && touch build/python;
-endif
-PYTHONPATH ?= .venv/lib/python${PYTHON_VERSION}/site-packages:/usr/lib64/python${PYTHON_VERSION}/site-packages
-
-
-PYTHON_BINDIR := $(shell dirname $(PYTHON_CMD))
-PYTHONHOME :=$(shell eval "cd $(PYTHON_BINDIR); pwd; cd > /dev/null")
-SYSTEM_PYTHON_CMD := $(CURRENT_DIR)/local/bin/python3
-
-.PHONY: python
-python: build/python
-		@echo "Python installed"
-
-local/bin/python3.8:
-		mkdir -p $(CURRENT_DIRECTORY)/local;
-		curl -z $(CURRENT_DIRECTORY)/local/Python-$(PYTHON_VERSION).tar.xz \
-				https://www.python.org/ftp/python/$(PYTHON_VERSION)/Python-$(PYTHON_VERSION).tar.xz \
-				-o $(CURRENT_DIRECTORY)/local/Python-$(PYTHON_VERSION).tar.xz;
-		cd $(CURRENT_DIRECTORY)/local && tar -xf Python-$(PYTHON_VERSION).tar.xz && Python-$(PYTHON_VERSION)/configure
 
 .PHONY: help
 help:
 	@echo "Usage: make <target>"
 	@echo
 	@echo "Possible targets:"
-	@echo "- user               Build the user specific version of the app"
-	@echo "- all                Build the app. Set USE_PYTHON3 to 1 to build with Python 3"
-	@echo "- serve              Serve the application with pserve"
-	@echo "- shell              Enter interactive shell with app loaded in the background"
-	@echo "- test               Launch the tests (no e2e tests)"
-	@echo "- lint               Run the linter"
-	@echo "- autolint           Run the autolinter"
-	@echo "- deploybranch       Deploy current branch to dev (must be pushed before hand)"
-	@echo "- deploybranchint    Deploy current branch to dev and int (must be pushed before hand)"
-	@echo "- deploybranchdemo   Deploy current branch to dev and demo (must be pushed before hand)"
-	@echo "- deletebranch       List deployed branches or delete a deployed branch (BRANCH_TO_DELETE=...)"
-	@echo "- deploydev          Deploys master to dev (SNAPSHOT=true to also create a snapshot)"
-	@echo "- deployint          Deploys a snapshot to integration (SNAPSHOT=201512021146)"
-	@echo "- deployprod         Deploys a snapshot to production (SNAPSHOT=201512021146)"
-	@echo "- clean              Remove generated files"
-	@echo "- cleanall           Remove all the build artefacts"
-	@echo
-	@echo "Variables:"
-	@echo "APACHE_ENTRY_PATH:   ${APACHE_ENTRY_PATH}"
-	@echo "API_URL:             ${API_URL}"
-	@echo "BRANCH_STAGING:      ${BRANCH_STAGING}"
-	@echo "GIT_BRANCH:          ${GIT_BRANCH}"
-	@echo "SERVER_PORT:         ${SERVER_PORT}"
-	@echo "USE_PYTHON3:         ${USE_PYTHON3}"
-	@echo
+	@echo -e " \033[1mSetup TARGETS\033[0m "
+	@echo "- setup              Create the python virtual environment with developper tools"
+	@echo "- ci                 Create the python virtual environment and install requirements based on the Pipfile.lock"
+	@echo -e " \033[1mFORMATING, LINTING AND TESTING TOOLS TARGETS\033[0m "
+	@echo "- format             Format the python source code"
+	@echo "- ci-check-format    Format the python source code and check if any files has changed. This is meant to be used by the CI."
+	@echo "- lint               Lint the python source code"
+	@echo "- format-lint        Format and lint the python source code"
+	@echo "- test               Run the tests"
+	@echo -e " \033[1mLOCAL SERVER TARGETS\033[0m "
+	@echo "- serve              Run the project using the flask debug server. Port can be set by Env variable HTTP_PORT (default: 5000)"
+	@echo "- gunicornserve      Run the project using the gunicorn WSGI server. Port can be set by Env variable DEBUG_HTTP_PORT (default: 5000)"
+	@echo -e " \033[1mDocker TARGETS\033[0m "
+	@echo "- dockerlogin        Login to the AWS ECR registery for pulling/pushing docker images"
+	@echo "- dockerbuild        Build the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG)) using the gunicorn WSGI server inside a container"
+	@echo "- dockerpush         Build and push the project localy (with tag := $(DOCKER_IMG_LOCAL_TAG))"
+	@echo "- dockerrun          Run the project using the gunicorn WSGI server inside a container (exposed port: 5000)"
+	@echo "- shutdown           Stop the aforementioned container"
+	@echo -e " \033[1mCLEANING TARGETS\033[0m "
+	@echo "- clean              Clean genereated files"
+	@echo "- clean_venv         Clean python venv"
 
 
-.PHONY: user
-user:
-	. ./$(USER_SOURCE) && make all
+# Build targets. Calling setup is all that is needed for the local files to be installed as needed.
 
-.PHONY: all
-all: setup templates lint fixrights test
+.PHONY: setup
+setup:
+	mkdir -p $(LOGS_DIR)
+	pipenv install --dev
+	pipenv shell
 
-setup: .venv .venv/hooks
 
-templates: .venv/last-version apache/wsgi.conf development.ini production.ini
+.PHONY: ci
+ci:
+	# Create virtual env with all packages for development using the Pipfile.lock
+	pipenv sync --dev
 
-.PHONY: dev
-dev:
-	. ./rc_dev && make all
 
-.PHONY: int
-int:
-	. ./rc_int && make all
+# linting target, calls upon yapf to make sure your code is easier to read and respects some conventions.
 
-.PHONY: prod
-prod:
-	. ./rc_prod && make all
+.PHONY: format
+format:
+	$(YAPF) -p -i --style .style.yapf $(PYTHON_FILES)
+	$(ISORT) $(PYTHON_FILES)
 
-.PHONY: serve
-serve:
-	PYTHONPATH=${PYTHONPATH} ${PSERVE_CMD} development.ini --reload
+.PHONY: ci-check-format
+ci-check-format: format
+	@if [[ -n `git status --porcelain` ]]; then \
+	 	>&2 echo "ERROR: the following files are not formatted correctly:"; \
+		>&2 git status --porcelain; \
+		exit 1; \
+	fi
 
-.PHONY: shell
-shell:
-	PYTHONPATH=${PYTHONPATH} ${PSHELL_CMD} development.ini
-
-.PHONY: testunit
-testunit:
-	PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/functional
-
-.PHONY: testintegration
-testintegration:
-	PYTHONPATH=${PYTHONPATH} ${NOSE_CMD} alti/tests/integration
-
-.PHONY: test
-test: testunit testintegration
 
 .PHONY: lint
 lint:
-	@echo "${GREEN}Linting python files...${RESET}";
-	${FLAKE8_CMD} --ignore=${PEP8_IGNORE} $(PYTHON_FILES) && echo ${RED}
+	$(PYLINT) $(PYTHON_FILES)
 
-.PHONY: autolint
-autolint:
-	@echo "${GREEN}Auto correction of python files...${RESET}";
-	${AUTOPEP8_CMD} --in-place --aggressive --aggressive --verbose --ignore=${PEP8_IGNORE} $(PYTHON_FILES)
 
-.PHONY: deploybranch
-deploybranch:
-	@echo "${GREEN}Deploying branch $(GIT_BRANCH) to dev...${RESET}";
-	./scripts/deploybranch.sh
+.PHONY: format-lint
+format-lint: format lint
 
-.PHONY: deletebranch
-deletebranch:
-	./scripts/delete_branch.sh $(BRANCH_TO_DELETE)
 
-.PHONY: deploybranchint
-deploybranchint:
-	@echo "${GREEN}Deploying branch $(GIT_BRANCH) to dev and int...${RESET}";
-	./scripts/deploybranch.sh int
+# Test target
 
-.PHONY: deploybranchdemo
-deploybranchdemo:
-	@echo "${GREEN}Deploying branch $(GIT_BRANCH) to dev and demo...${RESET}";
-	./scripts/deploybranch.sh demo
+.PHONY: test
+test:
+	mkdir -p $(TEST_REPORT_DIR)
+	DTM_BASE_PATH=$(DTM_BASE_PATH) $(NOSE) \
+		-c tests/unittest.cfg \
+		--verbose \
+		--junit-xml-path $(TEST_REPORT_DIR)/$(TEST_REPORT_FILE) \
+		-s tests/
 
-# Remove when ready to be merged
-.PHONY: deploydev
-deploydev:
-	@if test "$(SNAPSHOT)" = "true"; \
-	then \
-		scripts/deploydev.sh -s; \
-	else \
-		scripts/deploydev.sh; \
-	fi
 
-.PHONY: deployint
-deployint:
-	scripts/deploysnapshot.sh $(SNAPSHOT) int $(NO_TESTS) $(DEPLOYCONFIG)
+# Serve targets. Using these will run the application on your local machine. You can either serve with a wsgi front (like it would be within the container), or without.
 
-.PHONY: deployprod
-deployprod:
-	scripts/deploysnapshot.sh $(SNAPSHOT) prod $(NO_TESTS) $(DEPLOYCONFIG)
+.PHONY: serve
+serve:
+	LOGS_DIR=$(LOGS_DIR) DTM_BASE_PATH=$(DTM_BASE_PATH) FLASK_APP=$(subst -,_,$(SERVICE_NAME)) FLASK_DEBUG=1 $(FLASK) run \
+	--host=0.0.0.0 \
+	--port=$(HTTP_PORT)
 
-.PHONY: deploydemo
-deploydemo:
-	scritps/deploysnapshot.sh $(SNAPSHOT) demo
 
-rc_branch.mako:
-	@echo "${GREEN}Branch has changed${RESET}";
-rc_branch: rc_branch.mako
-	@echo "${GREEN}Creating branch template...${RESET}"
-	${MAKO_CMD} \
-		--var "git_branch=$(GIT_BRANCH)" \
-		--var "deploy_target=$(DEPLOY_TARGET)" \
-		--var "branch_staging=$(BRANCH_STAGING)" $< > $@
+.PHONY: gunicornserve
+gunicornserve:
+	LOGS_DIR=$(LOGS_DIR) DTM_BASE_PATH=$(DTM_BASE_PATH) $(PYTHON) wsgi.py
 
-deploy/deploy-branch.cfg.in:
-	@echo "${GREEN]}Template file deploy/deploy-branch.cfg.in has changed${RESET}";
-deploy/deploy-branch.cfg: deploy/deploy-branch.cfg.in
-	@echo "${GREEN}Creating deploy/deploy-branch.cfg...${RESET}";
-	${MAKO_CMD} --var "git_branch=$(GIT_BRANCH)" $< > $@
 
-deploy/conf/00-branch.conf.in:
-	@echo "${GREEN}Templat file deploy/conf/00-branch.conf.in has changed${RESET}";
-deploy/conf/00-branch.conf: deploy/conf/00-branch.conf.in
-	@echo "${GREEN}Creating deploy/conf/00-branch.conf...${RESET}"
-	${MAKO_CMD} --var "git_branch=$(GIT_BRANCH)" $< > $@
+# Docker related functions.
 
-apache/application.wsgi.mako:
-	@echo "${GREEN}Template file apache/application.wsgi.mako has changed${RESET}";
-apache/application.wsgi: apache/application.wsgi.mako
-	@echo "${GREEN}Creating apache/application.wsgi...${RESET}";
-	${MAKO_CMD} \
-		--var "current_directory=$(CURRENT_DIRECTORY)" \
-		--var "apache_base_path=$(APACHE_BASE_PATH)" \
-		--var "modwsgi_config=$(MODWSGI_CONFIG)" $< > $@
+.PHONY: dockerlogin
+dockerlogin:
+	aws --profile swisstopo-bgdi-builder ecr get-login-password --region $(AWS_DEFAULT_REGION) | docker login --username AWS --password-stdin $(DOCKER_REGISTRY)
 
-apache/wsgi.conf.mako:
-	@echo "${GREEN}Template file apache/wsgi.conf.mako has changed${RESET}";
-apache/wsgi.conf: apache/wsgi.conf.mako apache/application.wsgi
-	@echo "${GREEN}Creating apache/wsgi.conf...${RESET}";
-	${MAKO_CMD} \
-		--var "apache_entry_path=$(APACHE_ENTRY_PATH)" \
-		--var "apache_base_path=$(APACHE_BASE_PATH)" \
-		--var "branch_staging=$(BRANCH_STAGING)" \
-		--var "git_branch=$(GIT_BRANCH)" \
-		--var "current_directory=$(CURRENT_DIRECTORY)" \
-		--var "modwsgi_user=$(MODWSGI_USER)" \
-		--var "wsgi_threads=$(WSGI_THREADS)" \
-		--var "wsgi_processes=$(WSGI_PROCESSES)" \
-		--var "wsgi_app=$(WSGI_APP)" $< > $@
 
-development.ini.in:
-	@echo "${GREEN}Template file development.ini.in has changed${RESET}";
-development.ini: development.ini.in
-	@echo "${GREEN}Creating development.ini....${RESET}";
-	${MAKO_CMD} \
-		--var "app_version=$(VERSION)" \
-		--var "server_port=$(SERVER_PORT)" $< > $@
+.PHONY: dockerbuild
+dockerbuild:
+	docker build \
+		--build-arg GIT_HASH="$(GIT_HASH)" \
+		--build-arg GIT_BRANCH="$(GIT_BRANCH)" \
+		--build-arg GIT_DIRTY="$(GIT_DIRTY)" \
+		--build-arg VERSION="$(GIT_TAG)" \
+		--build-arg AUTHOR="$(AUTHOR)" \
+		-t $(DOCKER_IMG_LOCAL_TAG) .
 
-production.ini.in:
-	@echo "${GREEN}Template file production.ini.in has changed${RESET}";
-production.ini: production.ini.in
-	@echo "${GREEN}Creating production.ini...${RESET}";
-	${MAKO_CMD} \
-		--var "app_version=$(VERSION)" \
-		--var "server_port=$(SERVER_PORT)" \
-		--var "apache_entry_path=$(APACHE_ENTRY_PATH)" \
-		--var "apache_base_path=$(APACHE_BASE_PATH)" \
-		--var "current_directory=$(CURRENT_DIRECTORY)" \
-		--var "dtm_base_path=$(DTM_BASE_PATH)" \
-		--var "api_url=$(API_URL)" \
-		--var "http_proxy=$(HTTP_PROXY)" $< > $@
 
-.venv/hooks: .venv/bin/git-secrets ./scripts/install-git-hooks.sh
-	@echo "${GREEN}Installing git hooks${RESET}";
-	./scripts/install-git-hooks.sh
-	touch $@
+.PHONY: dockerpush
+dockerpush:
+	docker push $(DOCKER_IMG_LOCAL_TAG)
 
-requirements.txt:
-	@echo "${GREEN}File requirements.txt has changed${RESET}";
-.venv: requirements.txt
-	@echo "${GREEN}Setting up virtual environement...${RESET}";
-	@if [ ! -d $(INSTALL_DIRECTORY) ]; \
-	then \
-		virtualenv -p /usr/bin/python2.7 $(INSTALL_DIRECTORY); \
-		${PIP_CMD} install --upgrade pip==19.3.1 setuptools==44.0.0 --index-url ${PYPI_URL} ; \
-	fi
-	${PIP_CMD} install --index-url ${PYPI_URL} -e .
 
-.venv/bin/git-secrets: .venv
-	@echo "${GREEN}Installing git secrets${RESET}";
-	if [ ! -d ".git" ]; then git init; fi
-	rm -rf .venv/git-secrets
-	git clone https://github.com/awslabs/git-secrets .venv/git-secrets
-	cd .venv/git-secrets  && git reset --hard 635895a8d1b7c976ac9794cef420f8dc111a24d4 && make install PREFIX=..
-	(git config --local --get-regexp secret && git config --remove-section secrets) || cd
-	.venv/bin/git-secrets --register-aws
+.PHONY: dockerrun
+dockerrun:
+	LOGS_DIR=$(LOGS_DIR) DTM_BASE_PATH=. HTTP_PORT=$(HTTP_PORT) docker-compose up --build
 
-.venv/last-version::
-	mkdir -p $(dir $@)
-	test $(VERSION) != $(LAST_VERSION) && echo $(VERSION) > .venv/last-version || :
 
-fixrights:
-	@echo "${GREEN}Fixing rights...${RESET}";
-	chgrp -f -R geodata . || :
-	chmod -f -R g+srwX . || :
+.PHONY: shutdown
+shutdown:
+	HTTP_PORT=$(HTTP_PORT) docker-compose down
+
+
+# Clean targets
+
+.PHONY: clean_venv
+clean_venv:
+	pipenv --rm
+
 
 .PHONY: clean
-clean:
-	rm -rf production.ini
-	rm -rf development.ini
-	rm -rf apache/wsgi.conf
-	rm -rf apache/application.wsgi
-	rm -rf rc_branch
-	rm -rf deploy/deploy-branch.cfg
-	rm -rf deploy/conf/00-branch.conf
-
-.PHONY: cleanall
-cleanall: clean
-	rm -rf .venv
-	rm -rf *.egg-info
-
-.PHONY: generatetesttile
-generatetesttile:
-	$(SHELL) ./scripts/generate-test-data.sh
+clean: clean_venv
+	@# clean python cache files
+	find . -name __pycache__ -type d -print0 | xargs -I {} -0 rm -rf "{}"
+	rm -rf $(TEST_REPORT_DIR)
+	rm -rf $(LOGS_DIR)

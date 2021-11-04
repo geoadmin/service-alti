@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+Flask = "~=1.1.2"
+geojson = "~=2.5.0"
+gevent = "~=21.1.2"
+gunicorn = "~=20.1.0"
+regex = "~=2020.7.14"
+scipy = "~=1.5.2"
+Shapely = "~=1.7.0"
+Werkzeug = "~=1.0.1"
+PyYAML = "~=5.3.1"
+logging-utilities = "~=1.2.0"
+
+[dev-packages]
+mock = "~=4.0.2"
+nose2 = "*"
+pip-chill = "*"
+pylint = "*"
+pylint-flask = "*"
+yapf = "*"
+
+[requires]
+python_version = "3.7"
