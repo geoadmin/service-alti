@@ -59,9 +59,7 @@ def _create_profile(coordinates, z_values, output_to_json):
         profile = []
     else:
         # If the renderer is a csv file
-        profile = {'headers': ['Distance'], 'rows': []}
-        profile['headers'].append('Easting')
-        profile['headers'].append('Northing')
+        profile = {'headers': ['Distance', 'Altitude', 'Easting', 'Northing'], 'rows': []}
 
     for j, coord in enumerate(coordinates):
         if previous_coordinates is not None:
