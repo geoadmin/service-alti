@@ -40,7 +40,7 @@ def handle_exception(e):
     return make_error_msg(500, "Internal server error, please consult logs")
 
 
-@app.route('/checker', methods=['GET'])
+@app.route('/checker')
 def check():
     return make_response(jsonify({'success': True, 'message': 'OK', 'version': APP_VERSION}))
 
@@ -76,38 +76,38 @@ def height_route():
 
 @app.route('/profile.json', methods=['GET', 'POST'])
 def profile_json_route():
-    return __get_profile_from_helper(request, True)
+    return __get_profile_from_helper(True)
 
 
 @app.route('/profile.csv', methods=['GET', 'POST'])
 def profile_csv_route():
-    return __get_profile_from_helper(request, False)
+    return __get_profile_from_helper(False)
 
 
-def __get_profile_from_helper(request_object, output_to_json=True):
-    linestring = profile_arg_validation.read_linestring(request_object)
-    nb_points = profile_arg_validation.read_number_points(request_object)
-    is_custom_nb_points = profile_arg_validation.read_is_custom_nb_points(request_object)
-    spatial_reference = profile_arg_validation.read_spatial_reference(request_object, linestring)
-    offset = profile_arg_validation.read_offset(request_object)
+def __get_profile_from_helper(output_to_json=True):
+    linestring = profile_arg_validation.read_linestring()
+    nb_points = profile_arg_validation.read_number_points()
+    is_custom_nb_points = profile_arg_validation.read_is_custom_nb_points()
+    spatial_reference = profile_arg_validation.read_spatial_reference(linestring)
+    offset = profile_arg_validation.read_offset()
 
     # param only_requested_points, which is flag that when set to True will make
     # the profile with only the given points in geom (no filling points)
-    if 'only_requested_points' in request_object.args:
-        only_requested_points = bool(request_object.args.get('only_requested_points'))
+    if 'only_requested_points' in request.args:
+        only_requested_points = bool(request.args.get('only_requested_points'))
     else:
         only_requested_points = False
 
     # flag that define if filling has to be smart, aka to take resolution into account (so that
     # there's not two points closer than what the resolution is) or if points are placed without
     # care for that.
-    if 'smart_filling' in request_object.args:
-        smart_filling = bool(request_object.args.get('smart_filling'))
+    if 'smart_filling' in request.args:
+        smart_filling = bool(request.args.get('smart_filling'))
     else:
         smart_filling = False
 
-    if 'distinct_points' in request_object.args:
-        keep_points = bool(request_object.args.get('distinct_points'))
+    if 'distinct_points' in request.args:
+        keep_points = bool(request.args.get('distinct_points'))
     else:
         keep_points = False
 

@@ -29,7 +29,6 @@ class TestProfileValidation(unittest.TestCase):
     def setUp(self) -> None:
         service_alti.app.config['TESTING'] = True
         self.test_instance = service_alti.app.test_client()
-        self.headers = DEFAULT_HEADERS
 
     def assert_response(self, response, expected_status=200):
         self.assertIsNotNone(response)
@@ -47,7 +46,7 @@ class TestProfileValidation(unittest.TestCase):
                 'nb_points': nb_points,
                 'offset': offset
             },
-            headers=self.headers
+            headers=DEFAULT_HEADERS
         )
 
     @patch('app.routes.georaster_utils')
@@ -87,6 +86,17 @@ class TestProfileValidation(unittest.TestCase):
             mock_georaster_utils=mock_georaster_utils
         )
         self.assert_response(response)
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_validation_wrong_content_type(self, mock_georaster_utils):
+        prepare_mock(mock_georaster_utils)
+        response = self.test_instance.post(
+            '/rest/services/profile.json',
+            headers={
+                **DEFAULT_HEADERS, 'Content-Type': 'text/plain'
+            }
+        )
+        self.assert_response(response, expected_status=415)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_no_linestring(self, mock_georaster_utils):
