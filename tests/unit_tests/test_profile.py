@@ -166,6 +166,15 @@ class TestProfile(unittest.TestCase):
         self.assertEqual(resp.content_type, 'application/json')
 
     @patch('app.routes.georaster_utils')
+    def test_profile_lv03_layers_post_content_type_With_charset(self, mock_georaster_utils):
+        params = create_json(4, 21781)
+        self.headers['Content-Type'] = 'application/json; charset=utf-8'
+        resp = self.prepare_mock_and_test_post(
+            mock_georaster_utils=mock_georaster_utils, body=params, expected_status=200
+        )
+        self.assertEqual(resp.content_type, 'application/json')
+
+    @patch('app.routes.georaster_utils')
     def test_profile_lv03_layers_none(self, mock_georaster_utils):
         resp = self.prepare_mock_and_test_json_profile(
             mock_georaster_utils=mock_georaster_utils,
