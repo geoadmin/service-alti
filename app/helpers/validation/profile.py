@@ -5,6 +5,7 @@ import geojson
 from shapely.geometry import shape
 
 from flask import abort
+from flask import request
 
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
@@ -14,16 +15,16 @@ logger = logging.getLogger(__name__)
 max_content_length = 32 * 1024 * 1024  # 32MB
 
 
-def read_linestring(request_object):
+def read_linestring():
     # param geom, list of coordinates defining the line on which we want a profile
     linestring = None
     geom = None
     geom_to_shape = None
-    if 'geom' in request_object.args:
-        linestring = request_object.args.get('geom')
-    elif request_object.is_json and request_object.content_length is not None and \
-            0 < request_object.content_length < max_content_length:
-        linestring = request_object.get_data(as_text=True)  # read as text
+    if 'geom' in request.args:
+        linestring = request.args.get('geom')
+    elif request.is_json and request.content_length is not None and \
+            0 < request.content_length < max_content_length:
+        linestring = request.get_data(as_text=True)  # read as text
     if not linestring:
         abort(400, "No 'geom' given, cannot create a profile without coordinates")
     try:
@@ -51,12 +52,12 @@ def read_linestring(request_object):
     return geom_to_shape
 
 
-def read_number_points(request_object):
+def read_number_points():
     # number of points wanted in the final profile.
-    if 'nbPoints' in request_object.args:
-        nb_points = request_object.args.get('nbPoints')
-    elif 'nb_points' in request_object.args:
-        nb_points = request_object.args.get('nb_points')
+    if 'nbPoints' in request.args:
+        nb_points = request.args.get('nbPoints')
+    elif 'nb_points' in request.args:
+        nb_points = request.args.get('nb_points')
     else:
         nb_points = PROFILE_DEFAULT_AMOUNT_POINTS
 
@@ -78,20 +79,20 @@ def read_number_points(request_object):
     return nb_points
 
 
-def read_is_custom_nb_points(request_object):
+def read_is_custom_nb_points():
     # number of points wanted in the final profile.
-    return 'nbPoints' in request_object.args or 'nb_points' in request_object.args
+    return 'nbPoints' in request.args or 'nb_points' in request.args
 
 
-def read_spatial_reference(request_object, linestring):
+def read_spatial_reference(linestring):
     # param sr (or projection, sr meaning spatial reference), which Swiss projection to use.
     # Possible values are expressed in int, so value for EPSG:2056 (LV95) is 2056
     # and value for EPSG:21781 (LV03) is 21781. If this param is not present, it will be guessed
     # from the coordinates present in the param geom
-    if 'sr' in request_object.args:
-        spatial_reference = int(request_object.args.get('sr'))
-    elif 'projection' in request_object.args:
-        spatial_reference = int(request_object.args.get('projection'))
+    if 'sr' in request.args:
+        spatial_reference = int(request.args.get('sr'))
+    elif 'projection' in request.args:
+        spatial_reference = int(request.args.get('projection'))
     else:
         sr = srs_guesser(linestring)
         if sr is None:
@@ -106,12 +107,12 @@ def read_spatial_reference(request_object, linestring):
     return spatial_reference
 
 
-def read_offset(request_object):
+def read_offset():
     # param offset, used for smoothing. define how many coordinates should be included
     # in the window used for smoothing. If value is zero smoothing is disabled.
     offset = 3
-    if 'offset' in request_object.args:
-        offset = request_object.args.get('offset')
+    if 'offset' in request.args:
+        offset = request.args.get('offset')
         if offset.isdigit():
             offset = int(offset)
         else:
