@@ -27,7 +27,7 @@ Height and profile services for http://api3.geo.admin.ch
 
 ### Dependencies
 
-The **Make** targets assume you have **bash**, **curl**, **tar**, **docker** and **docker-compose** installed.
+The **Make** targets assume you have **bash**, **curl**, **python3.9**, **pipenv**, **docker** and **docker-compose** installed.
 
 ### Setting up to work
 
