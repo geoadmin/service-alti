@@ -70,7 +70,7 @@ def height_route():
         abort(400, "Query is out of bounds")
     alt = get_height(sr, lon, lat, georaster_utils)
     if alt is None:
-        abort(400, 'Requested coordinate ({},{}) out of bounds in sr {}'.format(lon, lat, sr))
+        abort(400, f'Requested coordinate ({lon},{lat}) out of bounds in sr {sr}')
     return {'height': str(alt)}
 
 

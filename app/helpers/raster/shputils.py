@@ -65,7 +65,7 @@ def read_record_poly_line(fp):
             curr_point = read_record_point(fp)
             data['parts'][part_index]['points'].append(curr_point)
             points_read += 1
-            if points_read == 0 or check_point == []:
+            if points_read == 0 or not check_point:
                 check_point = curr_point
             elif curr_point == check_point:
                 break

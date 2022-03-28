@@ -4,4 +4,4 @@ ALLOWED_DOMAINS = [
     r'.*\.swisstopo\.cloud',
 ]
 
-ALLOWED_DOMAINS_PATTERN = '({})'.format('|'.join(ALLOWED_DOMAINS))
+ALLOWED_DOMAINS_PATTERN = f"({'|'.join(ALLOWED_DOMAINS)})"
