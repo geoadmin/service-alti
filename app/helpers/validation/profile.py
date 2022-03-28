@@ -49,8 +49,8 @@ def read_linestring():
     if len(geom_to_shape.coords) > PROFILE_MAX_AMOUNT_POINTS:
         abort(
             413,
-            "Request Geometry contains too many points. Maximum number of points allowed: {}, "
-            "found {}".format(PROFILE_MAX_AMOUNT_POINTS, len(geom_to_shape.coords))
+            "Request Geometry contains too many points. Maximum number of points allowed: "
+            f"{PROFILE_MAX_AMOUNT_POINTS}, found {len(geom_to_shape.coords)}"
         )
     return geom_to_shape
 
@@ -76,8 +76,8 @@ def read_number_points():
     else:
         abort(
             400,
-            "Please provide a numerical value for the parameter 'NbPoints'/'nb_points'" +
-            " smaller than {}".format(PROFILE_MAX_AMOUNT_POINTS)
+            "Please provide a numerical value for the parameter 'NbPoints'/'nb_points'"
+            f" smaller than {PROFILE_MAX_AMOUNT_POINTS}"
         )
     return nb_points
 

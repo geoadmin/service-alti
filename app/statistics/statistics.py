@@ -4,7 +4,7 @@ DATA_FOLDER = "/var/local/geodata/bund/swisstopo/swissalti3d/hikingtime_analysis
 
 
 def load_json(filename):
-    with open(DATA_FOLDER + filename, "r") as json_file:
+    with open(DATA_FOLDER + filename, "r", encoding='utf-8') as json_file:
         if json_file is None:
             raise IOError("No metadata file found")
         json_data = json.load(json_file)

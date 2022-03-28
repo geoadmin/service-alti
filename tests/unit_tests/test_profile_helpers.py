@@ -58,9 +58,8 @@ class TestProfileHelpers(unittest.TestCase):
             len(response),
             PROFILE_DEFAULT_AMOUNT_POINTS,
             msg="with 'dumb' filling, there should be no regard to resolution and default amount "
-            "of points has to be used (default: {}, actual: {})".format(
-                PROFILE_DEFAULT_AMOUNT_POINTS, len(response)
-            )
+            f"of points has to be used (default: {PROFILE_DEFAULT_AMOUNT_POINTS}, "
+            f"actual: {len(response)})"
         )
         # checking values, it should switch to the next value every 20 iteration (point in profile)
         # i           : 0 .... 19 20 .... 39 40 .... etc ... 198 199 (exception with the last point)
@@ -72,9 +71,8 @@ class TestProfileHelpers(unittest.TestCase):
             self.assertEqual(
                 value,
                 expected_value,
-                msg="Wrong value at index {} (tile index: {}, expected: {}, actual: {}".format(
-                    i, value_index, expected_value, value
-                )
+                msg=f"Wrong value at index {i} (tile index: {value_index}, "
+                f"expected: {expected_value}, actual: {value}"
             )
 
     @patch('app.routes.georaster_utils')
@@ -85,7 +83,7 @@ class TestProfileHelpers(unittest.TestCase):
             11,
             msg="with 'smart' filling, there should be no more points than the resolution permits,"
             " in this case 20m of length with a resolution of 2m => 10points plus starting"
-            " points => 11 (was: {})".format(len(response))
+            f" points => 11 (was: {len(response)})"
         )
         # each values should be present only once, so we can test them in sequence (with the
         # exception of rounding, the value at index 9 should be rounded to the first digit :
@@ -96,9 +94,7 @@ class TestProfileHelpers(unittest.TestCase):
             self.assertEqual(
                 value,
                 expected,
-                msg="Values don't match at index {} (expected: {}, actual: {})".format(
-                    i, expected, value
-                )
+                msg=f"Values don't match at index {i} (expected: {expected}, actual: {value})"
             )
 
     @patch('app.routes.georaster_utils')
@@ -151,9 +147,8 @@ class TestProfileHelpers(unittest.TestCase):
         self.assertEqual(
             len(response),
             PROFILE_DEFAULT_AMOUNT_POINTS,
-            msg="There should be an exactly {} points in the profile, found {}".format(
-                PROFILE_DEFAULT_AMOUNT_POINTS, len(response)
-            )
+            msg=f"There should be an exactly {PROFILE_DEFAULT_AMOUNT_POINTS} points in the profile,"
+            f" found {len(response)}"
         )
         # there should be our middle point somewhere in the profile
         middle_point_found = False
