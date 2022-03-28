@@ -20,7 +20,7 @@ TEST_REPORT_FILE ?= nose2-junit.xml
 
 # Docker variables
 DOCKER_REGISTRY = 974517877189.dkr.ecr.eu-central-1.amazonaws.com
-DOCKER_IMG_LOCAL_TAG := $(DOCKER_REGISTRY)/$(SERVICE_NAME):local-$(USER)-$(GIT_HASH_SHORT)
+DOCKER_IMG_LOCAL_TAG = $(DOCKER_REGISTRY)/$(SERVICE_NAME):local-$(USER)-$(GIT_HASH_SHORT)
 
 # AWS variables
 AWS_DEFAULT_REGION = eu-central-1
@@ -170,7 +170,14 @@ dockerpush:
 
 .PHONY: dockerrun
 dockerrun:
-	LOGS_DIR=$(LOGS_DIR) DTM_BASE_PATH=. HTTP_PORT=$(HTTP_PORT) docker-compose up --build
+	docker run \
+		-it --rm --net=host \
+		-e HTTP_PORT=$(HTTP_PORT) \
+		-e LOGS_DIR=/logs \
+		-e DTM_BASE_PATH=/var/local/profile \
+		-v "${LOGS_DIR}":/logs \
+		-v "${DTM_BASE_PATH}":/var/local/profile \
+		$(DOCKER_IMG_LOCAL_TAG)
 
 
 .PHONY: shutdown
