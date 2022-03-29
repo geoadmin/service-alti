@@ -38,9 +38,7 @@ class TestProfile(unittest.TestCase):
 
     def __check_response(self, response, expected_status=200):
         self.assertIsNotNone(response)
-        self.assertEqual(
-            response.status_code, expected_status, msg="%s" % response.get_data(as_text=True)
-        )
+        self.assertEqual(response.status_code, expected_status, msg=response.get_data(as_text=True))
 
     def prepare_mock_and_test_post(self, mock_georaster_utils, body, expected_status):
         prepare_mock(mock_georaster_utils)
@@ -65,7 +63,7 @@ class TestProfile(unittest.TestCase):
             return response
         except Exception as e:
             logger.exception(e)
-            self.fail('Call to test_instance failed: %s' % (e))
+            self.fail(f'Call to test_instance failed: {e}')
 
     def get_csv_with_params(self, params):
         return self.test_instance.get(
@@ -93,7 +91,7 @@ class TestProfile(unittest.TestCase):
     def assert_response_contains(self, response, content):
         self.assertTrue(
             content in response.get_data(as_text=True),
-            msg="Response doesn't contain '%s' : '%s'" % (content, response.get_data(as_text=True))
+            msg=f"Response doesn't contain '{content}' : '{response.get_data(as_text=True)}'"
         )
 
     @patch('app.routes.georaster_utils')
@@ -160,6 +158,15 @@ class TestProfile(unittest.TestCase):
     def test_profile_lv03_layers_post(self, mock_georaster_utils):
         params = create_json(4, 21781)
         self.headers['Content-Type'] = 'application/json'
+        resp = self.prepare_mock_and_test_post(
+            mock_georaster_utils=mock_georaster_utils, body=params, expected_status=200
+        )
+        self.assertEqual(resp.content_type, 'application/json')
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_lv03_layers_post_content_type_With_charset(self, mock_georaster_utils):
+        params = create_json(4, 21781)
+        self.headers['Content-Type'] = 'application/json; charset=utf-8'
         resp = self.prepare_mock_and_test_post(
             mock_georaster_utils=mock_georaster_utils, body=params, expected_status=200
         )

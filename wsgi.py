@@ -33,7 +33,7 @@ if __name__ == '__main__':
         ALTI_WORKERS = (multiprocessing.cpu_count() * 2) + 1
     # Bind to 0.0.0.0 to let your app listen to all network interfaces.
     options = {
-        'bind': '%s:%s' % ('0.0.0.0', HTTP_PORT),
+        'bind': f'0.0.0.0:{HTTP_PORT}',
         'worker_class': 'gevent',
         'workers': ALTI_WORKERS,
         'access_log_format': '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(B)s Bytes '

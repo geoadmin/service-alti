@@ -39,7 +39,7 @@ def log_route():
 def wrap_in_callback_if_present(response):
     if "callback" in request.args:
         response.headers['Content-Type'] = 'application/javascript'
-        response.data = '%s(%s)' % (request.args.get('callback'), response.get_data(as_text=True))
+        response.data = f'{request.args.get("callback")}({response.get_data(as_text=True)})'
     return response
 
 

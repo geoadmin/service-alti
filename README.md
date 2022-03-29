@@ -2,8 +2,8 @@
 
 | Branch | Status |
 |--------|-----------|
-| develop | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUzFGKzRsYzJaVzdQVTd5VHR0Sng3VEo5dk9uMDYwNUZWcmtMV0pQaGdEcCtJZStxN0YyU3E2ZERxVThLK0lXczNEVG51c0RGSm9pU0NiNHA2L0lGZDdVPSIsIml2UGFyYW1ldGVyU3BlYyI6IjJ6cnVFeVo3V3RPMnJXZlMiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop) |
-| master | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiUzFGKzRsYzJaVzdQVTd5VHR0Sng3VEo5dk9uMDYwNUZWcmtMV0pQaGdEcCtJZStxN0YyU3E2ZERxVThLK0lXczNEVG51c0RGSm9pU0NiNHA2L0lGZDdVPSIsIml2UGFyYW1ldGVyU3BlYyI6IjJ6cnVFeVo3V3RPMnJXZlMiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
+| develop | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiK2FITjNBUmhiQ2J2cjdwM3hsT1ByeStsZkFSaVFHcTBzSDBrNSs3RDAwZm1penhYVzJiWVhmRHJaYmZDRm1Ed1MwdGIxVVYxc294dFA2aWhnTUtXRUFNPSIsIml2UGFyYW1ldGVyU3BlYyI6IkNXTmIrTlptaHBnVE5kQkMiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=develop) |
+| master | ![Build Status](https://codebuild.eu-central-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiK2FITjNBUmhiQ2J2cjdwM3hsT1ByeStsZkFSaVFHcTBzSDBrNSs3RDAwZm1penhYVzJiWVhmRHJaYmZDRm1Ed1MwdGIxVVYxc294dFA2aWhnTUtXRUFNPSIsIml2UGFyYW1ldGVyU3BlYyI6IkNXTmIrTlptaHBnVE5kQkMiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master) |
 
 - [Summary of the project](#summary-of-the-project)
 - [How to run locally](#how-to-run-locally)
@@ -27,7 +27,7 @@ Height and profile services for http://api3.geo.admin.ch
 
 ### Dependencies
 
-The **Make** targets assume you have **bash**, **curl**, **tar**, **docker** and **docker-compose** installed.
+The **Make** targets assume you have **bash**, **curl**, **python3.9**, **pipenv**, **docker** and **docker-compose** installed.
 
 ### Setting up to work
 

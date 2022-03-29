@@ -43,7 +43,7 @@ def dbfreader(f):
         raise ValueError(f'Invalid DBF terminator {terminator}')
 
     fields.insert(0, (b'DeletionFlag', b'C', 1, 0))
-    fmt = ''.join(['%ds' % fieldinfo[2] for fieldinfo in fields])
+    fmt = ''.join([f'{fieldinfo[2]}s' for fieldinfo in fields])
     fmtsiz = struct.calcsize(fmt)
     for i in range(numrec):
         record = struct.unpack(fmt, f.read(fmtsiz))
