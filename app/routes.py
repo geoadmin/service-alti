@@ -1,3 +1,4 @@
+import json
 import logging
 
 from shapely.geometry import Point
@@ -71,20 +72,35 @@ def height_route():
     alt = get_height(sr, lon, lat, georaster_utils)
     if alt is None:
         abort(400, f'Requested coordinate ({lon},{lat}) out of bounds in sr {sr}')
-    return {'height': str(alt)}
+    data = {'height': str(alt)}
+    if "callback" in request.args:
+        data = f'{request.args.get("callback")}({json.dumps(data, separators=(",", ":"))})'
+        response = make_response(data, 200, {'Content-Type': 'application/javascript'})
+    else:
+        response = make_response(data)
+    return response
 
 
 @app.route('/profile.json', methods=['GET', 'POST'])
 def profile_json_route():
-    return __get_profile_from_helper(True)
+    profile, status_code = _get_profile(True)
+    if "callback" in request.args:
+        data = f'{request.args.get("callback")}({json.dumps(profile, separators=(",", ":"))})'
+        response = make_response(data, {'Content-Type': 'application/javascript'})
+    else:
+        response = make_response(jsonify(profile))
+    return response, status_code
 
 
 @app.route('/profile.csv', methods=['GET', 'POST'])
 def profile_csv_route():
-    return __get_profile_from_helper(False)
+    if "callback" in request.args:
+        abort(400, 'callback parameter not supported')
+    profile, status_code = _get_profile(False)
+    return str(profile), status_code, {'Content-Type': 'text/csv'}
 
 
-def __get_profile_from_helper(output_to_json=True):
+def _get_profile(output_to_json):
     linestring = profile_arg_validation.read_linestring()
     nb_points = profile_arg_validation.read_number_points()
     is_custom_nb_points = profile_arg_validation.read_is_custom_nb_points()
@@ -122,18 +138,14 @@ def __get_profile_from_helper(output_to_json=True):
         output_to_json=output_to_json,
         georaster_utils=georaster_utils
     )
-    if output_to_json:
-        response = jsonify(result)
-    else:
-        response = str(result)
+
     # If profile calculation resulted in a lower number of point than requested (because there's no
     # need to add points closer to each other than the min resolution of 2m), we return HTTP 203 to
     # notify that nb_points couldn't be match.
     status_code = 200
     if is_custom_nb_points and len(result) < nb_points:
         status_code = 203
-    content_type = 'application/json' if output_to_json else 'text/csv'
-    return response, status_code, {'ContentType': content_type, 'Content-Type': content_type}
+    return result, status_code
 
 
 # if in debug, we add the route to the statistics page, otherwise it is not visible
