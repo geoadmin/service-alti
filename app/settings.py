@@ -14,3 +14,5 @@ DTM_BASE_PATH = Path(os.getenv('DTM_BASE_PATH', '/var/local/profile/'))
 PRELOAD_RASTER_FILES = strtobool(os.getenv('PRELOAD_RASTER_FILES', 'False'))
 
 TRAP_HTTP_EXCEPTIONS = True
+
+VALID_SRID = [21781, 2056]
