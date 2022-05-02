@@ -263,7 +263,7 @@ class TestHeight(unittest.TestCase):
             }
         )
         self.assertEqual(resp.content_type, 'application/javascript')
-        self.assertTrue('cb_({' in resp.get_data(as_text=True))
+        self.assertEqual('cb_({"height":"568.2"})', resp.get_data(as_text=True))
 
     @patch('app.routes.georaster_utils')
     def test_height_lv03_miss_northing(self, mock_georaster_utils):

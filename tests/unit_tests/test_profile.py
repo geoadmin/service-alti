@@ -28,54 +28,26 @@ from tests.unit_tests import prepare_mock
 logger = logging.getLogger(__name__)
 
 
-class TestProfile(unittest.TestCase):
-    # pylint: disable=too-many-public-methods
+class TestProfileBase(unittest.TestCase):
 
     def setUp(self) -> None:
         service_alti.app.config['TESTING'] = True
         self.test_instance = service_alti.app.test_client()
         self.headers = DEFAULT_HEADERS
 
-    def __check_response(self, response, expected_status=200):
+    def check_response(self, response, expected_status=200):
         self.assertIsNotNone(response)
         self.assertEqual(response.status_code, expected_status, msg=response.get_data(as_text=True))
 
-    def prepare_mock_and_test_post(self, mock_georaster_utils, body, expected_status):
-        prepare_mock(mock_georaster_utils)
-        response = self.post_with_body(body)
-        self.__check_response(response, expected_status)
-        return response
-
-    def prepare_mock_and_test_csv_profile(self, mock_georaster_utils, params, expected_status):
-        prepare_mock(mock_georaster_utils)
-        response = self.get_csv_with_params(params)
-        self.__check_response(response, expected_status)
-        return response
-
-    # pylint: disable=inconsistent-return-statements
-    def get_json_profile(self, params, expected_status=200):
-        # pylint: disable=broad-except
-        try:
-            response = self.test_instance.get(
-                ENDPOINT_FOR_JSON_PROFILE, query_string=params, headers=self.headers
-            )
-            self.__check_response(response, expected_status)
-            return response
-        except Exception as e:
-            logger.exception(e)
-            self.fail(f'Call to test_instance failed: {e}')
-
-    def get_csv_with_params(self, params):
-        return self.test_instance.get(
-            ENDPOINT_FOR_CSV_PROFILE, query_string=params, headers=self.headers
+    def assert_response_contains(self, response, content):
+        self.assertTrue(
+            content in response.get_data(as_text=True),
+            msg=f"Response doesn't contain '{content}' : '{response.get_data(as_text=True)}'"
         )
 
-    def post_with_body(self, body):
-        return self.test_instance.post(ENDPOINT_FOR_JSON_PROFILE, data=body, headers=self.headers)
 
-    def prepare_mock_and_test_json_profile(self, mock_georaster_utils, params, expected_status):
-        prepare_mock(mock_georaster_utils)
-        return self.get_json_profile(params=params, expected_status=expected_status)
+class TestProfileJson(TestProfileBase):
+    # pylint: disable=too-many-public-methods
 
     def verify_point_is_present(self, response, point, msg="point not present"):
         self.assertEqual(response.content_type, "application/json")
@@ -88,11 +60,31 @@ class TestProfile(unittest.TestCase):
         if not present:
             self.fail(msg)
 
-    def assert_response_contains(self, response, content):
-        self.assertTrue(
-            content in response.get_data(as_text=True),
-            msg=f"Response doesn't contain '{content}' : '{response.get_data(as_text=True)}'"
-        )
+    def prepare_mock_and_test_json_profile(self, mock_georaster_utils, params, expected_status):
+        prepare_mock(mock_georaster_utils)
+        return self.get_json_profile(params=params, expected_status=expected_status)
+
+    def prepare_mock_and_test_post(self, mock_georaster_utils, body, expected_status):
+        prepare_mock(mock_georaster_utils)
+        response = self.post_with_body(body)
+        self.check_response(response, expected_status)
+        return response
+
+    def post_with_body(self, body):
+        return self.test_instance.post(ENDPOINT_FOR_JSON_PROFILE, data=body, headers=self.headers)
+
+    def get_json_profile(self, params, expected_status=200):
+        # pylint: disable=broad-except
+        try:
+            response = self.test_instance.get(
+                ENDPOINT_FOR_JSON_PROFILE, query_string=params, headers=self.headers
+            )
+            self.check_response(response, expected_status)
+            return response
+        except Exception as e:
+            logger.exception(e)
+            self.fail(f'Call to test_instance failed: {e}')
+        return None
 
     @patch('app.routes.georaster_utils')
     def test_do_not_fail_when_no_origin(self, mock_georaster_utils):
@@ -307,38 +299,6 @@ class TestProfile(unittest.TestCase):
         self.assertGreaterEqual(PROFILE_MAX_AMOUNT_POINTS, len(resp.json))
 
     @patch('app.routes.georaster_utils')
-    def test_profile_lv03_csv_valid(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_csv_profile(
-            mock_georaster_utils=mock_georaster_utils,
-            params={'geom': create_json(4, 21781)},
-            expected_status=200
-        )
-        self.assertEqual(resp.content_type, 'text/csv')
-
-    @patch('app.routes.georaster_utils')
-    def test_profile_lv03_cvs_wrong_geom(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_csv_profile(
-            mock_georaster_utils=mock_georaster_utils, params={'geom': 'toto'}, expected_status=400
-        )
-        self.assert_response_contains(resp, 'Error loading geometry in JSON string')
-
-    @patch('app.routes.georaster_utils')
-    def test_profile_lv03_csv_misspelled_shape(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_csv_profile(
-            mock_georaster_utils=mock_georaster_utils,
-            params={'geom': LINESTRING_MISSPELLED_SHAPE},
-            expected_status=400
-        )
-        self.assert_response_contains(resp, 'Error loading geometry in JSON string')
-
-        resp = self.prepare_mock_and_test_csv_profile(
-            mock_georaster_utils=mock_georaster_utils,
-            params={'geom': LINESTRING_WRONG_SHAPE},
-            expected_status=400
-        )
-        self.assert_response_contains(resp, 'Error converting JSON to Shape')
-
-    @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_invalid_linestring(self, mock_georaster_utils):
         resp = self.prepare_mock_and_test_json_profile(
             mock_georaster_utils=mock_georaster_utils,
@@ -455,3 +415,60 @@ class TestProfile(unittest.TestCase):
             self.fail("All old elevation_models must be returned in alt for compatibility issue")
         if altitudes['DTM25'] != comb_value:
             self.fail("All values from all models should be taken from the new COMB layer")
+
+
+class TestProfileCsv(TestProfileBase):
+
+    def prepare_mock_and_test_csv_profile(self, mock_georaster_utils, params, expected_status):
+        prepare_mock(mock_georaster_utils)
+        response = self.get_csv_with_params(params)
+        self.check_response(response, expected_status)
+        return response
+
+    def get_csv_with_params(self, params):
+        return self.test_instance.get(
+            ENDPOINT_FOR_CSV_PROFILE, query_string=params, headers=self.headers
+        )
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_lv03_csv_valid(self, mock_georaster_utils):
+        resp = self.prepare_mock_and_test_csv_profile(
+            mock_georaster_utils=mock_georaster_utils,
+            params={'geom': create_json(4, 21781)},
+            expected_status=200
+        )
+        self.assertEqual(resp.content_type, 'text/csv')
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_lv03_cvs_wrong_geom(self, mock_georaster_utils):
+        resp = self.prepare_mock_and_test_csv_profile(
+            mock_georaster_utils=mock_georaster_utils, params={'geom': 'toto'}, expected_status=400
+        )
+        self.assert_response_contains(resp, 'Error loading geometry in JSON string')
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_lv03_csv_misspelled_shape(self, mock_georaster_utils):
+        resp = self.prepare_mock_and_test_csv_profile(
+            mock_georaster_utils=mock_georaster_utils,
+            params={'geom': LINESTRING_MISSPELLED_SHAPE},
+            expected_status=400
+        )
+        self.assert_response_contains(resp, 'Error loading geometry in JSON string')
+
+        resp = self.prepare_mock_and_test_csv_profile(
+            mock_georaster_utils=mock_georaster_utils,
+            params={'geom': LINESTRING_WRONG_SHAPE},
+            expected_status=400
+        )
+        self.assert_response_contains(resp, 'Error converting JSON to Shape')
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_lv03_csv_callback(self, mock_georaster_utils):
+        resp = self.prepare_mock_and_test_csv_profile(
+            mock_georaster_utils=mock_georaster_utils,
+            params={
+                'geom': create_json(4, 21781), 'callback': '_cb'
+            },
+            expected_status=400
+        )
+        self.assert_response_contains(resp, 'callback parameter not supported')

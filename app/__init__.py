@@ -35,14 +35,6 @@ def log_route():
     route_logger.debug('%s %s', request.method, request.path)
 
 
-@app.after_request
-def wrap_in_callback_if_present(response):
-    if "callback" in request.args:
-        response.headers['Content-Type'] = 'application/javascript'
-        response.data = f'{request.args.get("callback")}({response.get_data(as_text=True)})'
-    return response
-
-
 # Add CORS Headers to all request
 @app.after_request
 def add_cors_header(response):
