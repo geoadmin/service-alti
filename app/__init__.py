@@ -32,7 +32,7 @@ georaster_utils = GeoRasterUtils()
 @app.before_request
 def log_route():
     g.setdefault('request_started', time.time())
-    route_logger.info('%s %s', request.method, request.path)
+    route_logger.debug('%s %s', request.method, request.path)
 
 
 @app.after_request
