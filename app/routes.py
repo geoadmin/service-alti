@@ -1,5 +1,7 @@
+import csv
 import json
 import logging
+from io import StringIO
 
 from shapely.geometry import Point
 from werkzeug.exceptions import HTTPException
@@ -97,7 +99,17 @@ def profile_csv_route():
     if "callback" in request.args:
         abort(400, 'callback parameter not supported')
     profile, status_code = _get_profile(False)
-    return str(profile), status_code, {'Content-Type': 'text/csv'}
+    csv.register_dialect(
+        'semi-colon', delimiter=';', quoting=csv.QUOTE_ALL, quotechar='"', lineterminator='\r\n'
+    )
+    buffer = StringIO()
+    writer = csv.writer(buffer, dialect='semi-colon')
+    # write header
+    writer.writerow(profile['headers'])
+    writer.writerows(profile['rows'])
+    buffer.seek(0)
+
+    return buffer.read(), status_code, {'Content-Type': 'text/csv'}
 
 
 def _get_profile(output_to_json):
@@ -143,8 +155,11 @@ def _get_profile(output_to_json):
     # need to add points closer to each other than the min resolution of 2m), we return HTTP 203 to
     # notify that nb_points couldn't be match.
     status_code = 200
-    if is_custom_nb_points and len(result) < nb_points:
+    if output_to_json and is_custom_nb_points and len(result) < nb_points:
         status_code = 203
+    elif not output_to_json and is_custom_nb_points and len(result['rows']) < nb_points:
+        status_code = 203
+
     return result, status_code
 
 
