@@ -109,7 +109,7 @@ class TestProfileJson(TestProfileBase):
         self.assert_response_contains(
             resp,
             "Please provide a valid number for the spatial reference "
-            "system model 21781 or 2056"
+            "system model: 21781, 2056"
         )
 
     @patch('app.routes.georaster_utils')

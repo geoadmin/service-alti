@@ -10,6 +10,7 @@ from flask import request
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from app.helpers.validation import srs_guesser
+from app.helpers.validation import validate_sr
 
 logger = logging.getLogger(__name__)
 max_content_length = 32 * 1024 * 1024  # 32MB
@@ -107,11 +108,7 @@ def read_spatial_reference(linestring):
             abort(400, "No 'sr' given and cannot be guessed from 'geom'")
         spatial_reference = sr
 
-    if spatial_reference not in (21781, 2056):
-        abort(
-            400,
-            "Please provide a valid number for the spatial reference system model 21781 or 2056"
-        )
+    validate_sr(spatial_reference)
     return spatial_reference
 
 

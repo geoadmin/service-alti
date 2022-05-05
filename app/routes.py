@@ -22,8 +22,8 @@ from app.helpers.profile_helpers import get_profile
 from app.helpers.route import prefix_route
 from app.helpers.validation import bboxes
 from app.helpers.validation import srs_guesser
+from app.helpers.validation import validate_sr
 from app.helpers.validation.height import validate_lon_lat
-from app.helpers.validation.height import validate_sr
 # add route prefix
 from app.statistics.statistics import load_json
 from app.statistics.statistics import prepare_data
