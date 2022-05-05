@@ -109,7 +109,7 @@ class TestProfileJson(TestProfileBase):
         self.assert_response_contains(
             resp,
             "Please provide a valid number for the spatial reference "
-            "system model 21781 or 2056"
+            "system model: 21781, 2056"
         )
 
     @patch('app.routes.georaster_utils')
@@ -171,7 +171,7 @@ class TestProfileJson(TestProfileBase):
             params={'geom': '{"type":"LineString","coordinates":[[0,0],[0,0],[0,0]]}'},
             expected_status=400
         )
-        self.assert_response_contains(resp, "No 'sr' given and cannot be guessed from 'geom'")
+        self.assert_response_contains(resp, "Invalid LineString")
 
     def test_profile_lv03_layers_none2(self):
         resp = self.get_json_profile(
@@ -212,7 +212,7 @@ class TestProfileJson(TestProfileBase):
         resp = self.prepare_mock_and_test_json_profile(
             mock_georaster_utils=mock_georaster_utils, params={'geom': 'toto'}, expected_status=400
         )
-        self.assert_response_contains(resp, 'Error loading geometry in JSON string')
+        self.assert_response_contains(resp, 'Invalid geom parameter, must be a GEOJSON')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_wrong_shape(self, mock_georaster_utils):
@@ -221,7 +221,7 @@ class TestProfileJson(TestProfileBase):
             params={'geom': LINESTRING_WRONG_SHAPE},
             expected_status=400
         )
-        self.assert_response_contains(resp, 'Error converting JSON to Shape')
+        self.assert_response_contains(resp, 'geom parameter must be a LineString/Point GEOJSON')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_nb_points(self, mock_georaster_utils):
@@ -305,7 +305,7 @@ class TestProfileJson(TestProfileBase):
             params={'geom': '{"type":"LineString","coordinates":[[550050,206550]]}'},
             expected_status=400
         )
-        self.assert_response_contains(resp, 'Error converting JSON to Shape')
+        self.assert_response_contains(resp, 'Error converting GEOJSON to Shape')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_offset(self, mock_georaster_utils):
@@ -444,7 +444,7 @@ class TestProfileCsv(TestProfileBase):
         resp = self.prepare_mock_and_test_csv_profile(
             mock_georaster_utils=mock_georaster_utils, params={'geom': 'toto'}, expected_status=400
         )
-        self.assert_response_contains(resp, 'Error loading geometry in JSON string')
+        self.assert_response_contains(resp, 'Invalid geom parameter, must be a GEOJSON')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_csv_misspelled_shape(self, mock_georaster_utils):
@@ -453,14 +453,14 @@ class TestProfileCsv(TestProfileBase):
             params={'geom': LINESTRING_MISSPELLED_SHAPE},
             expected_status=400
         )
-        self.assert_response_contains(resp, 'Error loading geometry in JSON string')
+        self.assert_response_contains(resp, 'Invalid geom parameter, must be a GEOJSON')
 
         resp = self.prepare_mock_and_test_csv_profile(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': LINESTRING_WRONG_SHAPE},
             expected_status=400
         )
-        self.assert_response_contains(resp, 'Error converting JSON to Shape')
+        self.assert_response_contains(resp, 'geom parameter must be a LineString/Point GEOJSON')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_csv_callback(self, mock_georaster_utils):
