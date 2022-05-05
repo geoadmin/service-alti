@@ -14,6 +14,8 @@ from app.helpers.validation import srs_guesser
 logger = logging.getLogger(__name__)
 max_content_length = 32 * 1024 * 1024  # 32MB
 
+PROFILE_VALID_GEOMETRY_TYPES = ['LineString', 'Point']
+
 
 def read_linestring():
     # param geom, list of coordinates defining the line on which we want a profile
@@ -30,22 +32,25 @@ def read_linestring():
 
     if not linestring:
         abort(400, "No 'geom' given, cannot create a profile without coordinates")
+
     try:
         geom = geojson.loads(linestring, object_hook=geojson.GeoJSON.to_instance)
     except ValueError as e:
-        logger.exception(e)
-        abort(400, "Error loading geometry in JSON string")
+        logger.error('Invalid "geom" parameter, it is not geojson: %s', e)
+        abort(400, "Invalid geom parameter, must be a GEOJSON")
+
+    if geom.get('type') not in PROFILE_VALID_GEOMETRY_TYPES:
+        abort(400, f"geom parameter must be a {'/'.join(PROFILE_VALID_GEOMETRY_TYPES)} GEOJSON")
+
     try:
         geom_to_shape = shape(geom)
-    # pylint: disable=broad-except
-    except Exception as e:
-        logger.exception(e)
-        abort(400, "Error converting JSON to Shape")
-    try:
-        geom_to_shape.is_valid
-    # pylint: disable=broad-except
-    except Exception:
-        abort(400, "Invalid Linestring syntax")
+    except ValueError as e:
+        logger.error("Failed to transformed GEOJSON to shape: %s", e)
+        abort(400, "Error converting GEOJSON to Shape")
+
+    if not geom_to_shape.is_valid:
+        abort(400, f"Invalid {geom['type']}")
+
     if len(geom_to_shape.coords) > PROFILE_MAX_AMOUNT_POINTS:
         abort(
             413,
