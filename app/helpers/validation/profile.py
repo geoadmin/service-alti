@@ -113,7 +113,7 @@ def read_spatial_reference(linestring):
 def read_offset():
     # param offset, used for smoothing. define how many coordinates should be included
     # in the window used for smoothing. If value is zero smoothing is disabled.
-    offset = 3
+    offset = 0
     if 'offset' in request.args:
         offset = request.args.get('offset')
         if offset.isdigit():
