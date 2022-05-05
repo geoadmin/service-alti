@@ -35,6 +35,11 @@ LINESTRING_WRONG_SHAPE = '{"type":"OneShape","coordinates":[[550050,206550],[556
 LINESTRING_MISSPELLED_SHAPE = '{"type":"OneShape","coordinates":[[550050,206550],[556950,204150],' \
                               '[561050,207950]]'
 
+MULTILINESTRING_VALID_LV03 = '{"type": "MultiLineString", "coordinates": [' \
+                             f'[{POINT_1_LV03}, {POINT_3_LV03}, {POINT_2_LV03}],' \
+                             f'[{POINT_2_LV03}, {POINT_2_LV03}]' \
+                             ']}'
+
 
 def fake_get_height_for_coordinate(_, y):
     return VALUES_FOR_EACH_2M_STEP[int(int(y - 1199980) / 2) % 11]

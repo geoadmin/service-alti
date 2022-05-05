@@ -45,7 +45,9 @@ def read_linestring():
         geom_to_shape.is_valid
     # pylint: disable=broad-except
     except Exception:
-        abort(400, "Invalid Linestring syntax")
+        abort(400, "Invalid geometry syntax")
+    if geom_to_shape.geom_type != 'LineString':
+        abort(400, "Geometry must be a 'LineString'")
     if len(geom_to_shape.coords) > PROFILE_MAX_AMOUNT_POINTS:
         abort(
             413,

@@ -11,7 +11,7 @@ with patch('os.path.exists') as mock_exists:
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from tests import create_json
-from tests.unit_tests import DEFAULT_HEADERS
+from tests.unit_tests import DEFAULT_HEADERS, MULTILINESTRING_VALID_LV03
 from tests.unit_tests import prepare_mock
 
 logger = logging.getLogger(__name__)
@@ -62,6 +62,17 @@ class TestProfileValidation(unittest.TestCase):
             self.assert_response(response)
             profile = response.get_json()
             self.assertEqual(VALID_NB_POINTS, len(profile))
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_validation_invalid_geometry_type(self, mock_georaster_utils):
+        response = self.prepare_mock_and_test(
+            linestring=MULTILINESTRING_VALID_LV03,
+            spatial_reference=VALID_SPATIAL_REFERENCES[0],
+            nb_points=None,
+            offset=VALID_OFFSET,
+            mock_georaster_utils=mock_georaster_utils
+        )
+        self.assert_response(response, expected_status=400)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_valid_nb_points_none(self, mock_georaster_utils):
