@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+from distutils.util import strtobool
 from io import StringIO
 
 from shapely.geometry import Point
@@ -122,7 +123,7 @@ def _get_profile(output_to_json):
     # param only_requested_points, which is flag that when set to True will make
     # the profile with only the given points in geom (no filling points)
     if 'only_requested_points' in request.args:
-        only_requested_points = bool(request.args.get('only_requested_points'))
+        only_requested_points = strtobool(request.args.get('only_requested_points'))
     else:
         only_requested_points = False
 
@@ -130,12 +131,12 @@ def _get_profile(output_to_json):
     # there's not two points closer than what the resolution is) or if points are placed without
     # care for that.
     if 'smart_filling' in request.args:
-        smart_filling = bool(request.args.get('smart_filling'))
+        smart_filling = strtobool(request.args.get('smart_filling'))
     else:
         smart_filling = False
 
     if 'distinct_points' in request.args:
-        keep_points = bool(request.args.get('distinct_points'))
+        keep_points = strtobool(request.args.get('distinct_points'))
     else:
         keep_points = False
 
