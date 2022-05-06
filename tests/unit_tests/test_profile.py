@@ -224,7 +224,18 @@ class TestProfileJson(TestProfileBase):
         self.assert_response_contains(resp, 'geom parameter must be a LineString/Point GEOJSON')
 
     @patch('app.routes.georaster_utils')
-    def test_profile_lv03_json_nb_points(self, mock_georaster_utils):
+    def test_profile_lv03_json_small_line(self, mock_georaster_utils):
+
+        resp = self.prepare_mock_and_test_json_profile(
+            mock_georaster_utils=mock_georaster_utils,
+            params={'geom': LINESTRING_SMALL_LINE_LV03},
+            expected_status=200
+        )
+        self.assertEqual(resp.content_type, 'application/json')
+        self.assertLessEqual(len(resp.json), PROFILE_DEFAULT_AMOUNT_POINTS)
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_lv03_json_nb_points_smart_filling(self, mock_georaster_utils):
         # as 150 is too much for this profile (distance between points will be smaller than 2m
         # resolution of the altitude model), the service will return 203 and a smaller amount of
         # points
@@ -236,29 +247,33 @@ class TestProfileJson(TestProfileBase):
             expected_status=203
         )
         self.assertEqual(resp.content_type, 'application/json')
-        self.assertNotEqual(len(resp.json), 150)
+        self.assertLessEqual(len(resp.json), 150)
 
     @patch('app.routes.georaster_utils')
-    def test_profile_lv03_json_simplify_linestring(self, mock_georaster_utils):
+    def test_profile_lv03_json_fewer_nb_points_as_input_point(self, mock_georaster_utils):
+        input_points = 4
         resp = self.prepare_mock_and_test_json_profile(
             mock_georaster_utils=mock_georaster_utils,
             params={
-                'geom': create_json(4, 21781), 'nb_points': '2'
-            },
-            expected_status=200
-        )
-        self.assertEqual(resp.content_type, 'application/json')
-
-    @patch('app.routes.georaster_utils')
-    def test_profile_lv03_json_nb_points_smart_filling(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
-            mock_georaster_utils=mock_georaster_utils,
-            params={
-                'geom': LINESTRING_SMALL_LINE_LV03, 'smart_filling': True, 'nbPoints': '150'
+                'geom': create_json(input_points, 21781), 'nb_points': '2'
             },
             expected_status=203
         )
         self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(len(resp.json), input_points)
+
+    @patch('app.routes.georaster_utils')
+    def test_profile_lv03_json_only_input_point(self, mock_georaster_utils):
+        input_points = 4
+        resp = self.prepare_mock_and_test_json_profile(
+            mock_georaster_utils=mock_georaster_utils,
+            params={
+                'geom': create_json(input_points, 21781), 'only_requested_points': True
+            },
+            expected_status=200
+        )
+        self.assertEqual(resp.content_type, 'application/json')
+        self.assertEqual(len(resp.json), input_points)
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_nb_points_wrong(self, mock_georaster_utils):

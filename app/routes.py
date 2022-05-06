@@ -154,11 +154,11 @@ def _get_profile(output_to_json):
 
     # If profile calculation resulted in a lower number of point than requested (because there's no
     # need to add points closer to each other than the min resolution of 2m), we return HTTP 203 to
-    # notify that nb_points couldn't be match.
+    # notify that nb_points couldn't be match. Smartfilling can result in more points as expected.
     status_code = 200
-    if output_to_json and is_custom_nb_points and len(result) < nb_points:
+    if output_to_json and is_custom_nb_points and len(result) != nb_points:
         status_code = 203
-    elif not output_to_json and is_custom_nb_points and len(result['rows']) < nb_points:
+    elif not output_to_json and is_custom_nb_points and len(result['rows']) != nb_points:
         status_code = 203
 
     return result, status_code
