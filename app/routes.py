@@ -1,4 +1,8 @@
+import csv
+import json
 import logging
+from distutils.util import strtobool
+from io import StringIO
 
 from shapely.geometry import Point
 from werkzeug.exceptions import HTTPException
@@ -18,8 +22,8 @@ from app.helpers.profile_helpers import get_profile
 from app.helpers.route import prefix_route
 from app.helpers.validation import bboxes
 from app.helpers.validation import srs_guesser
+from app.helpers.validation import validate_sr
 from app.helpers.validation.height import validate_lon_lat
-from app.helpers.validation.height import validate_sr
 # add route prefix
 from app.statistics.statistics import load_json
 from app.statistics.statistics import prepare_data
@@ -71,20 +75,45 @@ def height_route():
     alt = get_height(sr, lon, lat, georaster_utils)
     if alt is None:
         abort(400, f'Requested coordinate ({lon},{lat}) out of bounds in sr {sr}')
-    return {'height': str(alt)}
+    data = {'height': str(alt)}
+    if "callback" in request.args:
+        data = f'{request.args.get("callback")}({json.dumps(data, separators=(",", ":"))})'
+        response = make_response(data, 200, {'Content-Type': 'application/javascript'})
+    else:
+        response = make_response(data)
+    return response
 
 
 @app.route('/profile.json', methods=['GET', 'POST'])
 def profile_json_route():
-    return __get_profile_from_helper(True)
+    profile, status_code = _get_profile(True)
+    if "callback" in request.args:
+        data = f'{request.args.get("callback")}({json.dumps(profile, separators=(",", ":"))})'
+        response = make_response(data, {'Content-Type': 'application/javascript'})
+    else:
+        response = make_response(jsonify(profile))
+    return response, status_code
 
 
 @app.route('/profile.csv', methods=['GET', 'POST'])
 def profile_csv_route():
-    return __get_profile_from_helper(False)
+    if "callback" in request.args:
+        abort(400, 'callback parameter not supported')
+    profile, status_code = _get_profile(False)
+    csv.register_dialect(
+        'semi-colon', delimiter=';', quoting=csv.QUOTE_ALL, quotechar='"', lineterminator='\r\n'
+    )
+    buffer = StringIO()
+    writer = csv.writer(buffer, dialect='semi-colon')
+    # write header
+    writer.writerow(profile['headers'])
+    writer.writerows(profile['rows'])
+    buffer.seek(0)
+
+    return buffer.read(), status_code, {'Content-Type': 'text/csv'}
 
 
-def __get_profile_from_helper(output_to_json=True):
+def _get_profile(output_to_json):
     linestring = profile_arg_validation.read_linestring()
     nb_points = profile_arg_validation.read_number_points()
     is_custom_nb_points = profile_arg_validation.read_is_custom_nb_points()
@@ -94,7 +123,7 @@ def __get_profile_from_helper(output_to_json=True):
     # param only_requested_points, which is flag that when set to True will make
     # the profile with only the given points in geom (no filling points)
     if 'only_requested_points' in request.args:
-        only_requested_points = bool(request.args.get('only_requested_points'))
+        only_requested_points = strtobool(request.args.get('only_requested_points'))
     else:
         only_requested_points = False
 
@@ -102,12 +131,12 @@ def __get_profile_from_helper(output_to_json=True):
     # there's not two points closer than what the resolution is) or if points are placed without
     # care for that.
     if 'smart_filling' in request.args:
-        smart_filling = bool(request.args.get('smart_filling'))
+        smart_filling = strtobool(request.args.get('smart_filling'))
     else:
         smart_filling = False
 
     if 'distinct_points' in request.args:
-        keep_points = bool(request.args.get('distinct_points'))
+        keep_points = strtobool(request.args.get('distinct_points'))
     else:
         keep_points = False
 
@@ -122,18 +151,17 @@ def __get_profile_from_helper(output_to_json=True):
         output_to_json=output_to_json,
         georaster_utils=georaster_utils
     )
-    if output_to_json:
-        response = jsonify(result)
-    else:
-        response = str(result)
+
     # If profile calculation resulted in a lower number of point than requested (because there's no
     # need to add points closer to each other than the min resolution of 2m), we return HTTP 203 to
-    # notify that nb_points couldn't be match.
+    # notify that nb_points couldn't be match. Smartfilling can result in more points as expected.
     status_code = 200
-    if is_custom_nb_points and len(result) < nb_points:
+    if output_to_json and is_custom_nb_points and len(result) != nb_points:
         status_code = 203
-    content_type = 'application/json' if output_to_json else 'text/csv'
-    return response, status_code, {'ContentType': content_type, 'Content-Type': content_type}
+    elif not output_to_json and is_custom_nb_points and len(result['rows']) != nb_points:
+        status_code = 203
+
+    return result, status_code
 
 
 # if in debug, we add the route to the statistics page, otherwise it is not visible

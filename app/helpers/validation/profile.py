@@ -10,9 +10,12 @@ from flask import request
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from app.helpers.validation import srs_guesser
+from app.helpers.validation import validate_sr
 
 logger = logging.getLogger(__name__)
 max_content_length = 32 * 1024 * 1024  # 32MB
+
+PROFILE_VALID_GEOMETRY_TYPES = ['LineString', 'Point']
 
 
 def read_linestring():
@@ -30,22 +33,25 @@ def read_linestring():
 
     if not linestring:
         abort(400, "No 'geom' given, cannot create a profile without coordinates")
+
     try:
         geom = geojson.loads(linestring, object_hook=geojson.GeoJSON.to_instance)
     except ValueError as e:
-        logger.exception(e)
-        abort(400, "Error loading geometry in JSON string")
+        logger.error('Invalid "geom" parameter, it is not geojson: %s', e)
+        abort(400, "Invalid geom parameter, must be a GEOJSON")
+
+    if geom.get('type') not in PROFILE_VALID_GEOMETRY_TYPES:
+        abort(400, f"geom parameter must be a {'/'.join(PROFILE_VALID_GEOMETRY_TYPES)} GEOJSON")
+
     try:
         geom_to_shape = shape(geom)
-    # pylint: disable=broad-except
-    except Exception as e:
-        logger.exception(e)
-        abort(400, "Error converting JSON to Shape")
-    try:
-        geom_to_shape.is_valid
-    # pylint: disable=broad-except
-    except Exception:
-        abort(400, "Invalid Linestring syntax")
+    except ValueError as e:
+        logger.error("Failed to transformed GEOJSON to shape: %s", e)
+        abort(400, "Error converting GEOJSON to Shape")
+
+    if not geom_to_shape.is_valid:
+        abort(400, f"Invalid {geom['type']}")
+
     if len(geom_to_shape.coords) > PROFILE_MAX_AMOUNT_POINTS:
         abort(
             413,
@@ -102,18 +108,14 @@ def read_spatial_reference(linestring):
             abort(400, "No 'sr' given and cannot be guessed from 'geom'")
         spatial_reference = sr
 
-    if spatial_reference not in (21781, 2056):
-        abort(
-            400,
-            "Please provide a valid number for the spatial reference system model 21781 or 2056"
-        )
+    validate_sr(spatial_reference)
     return spatial_reference
 
 
 def read_offset():
     # param offset, used for smoothing. define how many coordinates should be included
     # in the window used for smoothing. If value is zero smoothing is disabled.
-    offset = 3
+    offset = 0
     if 'offset' in request.args:
         offset = request.args.get('offset')
         if offset.isdigit():

@@ -2,7 +2,10 @@
 
 from shapely.geometry import Polygon
 
+from flask import abort
+
 from app.helpers.helpers import float_raise_nan
+from app.settings import VALID_SRID
 
 bboxes = {
     2056:
@@ -37,4 +40,14 @@ def srs_guesser(geom):
             if dtm_poly.contains(geom):
                 sr = epsg
                 break
+    return sr
+
+
+def validate_sr(sr):
+    if sr not in VALID_SRID:
+        abort(
+            400,
+            "Please provide a valid number for the spatial reference system model: "
+            f"{', '.join(map(str, VALID_SRID))}"
+        )
     return sr

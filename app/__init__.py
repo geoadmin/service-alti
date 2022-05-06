@@ -32,15 +32,7 @@ georaster_utils = GeoRasterUtils()
 @app.before_request
 def log_route():
     g.setdefault('request_started', time.time())
-    route_logger.info('%s %s', request.method, request.path)
-
-
-@app.after_request
-def wrap_in_callback_if_present(response):
-    if "callback" in request.args:
-        response.headers['Content-Type'] = 'application/javascript'
-        response.data = f'{request.args.get("callback")}({response.get_data(as_text=True)})'
-    return response
+    route_logger.debug('%s %s', request.method, request.path)
 
 
 # Add CORS Headers to all request
