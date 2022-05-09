@@ -165,7 +165,7 @@ class TestProfileValidation(unittest.TestCase):
         self.assert_response(response, expected_status=400)
 
     @patch('app.routes.georaster_utils')
-    def test_profile_validation_nb_points_not_int(self, mock_georaster_utils):
+    def test_profile_validation_invalid_nb_points(self, mock_georaster_utils):
         response = self.prepare_mock_and_test(
             linestring=create_json(2),
             spatial_reference=VALID_SPATIAL_REFERENCES[0],
@@ -174,6 +174,39 @@ class TestProfileValidation(unittest.TestCase):
             mock_georaster_utils=mock_georaster_utils
         )
         self.assert_response(response, expected_status=400)
+        self.assertEqual(
+            response.json['error']['message'],
+            'Please provide a numerical value for the parameter '
+            "'NbPoints'/'nb_points'"
+        )
+
+        response = self.prepare_mock_and_test(
+            linestring=create_json(2),
+            spatial_reference=VALID_SPATIAL_REFERENCES[0],
+            nb_points=0,
+            offset=VALID_OFFSET,
+            mock_georaster_utils=mock_georaster_utils
+        )
+        self.assert_response(response, expected_status=400)
+        self.assertEqual(
+            response.json['error']['message'],
+            'Please provide a numerical value for the parameter '
+            "'NbPoints'/'nb_points' greater or equal to 2"
+        )
+
+        response = self.prepare_mock_and_test(
+            linestring=create_json(2),
+            spatial_reference=VALID_SPATIAL_REFERENCES[0],
+            nb_points=-1,
+            offset=VALID_OFFSET,
+            mock_georaster_utils=mock_georaster_utils
+        )
+        self.assert_response(response, expected_status=400)
+        self.assertEqual(
+            response.json['error']['message'],
+            'Please provide a numerical value for the parameter '
+            "'NbPoints'/'nb_points' greater or equal to 2"
+        )
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_offset_not_int(self, mock_georaster_utils):
