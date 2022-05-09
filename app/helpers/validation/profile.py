@@ -70,16 +70,18 @@ def read_number_points():
     else:
         nb_points = PROFILE_DEFAULT_AMOUNT_POINTS
 
-    if (isinstance(nb_points, int) or nb_points.isdigit()) and int(nb_points) <= 1:
+    try:
+        nb_points = int(nb_points)
+    except ValueError:
+        abort(400, "Please provide a numerical value for the parameter 'NbPoints'/'nb_points'")
+
+    if nb_points <= 1:
         abort(
             400,
             "Please provide a numerical value for the parameter 'NbPoints'/'nb_points' greater "
             "or equal to 2"
         )
-    if (isinstance(nb_points, int) or
-        nb_points.isdigit()) and int(nb_points) <= PROFILE_MAX_AMOUNT_POINTS:
-        nb_points = int(nb_points)
-    else:
+    if nb_points > PROFILE_MAX_AMOUNT_POINTS:
         abort(
             400,
             "Please provide a numerical value for the parameter 'NbPoints'/'nb_points'"
