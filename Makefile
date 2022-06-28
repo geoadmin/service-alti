@@ -35,7 +35,8 @@ VENV := $(shell pipenv --venv)
 
 # default configuration
 HTTP_PORT ?= 5000
-DTM_BASE_PATH ?= $(CURRENT_DIR)
+# For the DTM_BASE_PATH use the one in development.bgdi.ch server as default
+DTM_BASE_PATH ?= /var/local/efs-dev/geodata/bund/swisstopo/
 LOGS_DIR ?= $(CURRENT_DIR)/logs
 
 # Commands
@@ -124,7 +125,7 @@ format-lint: format lint
 .PHONY: test
 test:
 	mkdir -p $(TEST_REPORT_DIR)
-	DTM_BASE_PATH=$(DTM_BASE_PATH) $(NOSE) \
+	DTM_BASE_PATH=$(CURRENT_DIR) $(NOSE) \
 		-c tests/unittest.cfg \
 		--verbose \
 		--junit-xml-path $(TEST_REPORT_DIR)/$(TEST_REPORT_FILE) \

@@ -1,7 +1,6 @@
 import csv
 import json
 import logging
-from distutils.util import strtobool
 from io import StringIO
 
 from shapely.geometry import Point
@@ -18,6 +17,7 @@ from app import app
 from app import georaster_utils
 from app.helpers import make_error_msg
 from app.helpers.height_helpers import get_height
+from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import get_profile
 from app.helpers.route import prefix_route
 from app.helpers.validation import bboxes
@@ -114,31 +114,26 @@ def profile_csv_route():
 
 
 def _get_profile(output_to_json):
-    linestring = profile_arg_validation.read_linestring()
-    nb_points = profile_arg_validation.read_number_points()
-    is_custom_nb_points = profile_arg_validation.read_is_custom_nb_points()
-    spatial_reference = profile_arg_validation.read_spatial_reference(linestring)
-    offset = profile_arg_validation.read_offset()
+    args = profile_arg_validation.get_args()
+    linestring = profile_arg_validation.read_linestring(args)
+    nb_points = profile_arg_validation.read_number_points(args)
+    is_custom_nb_points = True
+    if nb_points is None:
+        nb_points = PROFILE_DEFAULT_AMOUNT_POINTS
+        is_custom_nb_points = False
+    spatial_reference = profile_arg_validation.read_spatial_reference(linestring, args)
+    offset = profile_arg_validation.read_offset(args)
 
     # param only_requested_points, which is flag that when set to True will make
     # the profile with only the given points in geom (no filling points)
-    if 'only_requested_points' in request.args:
-        only_requested_points = strtobool(request.args.get('only_requested_points'))
-    else:
-        only_requested_points = False
+    only_requested_points = profile_arg_validation.read_only_requested_points(args)
 
     # flag that define if filling has to be smart, aka to take resolution into account (so that
     # there's not two points closer than what the resolution is) or if points are placed without
     # care for that.
-    if 'smart_filling' in request.args:
-        smart_filling = strtobool(request.args.get('smart_filling'))
-    else:
-        smart_filling = False
+    smart_filling = profile_arg_validation.read_smart_filling(args)
 
-    if 'distinct_points' in request.args:
-        keep_points = strtobool(request.args.get('distinct_points'))
-    else:
-        keep_points = False
+    keep_points = profile_arg_validation.read_distinct_points(args)
 
     result = get_profile(
         geom=linestring,
