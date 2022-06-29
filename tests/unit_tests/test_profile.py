@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
-import unittest
 
 from mock import patch
-
-with patch('os.path.exists') as mock_exists:
-    mock_exists.return_value = True
-    import app as service_alti
 
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from tests import create_json
-from tests.unit_tests import DEFAULT_HEADERS
 from tests.unit_tests import ENDPOINT_FOR_CSV_PROFILE
 from tests.unit_tests import ENDPOINT_FOR_JSON_PROFILE
 from tests.unit_tests import LINESTRING_MISSPELLED_SHAPE
@@ -24,20 +18,17 @@ from tests.unit_tests import POINT_1_LV03
 from tests.unit_tests import POINT_2_LV03
 from tests.unit_tests import POINT_3_LV03
 from tests.unit_tests import prepare_mock
+from tests.unit_tests.base import BaseRouteTestCase
 
 logger = logging.getLogger(__name__)
 
 
-class TestProfileBase(unittest.TestCase):
+class TestProfileBase(BaseRouteTestCase):
 
-    def setUp(self) -> None:
-        service_alti.app.config['TESTING'] = True
-        self.test_instance = service_alti.app.test_client()
-        self.headers = DEFAULT_HEADERS
-
-    def check_response(self, response, expected_status=200):
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, expected_status, msg=response.get_data(as_text=True))
+    def check_response(self, response, expected_status=200, expected_allowed_methods=None):
+        if expected_allowed_methods is None:
+            expected_allowed_methods = ['GET', 'HEAD', 'POST', 'OPTIONS']
+        super().check_response(response, expected_status, expected_allowed_methods)
 
     def assert_response_contains(self, response, content):
         self.assertTrue(

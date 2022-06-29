@@ -1,14 +1,9 @@
 # -*- coding: utf-8 -*-
-import unittest
 
 from mock import Mock
 from mock import patch
 
-with patch('os.path.exists') as mock_exists:
-    mock_exists.return_value = True
-    import app as service_alti
-
-from tests.unit_tests import DEFAULT_HEADERS
+from tests.unit_tests.base import BaseRouteTestCase
 
 EAST_LV03, NORTH_LV03 = 632510.0, 170755.0
 # LV95
@@ -17,13 +12,8 @@ EAST_LV95, NORTH_LV95 = 2632510.0, 1170755.0
 HEIGHT_DTM2, HEIGHT_DTM25 = 568.2, 567.6
 
 
-class TestHeight(unittest.TestCase):
+class TestHeight(BaseRouteTestCase):
     # pylint: disable=too-many-public-methods
-
-    def setUp(self) -> None:
-        service_alti.app.config['TESTING'] = True
-        self.test_instance = service_alti.app.test_client()
-        self.headers = DEFAULT_HEADERS
 
     def __test_get(self, params):
         return self.test_instance.get(
@@ -39,8 +29,7 @@ class TestHeight(unittest.TestCase):
         raster_mock.get_height_for_coordinate.return_value = return_value
         mock_georaster_utils.get_raster.return_value = raster_mock
         response = self.__test_get(params)
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, expected_status, msg=response.data)
+        self.check_response(response, expected_status)
         return response
 
     def __assert_height(self, response, expected_height):
