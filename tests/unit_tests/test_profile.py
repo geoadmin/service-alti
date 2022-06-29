@@ -18,7 +18,7 @@ from tests.unit_tests import POINT_1_LV03
 from tests.unit_tests import POINT_2_LV03
 from tests.unit_tests import POINT_3_LV03
 from tests.unit_tests import prepare_mock
-from tests.unit_tests.test_base import BaseRouteTestCase
+from tests.unit_tests.base import BaseRouteTestCase
 
 logger = logging.getLogger(__name__)
 

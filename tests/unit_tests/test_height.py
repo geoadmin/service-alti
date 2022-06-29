@@ -3,7 +3,7 @@
 from mock import Mock
 from mock import patch
 
-from tests.unit_tests.test_base import BaseRouteTestCase
+from tests.unit_tests.base import BaseRouteTestCase
 
 EAST_LV03, NORTH_LV03 = 632510.0, 170755.0
 # LV95

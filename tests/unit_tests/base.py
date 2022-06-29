@@ -6,11 +6,7 @@ with patch('os.path.exists') as mock_exists:
     mock_exists.return_value = True
     import app as service_alti
 
-from flask.helpers import url_for
-
-from tests.unit_tests import DEFAULT_EXTERN_HEADERS
 from tests.unit_tests import DEFAULT_HEADERS
-from tests.unit_tests import DEFAULT_INTERN_HEADERS
 
 
 class BaseRouteTestCase(unittest.TestCase):
@@ -44,18 +40,3 @@ class BaseRouteTestCase(unittest.TestCase):
         )
         self.assertIn('Access-Control-Allow-Headers', response.headers)
         self.assertEqual(response.headers['Access-Control-Allow-Headers'], '*')
-
-
-class CheckerTests(BaseRouteTestCase):
-
-    def test_checker_intern_origin(self):
-        response = self.test_instance.get(url_for('check'), headers=DEFAULT_INTERN_HEADERS)
-        self.check_response(response)
-        self.assertNotIn('Cache-Control', response.headers)
-        self.assertEqual(response.content_type, "application/json")
-
-    def test_checker_extern_origin(self):
-        response = self.test_instance.get(url_for('check'), headers=DEFAULT_EXTERN_HEADERS)
-        self.check_response(response)
-        self.assertNotIn('Cache-Control', response.headers)
-        self.assertEqual(response.content_type, "application/json")
