@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 import logging
-import unittest
 
 from mock import patch
-
-with patch('os.path.exists') as mock_exists:
-    mock_exists.return_value = True
-    import app as service_alti
 
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from tests import create_json
 from tests.unit_tests import DEFAULT_HEADERS
 from tests.unit_tests import prepare_mock
+from tests.unit_tests.test_profile import TestProfileBase
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +20,7 @@ VALID_NB_POINTS = 100
 INVALID_OFFSET = "hello world"
 
 
-class TestProfileValidation(unittest.TestCase):
-
-    def setUp(self) -> None:
-        service_alti.app.config['TESTING'] = True
-        self.test_instance = service_alti.app.test_client()
-
-    def assert_response(self, response, expected_status=200):
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, expected_status, msg=response.data)
+class TestProfileValidation(TestProfileBase):
 
     def prepare_mock_and_test(
         self, linestring, spatial_reference, nb_points, offset, mock_georaster_utils
@@ -59,7 +47,7 @@ class TestProfileValidation(unittest.TestCase):
                 offset=VALID_OFFSET,
                 mock_georaster_utils=mock_georaster_utils
             )
-            self.assert_response(response)
+            self.check_response(response)
             profile = response.get_json()
             self.assertEqual(VALID_NB_POINTS, len(profile))
 
@@ -72,7 +60,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response)
+        self.check_response(response)
         profile = response.get_json()
         self.assertEqual(PROFILE_DEFAULT_AMOUNT_POINTS, len(profile))
 
@@ -85,7 +73,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=None,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response)
+        self.check_response(response)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_wrong_content_type(self, mock_georaster_utils):
@@ -96,7 +84,7 @@ class TestProfileValidation(unittest.TestCase):
                 **DEFAULT_HEADERS, 'Content-Type': 'text/plain'
             }
         )
-        self.assert_response(response, expected_status=415)
+        self.check_response(response, expected_status=415)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_no_linestring(self, mock_georaster_utils):
@@ -107,7 +95,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_not_a_geojson_linestring(self, mock_georaster_utils):
@@ -118,7 +106,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_linestring_too_long(self, mock_georaster_utils):
@@ -129,7 +117,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=413)
+        self.check_response(response, expected_status=413)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_wrong_srid(self, mock_georaster_utils):
@@ -140,7 +128,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_nb_points_less_than_two(self, mock_georaster_utils):
@@ -151,7 +139,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_nb_points_too_big(self, mock_georaster_utils):
@@ -162,7 +150,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)
 
     @patch('app.routes.georaster_utils')
     def test_profile_validation_invalid_nb_points(self, mock_georaster_utils):
@@ -173,7 +161,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)
         self.assertEqual(
             response.json['error']['message'],
             'Please provide a numerical value for the parameter '
@@ -187,7 +175,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)
         self.assertEqual(
             response.json['error']['message'],
             'Please provide a numerical value for the parameter '
@@ -201,7 +189,7 @@ class TestProfileValidation(unittest.TestCase):
             offset=VALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)
         self.assertEqual(
             response.json['error']['message'],
             'Please provide a numerical value for the parameter '
@@ -217,4 +205,4 @@ class TestProfileValidation(unittest.TestCase):
             offset=INVALID_OFFSET,
             mock_georaster_utils=mock_georaster_utils
         )
-        self.assert_response(response, expected_status=400)
+        self.check_response(response, expected_status=400)

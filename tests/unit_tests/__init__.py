@@ -16,7 +16,10 @@ VALUES_FOR_EACH_2M_STEP = [
 
 ENDPOINT_FOR_JSON_PROFILE = '/rest/services/profile.json'
 ENDPOINT_FOR_CSV_PROFILE = '/rest/services/profile.csv'
-DEFAULT_HEADERS = {'Origin': 'https://map.geo.admin.ch'}
+DEFAULT_INTERN_HEADERS = {'Origin': 'https://map.geo.admin.ch'}
+DEFAULT_EXTERN_HEADERS = {'Origin': 'https://extern-company.com'}
+# Should accept anyone, as it is a public api
+DEFAULT_HEADERS = DEFAULT_EXTERN_HEADERS
 
 POINT_1_LV03 = [630000, 170000]
 POINT_2_LV03 = [634000, 173000]

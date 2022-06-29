@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
+import csv
+import json
 import logging
-import unittest
+from io import StringIO
 
 from mock import patch
-
-with patch('os.path.exists') as mock_exists:
-    mock_exists.return_value = True
-    import app as service_alti
 
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from tests import create_json
-from tests.unit_tests import DEFAULT_HEADERS
 from tests.unit_tests import ENDPOINT_FOR_CSV_PROFILE
 from tests.unit_tests import ENDPOINT_FOR_JSON_PROFILE
 from tests.unit_tests import LINESTRING_MISSPELLED_SHAPE
@@ -24,20 +21,17 @@ from tests.unit_tests import POINT_1_LV03
 from tests.unit_tests import POINT_2_LV03
 from tests.unit_tests import POINT_3_LV03
 from tests.unit_tests import prepare_mock
+from tests.unit_tests.base import BaseRouteTestCase
 
 logger = logging.getLogger(__name__)
 
 
-class TestProfileBase(unittest.TestCase):
+class TestProfileBase(BaseRouteTestCase):
 
-    def setUp(self) -> None:
-        service_alti.app.config['TESTING'] = True
-        self.test_instance = service_alti.app.test_client()
-        self.headers = DEFAULT_HEADERS
-
-    def check_response(self, response, expected_status=200):
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, expected_status, msg=response.get_data(as_text=True))
+    def check_response(self, response, expected_status=200, expected_allowed_methods=None):
+        if expected_allowed_methods is None:
+            expected_allowed_methods = ['GET', 'HEAD', 'POST', 'OPTIONS']
+        super().check_response(response, expected_status, expected_allowed_methods)
 
     def assert_response_contains(self, response, content):
         self.assertTrue(
@@ -60,18 +54,27 @@ class TestProfileJson(TestProfileBase):
         if not present:
             self.fail(msg)
 
-    def prepare_mock_and_test_json_profile(self, mock_georaster_utils, params, expected_status):
+    def prepare_mock_and_test_get(self, mock_georaster_utils, params, expected_status):
         prepare_mock(mock_georaster_utils)
         return self.get_json_profile(params=params, expected_status=expected_status)
 
-    def prepare_mock_and_test_post(self, mock_georaster_utils, body, expected_status):
+    def prepare_mock_and_test_post_json(self, mock_georaster_utils, body, expected_status):
         prepare_mock(mock_georaster_utils)
-        response = self.post_with_body(body)
+        response = self.test_instance.post(
+            ENDPOINT_FOR_JSON_PROFILE, data=body, headers=self.headers
+        )
         self.check_response(response, expected_status)
         return response
 
-    def post_with_body(self, body):
-        return self.test_instance.post(ENDPOINT_FOR_JSON_PROFILE, data=body, headers=self.headers)
+    def prepare_mock_and_test_post_urlencoded(
+        self, mock_georaster_utils, body, expected_status, query=None, headers=None
+    ):
+        prepare_mock(mock_georaster_utils)
+        response = self.test_instance.post(
+            ENDPOINT_FOR_JSON_PROFILE, data=body, query_string=query, headers=None
+        )
+        self.check_response(response, expected_status)
+        return response
 
     def get_json_profile(self, params, expected_status=200):
         # pylint: disable=broad-except
@@ -89,7 +92,7 @@ class TestProfileJson(TestProfileBase):
     @patch('app.routes.georaster_utils')
     def test_do_not_fail_when_no_origin(self, mock_georaster_utils):
         self.headers = {}
-        self.prepare_mock_and_test_json_profile(
+        self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'sr': 2056, 'geom': create_json(4, 2056)
@@ -99,7 +102,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_invalid_sr_json_valid(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'sr': 666, 'geom': create_json(3, 21781)
@@ -114,7 +117,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv95_json_valid(self, mock_georaster_utils):
-        self.prepare_mock_and_test_json_profile(
+        self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'sr': 2056, 'geom': create_json(4, 2056)
@@ -124,7 +127,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_valid(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': LINESTRING_VALID_LV03, 'smart_filling': True, 'offset': 0
@@ -150,7 +153,7 @@ class TestProfileJson(TestProfileBase):
     def test_profile_lv03_layers_post(self, mock_georaster_utils):
         params = create_json(4, 21781)
         self.headers['Content-Type'] = 'application/json'
-        resp = self.prepare_mock_and_test_post(
+        resp = self.prepare_mock_and_test_post_json(
             mock_georaster_utils=mock_georaster_utils, body=params, expected_status=200
         )
         self.assertEqual(resp.content_type, 'application/json')
@@ -159,14 +162,14 @@ class TestProfileJson(TestProfileBase):
     def test_profile_lv03_layers_post_content_type_With_charset(self, mock_georaster_utils):
         params = create_json(4, 21781)
         self.headers['Content-Type'] = 'application/json; charset=utf-8'
-        resp = self.prepare_mock_and_test_post(
+        resp = self.prepare_mock_and_test_post_json(
             mock_georaster_utils=mock_georaster_utils, body=params, expected_status=200
         )
         self.assertEqual(resp.content_type, 'application/json')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_layers_none(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': '{"type":"LineString","coordinates":[[0,0],[0,0],[0,0]]}'},
             expected_status=400
@@ -186,7 +189,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_with_callback_valid(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': create_json(4, 21781), 'callback': 'cb_'
@@ -198,7 +201,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_missing_geom(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'sr': 21781, 'geom': None
@@ -209,14 +212,14 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_wrong_geom(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils, params={'geom': 'toto'}, expected_status=400
         )
         self.assert_response_contains(resp, 'Invalid geom parameter, must be a GEOJSON')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_wrong_shape(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': LINESTRING_WRONG_SHAPE},
             expected_status=400
@@ -226,7 +229,7 @@ class TestProfileJson(TestProfileBase):
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_small_line(self, mock_georaster_utils):
 
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': LINESTRING_SMALL_LINE_LV03},
             expected_status=200
@@ -239,7 +242,7 @@ class TestProfileJson(TestProfileBase):
         # as 150 is too much for this profile (distance between points will be smaller than 2m
         # resolution of the altitude model), the service will return 203 and a smaller amount of
         # points
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': LINESTRING_SMALL_LINE_LV03, 'smart_filling': True, 'nb_points': '150'
@@ -252,7 +255,7 @@ class TestProfileJson(TestProfileBase):
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_fewer_nb_points_as_input_point(self, mock_georaster_utils):
         input_points = 4
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': create_json(input_points, 21781), 'nb_points': '2'
@@ -265,7 +268,7 @@ class TestProfileJson(TestProfileBase):
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_only_input_point(self, mock_georaster_utils):
         input_points = 4
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': create_json(input_points, 21781), 'only_requested_points': True
@@ -277,7 +280,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_nb_points_wrong(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': create_json(4, 21781), 'nb_points': 'toto'
@@ -291,7 +294,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_nb_points_too_much(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': create_json(4, 21781), 'nb_points': PROFILE_MAX_AMOUNT_POINTS + 1
@@ -305,7 +308,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_default_nb_points(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': LINESTRING_VALID_LV03},
             expected_status=200
@@ -315,7 +318,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_invalid_linestring(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': '{"type":"LineString","coordinates":[[550050,206550]]}'},
             expected_status=400
@@ -324,7 +327,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_offset(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': LINESTRING_VALID_LV03, 'offset': '1'
@@ -335,7 +338,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_json_invalid_offset(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': LINESTRING_VALID_LV03, 'offset': 'asdf'
@@ -348,7 +351,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_entity_too_large(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': create_json(7000), 'sr': '2056'
@@ -361,14 +364,14 @@ class TestProfileJson(TestProfileBase):
     def test_profile_entity_too_large_post(self, mock_georaster_utils):
         params = create_json(7000)
         self.headers['Content-Type'] = 'application/json'
-        resp = self.prepare_mock_and_test_post(
+        resp = self.prepare_mock_and_test_post_json(
             mock_georaster_utils=mock_georaster_utils, body=params, expected_status=413
         )
         self.assert_response_contains(resp, 'Geometry contains too many points')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv95(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': LINESTRING_VALID_LV95},
             expected_status=200
@@ -377,7 +380,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv95_nb_points_exceeds_resolution_meshing(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': LINESTRING_SMALL_LINE_LV95, 'smart_filling': True, 'nb_points': 150
@@ -398,7 +401,7 @@ class TestProfileJson(TestProfileBase):
                                                                  [2632820.8, 1170741.8]
         multipoint_geom = f'{{"type":"LineString","coordinates":[{point1},{point2},{point3},' \
                           f'{point4},{point5},{point6},{point7}]}}'
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': multipoint_geom},
             expected_status=200
@@ -413,7 +416,7 @@ class TestProfileJson(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_all_old_elevation_models_are_returned(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_json_profile(
+        resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': LINESTRING_VALID_LV95},
             expected_status=200
@@ -431,46 +434,145 @@ class TestProfileJson(TestProfileBase):
         if altitudes['DTM25'] != comb_value:
             self.fail("All values from all models should be taken from the new COMB layer")
 
+    @patch('app.routes.georaster_utils')
+    def test_post_profile_url_encoded(self, mock_georaster_utils):
+
+        nb_points = 10
+        response = self.prepare_mock_and_test_post_urlencoded(
+            mock_georaster_utils,
+            {
+                'geom': LINESTRING_VALID_LV95, 'nb_points': nb_points
+            },
+            200,
+        )
+        self.assertEqual(response.content_type, 'application/json')
+        self.assertIsInstance(response.json, list)
+        self.assertAlmostEqual(len(response.json), nb_points, delta=1)
+
+    @patch('app.routes.georaster_utils')
+    def test_post_profile_url_encoded_and_query(self, mock_georaster_utils):
+
+        nb_points = 10
+        response = self.prepare_mock_and_test_post_urlencoded(
+            mock_georaster_utils, {'geom': LINESTRING_VALID_LV95},
+            200,
+            query={'nb_points': nb_points}
+        )
+        self.assertEqual(response.content_type, 'application/json')
+        self.assertIsInstance(response.json, list)
+        self.assertAlmostEqual(len(response.json), nb_points, delta=1)
+
+    @patch('app.routes.georaster_utils')
+    def test_post_profile_url_encoded_and_query_precedence(self, mock_georaster_utils):
+        nb_points = 10
+        response = self.prepare_mock_and_test_post_urlencoded(
+            mock_georaster_utils, {
+                'geom': LINESTRING_VALID_LV95, 'nb_points': nb_points
+            },
+            200,
+            query={'nb_points': 100}
+        )
+        self.assertEqual(response.content_type, 'application/json')
+        self.assertIsInstance(response.json, list)
+        self.assertAlmostEqual(len(response.json), nb_points, delta=1)
+
+    @patch('app.routes.georaster_utils')
+    def test_post_profile_url_encoded_wrong_sr(self, mock_georaster_utils):
+
+        nb_points = 10
+        response = self.prepare_mock_and_test_post_urlencoded(
+            mock_georaster_utils,
+            {
+                'geom': LINESTRING_VALID_LV95, 'nb_points': nb_points, 'sr': 12345
+            },
+            400,
+        )
+        self.assertEqual(response.content_type, 'application/json')
+
+    @patch('app.routes.georaster_utils')
+    def test_post_profile_url_encoded_wrong_offset(self, mock_georaster_utils):
+
+        nb_points = 10
+        response = self.prepare_mock_and_test_post_urlencoded(
+            mock_georaster_utils,
+            {
+                'geom': LINESTRING_VALID_LV95, 'nb_points': nb_points, 'offset': 'bla'
+            },
+            400,
+        )
+        self.assertEqual(response.content_type, 'application/json')
+
 
 class TestProfileCsv(TestProfileBase):
 
-    def prepare_mock_and_test_csv_profile(self, mock_georaster_utils, params, expected_status):
+    @classmethod
+    def parse_csv(cls, data):
+        reader = csv.reader(StringIO(data))
+        parsed_data = list(reader)
+        return parsed_data
+
+    def mock_get_csv_profile(self, mock_georaster_utils, params, expected_status):
         prepare_mock(mock_georaster_utils)
-        response = self.get_csv_with_params(params)
+        response = self.test_instance.get(
+            ENDPOINT_FOR_CSV_PROFILE, query_string=params, headers=self.headers
+        )
         self.check_response(response, expected_status)
         return response
 
-    def get_csv_with_params(self, params):
-        return self.test_instance.get(
+    def mock_post_json_csv_profile(
+        self, mock_georaster_utils, body, expected_status, query=None, headers=None
+    ):
+        prepare_mock(mock_georaster_utils)
+        response = self.test_instance.post(
+            ENDPOINT_FOR_CSV_PROFILE, json=body, query_string=query, headers=headers
+        )
+        self.check_response(response, expected_status)
+        return response
+
+    def mock_post_urlencoded_csv_profile(
+        self, mock_georaster_utils, body, expected_status, headers=None
+    ):
+        prepare_mock(mock_georaster_utils)
+        response = self.test_instance.post(ENDPOINT_FOR_CSV_PROFILE, data=body, headers=None)
+        self.check_response(response, expected_status)
+        return response
+
+    def prepare_mock_and_test_post_csv_profile(self, mock_georaster_utils, params, expected_status):
+        prepare_mock(mock_georaster_utils)
+        response = self.test_instance.post(
             ENDPOINT_FOR_CSV_PROFILE, query_string=params, headers=self.headers
         )
+        self.check_response(response, expected_status)
+        return response
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_csv_valid(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_csv_profile(
+        resp = self.mock_get_csv_profile(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': create_json(4, 21781)},
             expected_status=200
         )
         self.assertEqual(resp.content_type, 'text/csv')
+        data = self.parse_csv(resp.get_data(as_text=True))
+        self.assertAlmostEqual(len(data), 200, delta=2)
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_cvs_wrong_geom(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_csv_profile(
+        resp = self.mock_get_csv_profile(
             mock_georaster_utils=mock_georaster_utils, params={'geom': 'toto'}, expected_status=400
         )
         self.assert_response_contains(resp, 'Invalid geom parameter, must be a GEOJSON')
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_csv_misspelled_shape(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_csv_profile(
+        resp = self.mock_get_csv_profile(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': LINESTRING_MISSPELLED_SHAPE},
             expected_status=400
         )
         self.assert_response_contains(resp, 'Invalid geom parameter, must be a GEOJSON')
 
-        resp = self.prepare_mock_and_test_csv_profile(
+        resp = self.mock_get_csv_profile(
             mock_georaster_utils=mock_georaster_utils,
             params={'geom': LINESTRING_WRONG_SHAPE},
             expected_status=400
@@ -479,7 +581,7 @@ class TestProfileCsv(TestProfileBase):
 
     @patch('app.routes.georaster_utils')
     def test_profile_lv03_csv_callback(self, mock_georaster_utils):
-        resp = self.prepare_mock_and_test_csv_profile(
+        resp = self.mock_get_csv_profile(
             mock_georaster_utils=mock_georaster_utils,
             params={
                 'geom': create_json(4, 21781), 'callback': '_cb'
@@ -487,3 +589,28 @@ class TestProfileCsv(TestProfileBase):
             expected_status=400
         )
         self.assert_response_contains(resp, 'callback parameter not supported')
+
+    @patch('app.routes.georaster_utils')
+    def test_post_profile_csv_json(self, mock_georaster_utils):
+        nb_points = 10
+        response = self.mock_post_json_csv_profile(
+            mock_georaster_utils,
+            json.loads(LINESTRING_VALID_LV95),
+            200,
+            query={'nb_points': nb_points}
+        )
+        self.assertEqual(response.content_type, 'text/csv')
+        data = self.parse_csv(response.get_data(as_text=True))
+        self.assertAlmostEqual(len(data), nb_points, delta=1)
+
+    @patch('app.routes.georaster_utils')
+    def test_post_profile_csv_url_encoded(self, mock_georaster_utils):
+        nb_points = 10
+        response = self.mock_post_urlencoded_csv_profile(
+            mock_georaster_utils, {
+                'geom': LINESTRING_VALID_LV95, 'nb_points': nb_points
+            }, 200
+        )
+        self.assertEqual(response.content_type, 'text/csv')
+        data = self.parse_csv(response.get_data(as_text=True))
+        self.assertAlmostEqual(len(data), nb_points, delta=1)

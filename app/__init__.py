@@ -1,6 +1,7 @@
 import logging
 import re
 import time
+from itertools import chain
 
 from flask import Flask
 from flask import g
@@ -9,7 +10,6 @@ from flask import request
 from app import settings
 from app.helpers import init_logging
 from app.helpers.raster.georaster import GeoRasterUtils
-from app.helpers.url import ALLOWED_DOMAINS_PATTERN
 from app.middleware import ReverseProxy
 
 # Initialize Logging using JSON format for all loggers and using the Stream Handler.
@@ -38,13 +38,32 @@ def log_route():
 # Add CORS Headers to all request
 @app.after_request
 def add_cors_header(response):
-    if (
-        'Origin' in request.headers and
-        re.match(ALLOWED_DOMAINS_PATTERN, request.headers['Origin'])
-    ):
-        response.headers['Access-Control-Allow-Origin'] = request.headers['Origin']
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Origin'] = "*"
+    response.headers['Access-Control-Allow-Headers'] = "*"
+    response.headers.set(
+        'Access-Control-Allow-Methods', ', '.join(get_registered_method(request.url_rule))
+    )
     return response
+
+
+# Helper method for add_cors_header
+def get_registered_method(url_rule):
+    '''Returns the list of registered method for the given endpoint'''
+
+    # The list of registered method is taken from the werkzeug.routing.Rule. A Rule object
+    # has a methods property with the list of allowed method on an endpoint. If this property is
+    # missing then all methods are allowed.
+    # See https://werkzeug.palletsprojects.com/en/2.0.x/routing/#werkzeug.routing.Rule
+    all_methods = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'DELETE']
+    return set(
+        chain.from_iterable(
+            [
+                r.methods if r.methods else all_methods
+                for r in app.url_map.iter_rules()
+                if r.rule == str(url_rule)
+            ]
+        )
+    )
 
 
 # NOTE it is better to have this method registered last (after add_cors_header) otherwise
