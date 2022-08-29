@@ -111,7 +111,7 @@ def _obtain_nb_points_per_segment_no_loss(distances, nb_points_total, total_dist
     nb_points_segments = []
     for d in distances:
         nb_points_segments.append(math.modf(max(nb_points_total * d / total_distance, 0.0)))
-    sum_int = sum([int(nbp[1]) for nbp in nb_points_segments])
+    sum_int = sum(int(nbp[1]) for nbp in nb_points_segments)
     while sum_int < nb_points_total:
         min_val, max_val, min_index, max_index = 1.0, 0.0, 0, 0
         for i, item in enumerate(nb_points_segments):
@@ -123,7 +123,7 @@ def _obtain_nb_points_per_segment_no_loss(distances, nb_points_total, total_dist
 
         nb_points_segments[min_index] = (-0.5, nb_points_segments[min_index][1])
         nb_points_segments[max_index] = (-0.5, nb_points_segments[max_index][1] + 1.0)
-        sum_int = sum([int(nbp[0]) for nbp in nb_points_segments])
+        sum_int = sum(int(nbp[0]) for nbp in nb_points_segments)
 
         if min_val >= 1.0 and max_val <= 0.0:
             break
