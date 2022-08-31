@@ -24,7 +24,6 @@ from app.helpers.validation import bboxes
 from app.helpers.validation import srs_guesser
 from app.helpers.validation import validate_sr
 from app.helpers.validation.height import validate_lon_lat
-# add route prefix
 from app.statistics.statistics import load_json
 from app.statistics.statistics import prepare_data
 from app.version import APP_VERSION
@@ -45,8 +44,16 @@ def handle_exception(e):
 
 
 @app.route('/checker')
-def check():
+def liveness():
     return make_response(jsonify({'success': True, 'message': 'OK', 'version': APP_VERSION}))
+
+
+@app.route('/checker/ready')
+def readiness():
+    # Make sure the data are available
+    if not georaster_utils.raster_files_exists():
+        abort(503, "No raster files found")
+    return make_response(jsonify({'success': True, 'message': 'OK'}))
 
 
 @app.route('/height')
