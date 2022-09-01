@@ -19,7 +19,6 @@ from app.helpers import make_error_msg
 from app.helpers.height_helpers import get_height
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS
 from app.helpers.profile_helpers import get_profile
-from app.helpers.route import prefix_route
 from app.helpers.validation import bboxes
 from app.helpers.validation import srs_guesser
 from app.helpers.validation import validate_sr
@@ -28,7 +27,7 @@ from app.statistics.statistics import load_json
 from app.statistics.statistics import prepare_data
 from app.version import APP_VERSION
 
-app.route = prefix_route(app.route, '/rest/services/')
+ROUTE_PREFIX = '/rest/services/'
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +55,7 @@ def readiness():
     return make_response(jsonify({'success': True, 'message': 'OK'}))
 
 
-@app.route('/height')
+@app.route(f'{ROUTE_PREFIX}/height')
 def height_route():
     if 'easting' in request.args:
         lon = request.args.get('easting')
@@ -91,7 +90,7 @@ def height_route():
     return response
 
 
-@app.route('/profile.json', methods=['GET', 'POST'])
+@app.route(f'{ROUTE_PREFIX}/profile.json', methods=['GET', 'POST'])
 def profile_json_route():
     profile, status_code = _get_profile(True)
     if "callback" in request.args:
@@ -102,7 +101,7 @@ def profile_json_route():
     return response, status_code
 
 
-@app.route('/profile.csv', methods=['GET', 'POST'])
+@app.route(f'{ROUTE_PREFIX}/profile.csv', methods=['GET', 'POST'])
 def profile_csv_route():
     if "callback" in request.args:
         abort(400, 'callback parameter not supported')
@@ -169,11 +168,11 @@ def _get_profile(output_to_json):
 # if in debug, we add the route to the statistics page, otherwise it is not visible
 if app.debug:
 
-    @app.route('/stats')
+    @app.route(f'{ROUTE_PREFIX}/stats')
     def generate_stats():
         return render_template('statistics.html')
 
-    @app.route('/stats_data')
+    @app.route(f'{ROUTE_PREFIX}/stats_data')
     def stats_data():
         metadata = load_json("metadata.json")
         return app.response_class(prepare_data(metadata), content_type='application/json')
