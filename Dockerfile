@@ -5,7 +5,13 @@ RUN groupadd -g 1000 geoadmin && useradd -u 1000 -s /bin/false -g geoadmin geoad
 
 
 # HERE : install relevant packages
-RUN pip3 install pipenv \
+# NOTE: curl is required for vhost health check, could be removed when moving to k8s
+RUN apt-get update \
+  && apt-get -y install \
+       curl \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* \
+  && pip3 install pipenv \
     && pipenv --version
 
 COPY Pipfile* /tmp/

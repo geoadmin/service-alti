@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from os.path import dirname
+from pathlib import Path
 from struct import unpack
 
 from app.helpers.raster.shputils import SHPUtils
@@ -58,6 +59,12 @@ class GeoRasterUtils(object):
                     e
                 )
                 raise e
+
+    def raster_files_exists(self):
+        for f in self.raster_files.values():
+            if not Path(f).exists():
+                return False
+        return True
 
 
 class BinaryTerrainTile(object):
