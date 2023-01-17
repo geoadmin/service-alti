@@ -46,6 +46,19 @@ def add_cors_header(response):
     return response
 
 
+# Set Cache Headers
+@app.after_request
+def add_cache_header(response):
+    # overwrite with these 5xx cache settings
+    # no cache on these 5xx errors, they are supposed to be temporary
+    if response.status_code in (502, 503, 504, 507):
+        response.headers['Cache-Control'] = 'no-cache'
+    # short cache duration for other 5xx errors
+    elif response.status_code >= 500:
+        response.headers['Cache-Control'] = 'public, max-age=10'
+    return response
+
+
 # Helper method for add_cors_header
 def get_registered_method(url_rule):
     '''Returns the list of registered method for the given endpoint'''
