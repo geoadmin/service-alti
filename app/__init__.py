@@ -49,6 +49,9 @@ def add_cors_header(response):
 # Set Cache Headers
 @app.after_request
 def add_cache_header(response):
+    if request.method not in ('GET', 'HEAD', 'OPTIONS'):
+        return response
+
     # overwrite with these 5xx cache settings
     # no cache on these 5xx errors, they are supposed to be temporary
     if response.status_code in (502, 503, 504, 507):
