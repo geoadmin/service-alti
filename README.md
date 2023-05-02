@@ -117,3 +117,4 @@ The service is configured by Environment Variable:
 | DTM_BASE_PATH        | `'/var/local/profile/'`   | Raster and COMB files location         |
 | PRELOAD_RASTER_FILES | `False`                   | Preload raster files at startup. If not set they will be loaded during first request |
 | ALTI_WORKERS         | `0`                       | Number of workers. `0` or negative value means that the number of worker are computed from the number of cpu |
+| DFT_CACHE_HEADER     | `public, max-age=86400`   | Default cache settings for successful GET, HEAD and OPTIONS requests |

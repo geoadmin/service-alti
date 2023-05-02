@@ -12,20 +12,11 @@ class CheckerTests(BaseRouteTestCase):
     def __liveness_test_get_request(self, headers):
         response = self.test_instance.get(url_for('liveness'), headers=headers)
         self.check_response(response)
-        self.assertNotIn('Cache-Control', response.headers)
         self.assertEqual(response.content_type, "application/json")
 
     def __readiness_test_get_request(self, headers, expected_status=200):
         response = self.test_instance.get(url_for('readiness'), headers=headers)
         self.check_response(response, expected_status=expected_status)
-        if expected_status < 500:
-            self.assertNotIn('Cache-Control', response.headers)
-        elif expected_status in (502, 503, 504, 507):
-            self.assertIn('Cache-Control', response.headers)
-            self.assertIn('no-cache', response.headers['Cache-Control'])
-        elif expected_status >= 500:
-            self.assertIn('Cache-Control', response.headers)
-            self.assertIn('max-age', response.headers['Cache-Control'])
         self.assertEqual(response.content_type, "application/json")
 
     def test_liveness_intern_origin(self):

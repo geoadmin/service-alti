@@ -12,6 +12,7 @@ LOGGING_CFG = os.getenv('LOGGING_CFG', 'logging-cfg-local.yml')
 
 DTM_BASE_PATH = Path(os.getenv('DTM_BASE_PATH', '/var/local/profile/'))
 PRELOAD_RASTER_FILES = strtobool(os.getenv('PRELOAD_RASTER_FILES', 'False'))
+DFT_CACHE_HEADER = os.getenv('DFT_CACHE_HEADER', 'public, max-age=86400')
 
 TRAP_HTTP_EXCEPTIONS = True
 
