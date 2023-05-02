@@ -50,6 +50,18 @@ class TestHeight(BaseRouteTestCase):
         )
 
     @patch('app.routes.georaster_utils')
+    def test_cache_header(self, mock_georaster_utils):
+        response = self.__prepare_mock_and_test_get(
+            mock_georaster_utils=mock_georaster_utils,
+            params={
+                'easting': EAST_LV95, 'northing': NORTH_LV95
+            }
+        )
+        self.assertIn('Cache-Control', response.headers)
+        self.assertIn('public', response.headers['Cache-Control'])
+        self.assertIn('max-age=', response.headers['Cache-Control'])
+
+    @patch('app.routes.georaster_utils')
     def test_height_no_sr_assuming_lv03(self, mock_georaster_utils):
         self.__assert_height(
             response=self.__prepare_mock_and_test_get(
