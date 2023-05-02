@@ -101,6 +101,19 @@ class TestProfileJson(TestProfileBase):
         )
 
     @patch('app.routes.georaster_utils')
+    def test_cache_header(self, mock_georaster_utils):
+        response = self.prepare_mock_and_test_get(
+            mock_georaster_utils=mock_georaster_utils,
+            params={
+                'sr': 2056, 'geom': create_json(4, 2056)
+            },
+            expected_status=200
+        )
+        self.assertIn('Cache-Control', response.headers)
+        self.assertIn('public', response.headers['Cache-Control'])
+        self.assertIn('max-age=', response.headers['Cache-Control'])
+
+    @patch('app.routes.georaster_utils')
     def test_profile_invalid_sr_json_valid(self, mock_georaster_utils):
         resp = self.prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,

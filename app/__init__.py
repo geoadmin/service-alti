@@ -59,6 +59,8 @@ def add_cache_header(response):
     # short cache duration for other 5xx errors
     elif response.status_code >= 500:
         response.headers['Cache-Control'] = 'public, max-age=10'
+    else:
+        response.headers['Cache-Control'] = settings.DFT_CACHE_HEADER
     return response
 
 
