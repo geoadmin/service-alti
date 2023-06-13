@@ -118,3 +118,4 @@ The service is configured by Environment Variable:
 | PRELOAD_RASTER_FILES | `False`                   | Preload raster files at startup. If not set they will be loaded during first request |
 | ALTI_WORKERS         | `0`                       | Number of workers. `0` or negative value means that the number of worker are computed from the number of cpu |
 | DFT_CACHE_HEADER     | `public, max-age=86400`   | Default cache settings for successful GET, HEAD and OPTIONS requests |
+| GUNICORN_WORKER_TMP_DIR | `None` | This should be set to an tmpfs file system for better performance. See https://docs.gunicorn.org/en/stable/settings.html#worker-tmp-dir. |

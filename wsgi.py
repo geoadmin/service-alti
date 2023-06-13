@@ -5,6 +5,7 @@ from gunicorn.app.base import BaseApplication
 from app import app as application
 from app.helpers import get_logging_cfg
 from app.settings import ALTI_WORKERS
+from app.settings import GUNICORN_WORKER_TMP_DIR
 from app.settings import HTTP_PORT
 
 
@@ -38,6 +39,7 @@ if __name__ == '__main__':
         'workers': ALTI_WORKERS,
         'access_log_format': '%(h)s %(l)s %(u)s "%(r)s" %(s)s %(B)s Bytes '
                              '"%(f)s" "%(a)s" %(L)ss',
+        'worker_tmp_dir': GUNICORN_WORKER_TMP_DIR,
         'timeout': 60,
         'logconfig_dict': get_logging_cfg()
     }
