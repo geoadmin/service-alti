@@ -183,7 +183,7 @@ dockerrun:
 
 .PHONY: shutdown
 shutdown:
-	HTTP_PORT=$(HTTP_PORT) docker-compose down
+	HTTP_PORT=$(HTTP_PORT) docker compose down
 
 
 # Clean targets
