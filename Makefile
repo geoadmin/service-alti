@@ -181,11 +181,6 @@ dockerrun:
 		$(DOCKER_IMG_LOCAL_TAG)
 
 
-.PHONY: shutdown
-shutdown:
-	HTTP_PORT=$(HTTP_PORT) docker-compose down
-
-
 # Clean targets
 
 .PHONY: clean_venv
