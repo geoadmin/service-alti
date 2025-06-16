@@ -164,7 +164,7 @@ class TestHeight(BaseRouteTestCase):
         resp = self.__prepare_mock_and_test_get(
             mock_georaster_utils=mock_georaster_utils,
             params={
-                'easting': '600000', 'northing': '0'
+                'easting': '600000', 'northing': '-100000'
             },
             expected_status=400
         )
