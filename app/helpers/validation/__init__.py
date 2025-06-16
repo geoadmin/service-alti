@@ -10,17 +10,17 @@ from app.settings import VALID_SRID
 bboxes = {
     2056:
         (
-            float_raise_nan(2450000),
-            float_raise_nan(1030000),
-            float_raise_nan(2900000),
-            float_raise_nan(1350000)
+            float_raise_nan(2385000),  # xmin: expanded to cover old and new
+            float_raise_nan(974000),  # ymin: expanded to cover old and new
+            float_raise_nan(2935000),  # xmax: expanded to cover old and new
+            float_raise_nan(1404000)  # ymax: expanded to cover old and new
         ),
     21781:
         (
-            float_raise_nan(450000),
-            float_raise_nan(30000),
-            float_raise_nan(900000),
-            float_raise_nan(350000)
+            float_raise_nan(385000),  # xmin: expanded to cover old and new
+            float_raise_nan(-26000),  # ymin: expanded to cover old and new
+            float_raise_nan(940000),  # xmax: expanded to cover old and new
+            float_raise_nan(456000)  # ymax: expanded to cover old and new
         )
 }
 
