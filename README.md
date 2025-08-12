@@ -101,9 +101,7 @@ http://api3.geo.admin.ch/services/sdiservices.html#profile
 
 When creating a PR, it should run a codebuild job to test, build and push automatically your PR as a tagged container.
 
-This service is to be deployed to the Kubernetes cluster once it is merged.
-
-TO DO: give instructions to deploy to kubernetes.
+This service deploys automatically to the Kubernetes cluster once it is merged.
 
 ### Deployment configuration
 
