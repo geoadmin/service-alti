@@ -13,7 +13,7 @@ Flask = "~=2.0"
 PyYAML = "~=6.0"
 
 [dev-packages]
-mock = "~=4.0.2"
+mock = "*"
 nose2 = "*"
 pip-chill = "*"
 pylint = "*"
