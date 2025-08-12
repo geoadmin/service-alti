@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from shapely.geometry import Polygon
 
 from flask import abort
