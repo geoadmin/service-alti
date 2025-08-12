@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from distutils.util import strtobool
 
 import geojson
 from shapely.geometry import shape
@@ -11,6 +10,7 @@ from flask import request
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from app.helpers.validation import srs_guesser
 from app.helpers.validation import validate_sr
+from app.settings import strtobool
 
 logger = logging.getLogger(__name__)
 max_content_length = 32 * 1024 * 1024  # 32MB
