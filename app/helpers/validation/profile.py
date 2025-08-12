@@ -2,6 +2,7 @@
 import logging
 
 import geojson
+from shapely.errors import GEOSException
 from shapely.geometry import shape
 
 from flask import abort
@@ -53,7 +54,7 @@ def read_linestring(args):
 
     try:
         geom_to_shape = shape(geom)
-    except ValueError as e:
+    except GEOSException as e:
         logger.error("Failed to transformed GEOJSON to shape: %s", e)
         abort(400, "Error converting GEOJSON to Shape")
 
