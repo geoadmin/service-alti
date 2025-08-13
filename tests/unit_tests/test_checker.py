@@ -31,16 +31,12 @@ class CheckerTests(BaseRouteTestCase):
     def test_readiness_not_ready(self):
         self.__readiness_test_get_request(None, expected_status=503)
 
-    @mock.patch(
-        'app.routes.georaster_utils.raster_files_exists',
-    )
+    @mock.patch('app.routes.georaster_utils.raster_files_exists',)
     def test_readiness_no_origin(self, mock_raster_files_exists):
         mock_raster_files_exists.return_value = True
         self.__readiness_test_get_request(None)
 
-    @mock.patch(
-        'app.routes.georaster_utils.raster_files_exists',
-    )
+    @mock.patch('app.routes.georaster_utils.raster_files_exists',)
     def test_readiness_extern_origin(self, mock_raster_files_exists):
         mock_raster_files_exists.return_value = True
         self.__readiness_test_get_request(DEFAULT_EXTERN_HEADERS)

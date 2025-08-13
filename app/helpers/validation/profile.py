@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 import logging
-from distutils.util import strtobool
 
 import geojson
+from shapely.errors import GEOSException
 from shapely.geometry import shape
 
 from flask import abort
@@ -11,6 +10,7 @@ from flask import request
 from app.helpers.profile_helpers import PROFILE_MAX_AMOUNT_POINTS
 from app.helpers.validation import srs_guesser
 from app.helpers.validation import validate_sr
+from app.settings import strtobool
 
 logger = logging.getLogger(__name__)
 max_content_length = 32 * 1024 * 1024  # 32MB
@@ -53,7 +53,7 @@ def read_linestring(args):
 
     try:
         geom_to_shape = shape(geom)
-    except ValueError as e:
+    except GEOSException as e:
         logger.error("Failed to transformed GEOJSON to shape: %s", e)
         abort(400, "Error converting GEOJSON to Shape")
 

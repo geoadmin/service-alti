@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # file taken from http://indiemaps.com/blog/2008/03/easy-shapefile-loading-in-python/
 import logging
 from struct import unpack

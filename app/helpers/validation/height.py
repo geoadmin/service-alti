@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from flask import abort
 
 from app.helpers.helpers import float_raise_nan
