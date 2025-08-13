@@ -13,8 +13,8 @@ from flask import render_template
 from flask import request
 
 import app.helpers.validation.profile as profile_arg_validation
-from app import app
-from app import georaster_utils
+from app.app import app
+from app.app import georaster_utils
 from app.helpers import make_error_msg
 from app.helpers.height_helpers import get_height
 from app.helpers.profile_helpers import PROFILE_DEFAULT_AMOUNT_POINTS

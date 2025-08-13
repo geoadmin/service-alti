@@ -69,10 +69,7 @@ disable=missing-docstring,
     too-many-positional-arguments,
     too-few-public-methods,
     useless-object-inheritance,
-    invalid-name,
-    # there is currently a bug preventing disabling cyclic imports on a specific line
-    # see https://github.com/pylint-dev/pylint/issues/9490
-    cyclic-import
+    invalid-name
 
 
 # Enable the message, report, category or checker with the given id(s). You can
