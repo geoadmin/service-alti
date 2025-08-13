@@ -1,6 +1,6 @@
-# Buster slim python 3.9 base image.
-FROM python:3.9-slim-buster
-ENV HTTP_PORT 8080
+FROM python:3.13-slim-bookworm
+ENV HTTP_PORT=8080
+
 RUN groupadd -g 1000 geoadmin && useradd -u 1000 -s /bin/false -g geoadmin geoadmin
 
 

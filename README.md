@@ -27,7 +27,7 @@ Height and profile services for http://api3.geo.admin.ch
 
 ### Dependencies
 
-The **Make** targets assume you have **bash**, **curl**, **python3.9**, **pipenv**, **docker** installed.
+The **Make** targets assume you have **bash**, **curl**, **python3.13**, **pipenv**, **docker** installed.
 
 ### Setting up to work
 
@@ -101,9 +101,7 @@ http://api3.geo.admin.ch/services/sdiservices.html#profile
 
 When creating a PR, it should run a codebuild job to test, build and push automatically your PR as a tagged container.
 
-This service is to be deployed to the Kubernetes cluster once it is merged.
-
-TO DO: give instructions to deploy to kubernetes.
+This service deploys automatically to the Kubernetes cluster once it is merged.
 
 ### Deployment configuration
 
@@ -119,3 +117,28 @@ The service is configured by Environment Variable:
 | ALTI_WORKERS         | `0`                       | Number of workers. `0` or negative value means that the number of worker are computed from the number of cpu |
 | DFT_CACHE_HEADER     | `public, max-age=86400`   | Default cache settings for successful GET, HEAD and OPTIONS requests |
 | GUNICORN_WORKER_TMP_DIR | `None` | This should be set to an tmpfs file system for better performance. See https://docs.gunicorn.org/en/stable/settings.html#worker-tmp-dir. |
+
+## Updating Packages
+
+All packages used in production are pinned to a major version. Automatically updating these packages
+will use the latest minor (or patch) version available. Packages used for development, on the other
+hand, are not pinned unless they need to be used with a specific version of a production package
+(for example, boto3-stubs for boto3).
+
+To update the packages to the latest minor/compatible versions, run:
+
+```bash
+pipenv update --dev
+```
+
+To see what major/incompatible releases would be available, run:
+
+```bash
+pipenv update --dev --outdated
+```
+
+To update packages to a new major release, run:
+
+```bash
+pipenv install logging-utilities~=5.0
+```
