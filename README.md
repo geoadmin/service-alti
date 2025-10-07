@@ -18,6 +18,7 @@
   - [`/rest/services/profile.json` and `/rest/services/profile.csv` GET/POST](#restservicesprofilejson-and-restservicesprofilecsv-getpost)
 - [Deploying the project and continuous integration](#deploying-the-project-and-continuous-integration)
   - [Deployment configuration](#deployment-configuration)
+- [Updating Packages](#updating-packages)
 
 ## Summary of the project
 
@@ -117,6 +118,8 @@ The service is configured by Environment Variable:
 | ALTI_WORKERS         | `0`                       | Number of workers. `0` or negative value means that the number of worker are computed from the number of cpu |
 | DFT_CACHE_HEADER     | `public, max-age=86400`   | Default cache settings for successful GET, HEAD and OPTIONS requests |
 | GUNICORN_WORKER_TMP_DIR | `None` | This should be set to an tmpfs file system for better performance. See https://docs.gunicorn.org/en/stable/settings.html#worker-tmp-dir. |
+| GUNICORN_KEEPALIVE | `2` | The [`keepalive`](https://docs.gunicorn.org/en/stable/settings.html#keepalive) setting passed to gunicorn. |
+
 
 ## Updating Packages
 

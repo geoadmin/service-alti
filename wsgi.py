@@ -5,6 +5,7 @@ from gunicorn.app.base import BaseApplication
 from app.app import app as application
 from app.helpers import get_logging_cfg
 from app.settings import ALTI_WORKERS
+from app.settings import GUNICORN_KEEPALIVE
 from app.settings import GUNICORN_WORKER_TMP_DIR
 from app.settings import HTTP_PORT
 
@@ -42,6 +43,7 @@ if __name__ == '__main__':
                              '"%(f)s" "%(a)s" %(L)ss',
         'worker_tmp_dir': GUNICORN_WORKER_TMP_DIR,
         'timeout': 60,
+        'keepalive': GUNICORN_KEEPALIVE,
         'logconfig_dict': get_logging_cfg()
     }
     StandaloneApplication(application, options).run()
