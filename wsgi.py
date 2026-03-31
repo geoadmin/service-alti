@@ -1,3 +1,16 @@
+# Initialize OTEL.
+# Initialize should be called as early as possible, but at least before the app is imported
+# The order has a impact on how the libraries are instrumented. If called after app import,
+# e.g. the flask instrumentation has no effect. See:
+# https://github.com/open-telemetry/opentelemetry.io/blob/main/content/en/docs/zero-code/python/troubleshooting.md#use-programmatic-auto-instrumentation
+# pylint: disable=wrong-import-position,wrong-import-order,ungrouped-imports
+
+from app.helpers.otel import initialize
+from app.helpers.otel import initialize_flask
+from app.helpers.otel import setup_trace_provider
+
+initialize()
+
 import multiprocessing
 
 from gunicorn.app.base import BaseApplication
@@ -8,6 +21,15 @@ from app.settings import ALTI_WORKERS
 from app.settings import GUNICORN_KEEPALIVE
 from app.settings import GUNICORN_WORKER_TMP_DIR
 from app.settings import HTTP_PORT
+
+initialize_flask(application)
+
+
+def post_fork(server, worker):
+    server.log.info("Worker spawned (pid: %s)", worker.pid)
+
+    # Setup OTEL providers for this worker
+    setup_trace_provider()
 
 
 class StandaloneApplication(BaseApplication):  # pylint: disable=abstract-method
@@ -44,6 +66,7 @@ if __name__ == '__main__':
         'worker_tmp_dir': GUNICORN_WORKER_TMP_DIR,
         'timeout': 60,
         'keepalive': GUNICORN_KEEPALIVE,
-        'logconfig_dict': get_logging_cfg()
+        'logconfig_dict': get_logging_cfg(),
+        'post_fork': post_fork
     }
     StandaloneApplication(application, options).run()

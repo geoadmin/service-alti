@@ -1,0 +1,30 @@
+version: "2"
+services:
+  service-alti:
+    build: .
+    environment:
+      - HTTP_PORT=8080
+      - LOGS_DIR=/logs
+      - DTM_BASE_PATH=/var/local/profile
+    env_file:
+      - .env.test
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/logs
+      - /var/local/profile:/var/local/profile
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: --config otel-local-config.yaml
+    volumes:
+      - ./otel-local-config.yaml:/otel-local-config.yaml
+    ports:
+      - "4317:4317"
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"
