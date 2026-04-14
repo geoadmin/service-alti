@@ -82,6 +82,9 @@ formatters:
         duration: "%(duration)s"
         payload: "%(response.json).128s"
       message: message
+      otelSpanID: otelSpanID
+      otelTraceID: otelTraceID
+      otelTraceSampled: otelTraceSampled
 
 handlers:
   console:

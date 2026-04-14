@@ -94,6 +94,9 @@ ci:
 	# Create virtual env with all packages for development using the Pipfile.lock
 	pipenv sync --dev
 
+.PHONY: otelrequirements
+otelrequirements:
+	edot-bootstrap --action=requirements
 
 # linting target, calls upon yapf to make sure your code is easier to read and respects some conventions.
 
